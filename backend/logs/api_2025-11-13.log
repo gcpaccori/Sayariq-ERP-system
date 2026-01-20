@@ -1,0 +1,81 @@
+[2025-11-13 10:13:05] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"200.215.229.172","user_agent":"Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/142.0.0.0 Safari\/537.36"}
+[2025-11-13 10:13:05] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-13 10:13:15] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/status","ip":"200.215.229.172","user_agent":"Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/142.0.0.0 Safari\/537.36"}
+[2025-11-13 10:13:15] [DEBUG] Procesando ruta | Context: {"path":"status","method":"GET","uri":"\/backend\/status"}
+[2025-11-13 10:19:34] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"200.215.229.172","user_agent":"Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/142.0.0.0 Safari\/537.36"}
+[2025-11-13 10:19:34] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-13 10:27:01] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.203.8","user_agent":"node"}
+[2025-11-13 10:27:01] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-13 10:27:01] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.203.8","user_agent":"node"}
+[2025-11-13 10:27:01] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-13 10:30:22] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/j","ip":"51.158.203.8","user_agent":"Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/142.0.0.0 Safari\/537.36"}
+[2025-11-13 10:30:22] [DEBUG] Procesando ruta | Context: {"path":"j","method":"GET","uri":"\/backend\/j"}
+[2025-11-13 10:30:31] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.203.8","user_agent":"Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/142.0.0.0 Safari\/537.36"}
+[2025-11-13 10:30:31] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-13 10:39:51] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.195.12","user_agent":"node"}
+[2025-11-13 10:39:51] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-13 10:39:51] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.195.12","user_agent":"node"}
+[2025-11-13 10:39:51] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-13 10:44:36] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.203.8","user_agent":"node"}
+[2025-11-13 10:44:36] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-13 10:44:36] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.203.8","user_agent":"node"}
+[2025-11-13 10:44:36] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-13 10:54:58] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.203.8","user_agent":"node"}
+[2025-11-13 10:54:58] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-13 10:54:58] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.203.8","user_agent":"node"}
+[2025-11-13 10:54:58] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-13 10:56:26] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.195.12","user_agent":"node"}
+[2025-11-13 10:56:26] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-13 10:56:26] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.195.12","user_agent":"node"}
+[2025-11-13 10:56:26] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-13 11:01:09] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.203.8","user_agent":"node"}
+[2025-11-13 11:01:09] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.203.8","user_agent":"node"}
+[2025-11-13 11:01:09] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-13 11:01:09] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-13 11:01:18] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.203.8","user_agent":"node"}
+[2025-11-13 11:01:18] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-13 11:02:59] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.195.12","user_agent":"node"}
+[2025-11-13 11:02:59] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-13 11:03:20] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.195.12","user_agent":"node"}
+[2025-11-13 11:03:20] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-13 11:03:24] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.195.12","user_agent":"node"}
+[2025-11-13 11:03:24] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-13 11:04:22] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"POST","uri":"\/backend\/personas","ip":"51.158.203.8","user_agent":"node"}
+[2025-11-13 11:04:22] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"POST","uri":"\/backend\/personas"}
+[2025-11-13 11:04:22] [ERROR] Error en API | Context: {"message":"SQLSTATE[23000]: Integrity constraint violation: 1048 Column 'nombre_completo' cannot be null","file":"\/home\/fran2869\/citeapurimac.org\/backend\/controllers\/PersonasController.php","line":109}
+[2025-11-13 11:17:36] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.203.8","user_agent":"node"}
+[2025-11-13 11:17:36] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-13 11:17:36] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.203.8","user_agent":"node"}
+[2025-11-13 11:17:36] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-13 11:25:05] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"212.83.147.227","user_agent":"node"}
+[2025-11-13 11:25:05] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-13 11:25:21] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"PUT","uri":"\/backend\/personas\/1","ip":"212.83.147.227","user_agent":"node"}
+[2025-11-13 11:25:21] [DEBUG] Procesando ruta | Context: {"path":"personas\/1","method":"PUT","uri":"\/backend\/personas\/1"}
+[2025-11-13 11:25:21] [EXCEPTION] PDOStatement::bindParam(): Argument #2 ($var) cannot be passed by reference | Context: {"file":"\/home\/fran2869\/citeapurimac.org\/backend\/controllers\/PersonasController.php","line":161}
+[2025-11-13 11:42:42] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"212.83.147.227","user_agent":"node"}
+[2025-11-13 11:42:43] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-13 11:42:43] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"212.83.147.227","user_agent":"node"}
+[2025-11-13 11:42:43] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-13 11:42:50] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"212.83.147.227","user_agent":"node"}
+[2025-11-13 11:42:50] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-13 11:43:00] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"DELETE","uri":"\/backend\/personas\/1","ip":"212.83.147.227","user_agent":"node"}
+[2025-11-13 11:43:00] [DEBUG] Procesando ruta | Context: {"path":"personas\/1","method":"DELETE","uri":"\/backend\/personas\/1"}
+[2025-11-13 11:43:00] [ERROR] Error en API | Context: {"message":"SQLSTATE[23000]: Integrity constraint violation: 1451 Cannot delete or update a parent row: a foreign key constraint fails (`fran2869_sayariq`.`adelantos`, CONSTRAINT `adelantos_ibfk_1` FOREIGN KEY (`productor_id`) REFERENCES `personas` (`id`))","file":"\/home\/fran2869\/citeapurimac.org\/backend\/controllers\/PersonasController.php","line":183}
+[2025-11-13 11:46:18] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"212.83.147.227","user_agent":"node"}
+[2025-11-13 11:46:18] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-13 11:46:27] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"PUT","uri":"\/backend\/personas\/1","ip":"51.15.21.208","user_agent":"node"}
+[2025-11-13 11:46:27] [DEBUG] Procesando ruta | Context: {"path":"personas\/1","method":"PUT","uri":"\/backend\/personas\/1"}
+[2025-11-13 11:46:27] [EXCEPTION] PDOStatement::bindParam(): Argument #2 ($var) cannot be passed by reference | Context: {"file":"\/home\/fran2869\/citeapurimac.org\/backend\/controllers\/PersonasController.php","line":161}
+[2025-11-13 11:48:51] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-13 11:48:51] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-13 11:48:57] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"PUT","uri":"\/backend\/personas\/1","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-13 11:48:57] [DEBUG] Procesando ruta | Context: {"path":"personas\/1","method":"PUT","uri":"\/backend\/personas\/1"}
+[2025-11-13 11:48:58] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-13 11:48:58] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-13 11:56:26] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"POST","uri":"\/backend\/personas","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-13 11:56:26] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"POST","uri":"\/backend\/personas"}
+[2025-11-13 11:56:26] [EXCEPTION] PDOStatement::bindParam(): Argument #2 ($var) cannot be passed by reference | Context: {"file":"\/home\/fran2869\/citeapurimac.org\/backend\/controllers\/PersonasController.php","line":111}
+[2025-11-13 12:21:15] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-13 12:21:15] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-13 12:21:15] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-13 12:21:15] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}

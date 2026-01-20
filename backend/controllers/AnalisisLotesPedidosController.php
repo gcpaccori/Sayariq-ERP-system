@@ -64,8 +64,8 @@ class AnalisisLotesPedidosController {
         $query = "SELECT 
                     COUNT(DISTINCT po.lote_id) as total_lotes_usados,
                     COUNT(DISTINCT po.pedido_id) as total_pedidos_atendidos,
-                    COALESCE(SUM(po.peso_asignado), 0) as peso_total_asignado,
-                    COALESCE(AVG(po.peso_asignado), 0) as peso_promedio_asignacion,
+                    SUM(po.peso_asignado) as peso_total_asignado,
+                    AVG(po.peso_asignado) as peso_promedio_asignacion,
                     COUNT(CASE WHEN po.estado = 'completado' THEN 1 END) as asignaciones_completadas,
                     COUNT(CASE WHEN po.estado = 'en_proceso' THEN 1 END) as asignaciones_en_proceso,
                     COUNT(CASE WHEN po.estado = 'planificado' THEN 1 END) as asignaciones_planificadas
@@ -77,8 +77,8 @@ class AnalisisLotesPedidosController {
         
         // Calcular tasa de eficiencia
         $queryEficiencia = "SELECT 
-                              COALESCE(SUM(l.peso_inicial), 0) as peso_inicial_total,
-                              COALESCE(SUM(l.peso_neto), 0) as peso_neto_total
+                              SUM(l.peso_inicial) as peso_inicial_total,
+                              SUM(l.peso_neto) as peso_neto_total
                             FROM lotes l
                             INNER JOIN planificacion_operativa po ON l.id = po.lote_id";
         
@@ -91,13 +91,6 @@ class AnalisisLotesPedidosController {
         } else {
             $metricas['eficiencia_peso'] = 0;
         }
-        
-        // Ensure all numeric values are properly cast
-        $metricas['total_lotes_usados'] = (int)$metricas['total_lotes_usados'];
-        $metricas['total_pedidos_atendidos'] = (int)$metricas['total_pedidos_atendidos'];
-        $metricas['peso_total_asignado'] = (float)$metricas['peso_total_asignado'];
-        $metricas['peso_promedio_asignacion'] = (float)$metricas['peso_promedio_asignacion'];
-        $metricas['eficiencia_peso'] = (float)$metricas['eficiencia_peso'];
         
         echo json_encode($metricas);
     }

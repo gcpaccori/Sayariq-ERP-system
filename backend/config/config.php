@@ -23,10 +23,10 @@ define('DEBUG_MODE', true);
 define('AUTH_REQUIRED', false); // Acceso abierto
 
 // Configuración de base de datos InfinityFree
-define('DB_HOST', 'sql308.infinityfree.com');
-define('DB_NAME', 'if0_40375920_sayariq');
-define('DB_USER', 'if0_40375920');
-define('DB_PASS', '4EcScCLR1tZun');
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'fran2869_sayariq');
+define('DB_USER', 'fran2869_sayariq');
+define('DB_PASS', 'OdHnplX!OwriBM{M');
 define('DB_CHARSET', 'utf8mb4');
 
 // Configuración de sesiones

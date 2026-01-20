@@ -4,7 +4,7 @@ class LiquidacionesController {
     private $tableLiquidaciones = "liquidaciones";
     private $tableDetalle = "liquidaciones_detalle";
 
-    // nombres canónicos de categorías
+    // nombres canónicos de categorías (para kardex)
     private $categorias = [
         'exportable','industrial','descarte','nacional','jugo',
         'primera','segunda','tercera','cuarta','quinta','dedos'
@@ -34,12 +34,15 @@ class LiquidacionesController {
                     $this->getAll();
                 }
                 break;
+
             case 'POST':
                 $this->create();
                 break;
+
             case 'PUT':
                 $this->update($id);
                 break;
+
             case 'DELETE':
                 $this->delete($id);
                 break;
@@ -196,9 +199,11 @@ class LiquidacionesController {
 
     /**
      * =======================================
-     * CREAR LIQUIDACIÓN (OPCIÓN B PROFESIONAL)
-     * - Guarda liquidacion_id en adelantos SI EXISTE la columna
-     * - Registra salidas en KARDEX con saldo_categoria
+     * CREAR LIQUIDACIÓN
+     * - Usa jabas + humedad POR CATEGORÍA
+     * - Guarda campos extra en liquidaciones_detalle:
+     *   numero_jabas, peso_jabas, porcentaje_humedad, peso_descuento_humedad
+     * - Registra salidas en KARDEX con peso neto liquidable
      * =======================================
      */
     public function create() {
@@ -227,71 +232,121 @@ class LiquidacionesController {
             // Número de liquidación
             $numeroLiquidacion = $this->generarNumeroLiquidacion();
 
-            // 1. Insertar liquidación principal
+            // Totales principales que ya manejabas
+            $totalBrutoFruta = isset($data->total_bruto_fruta) ? (float)$data->total_bruto_fruta : 0.0;
+            $totalAPagar     = isset($data->total_a_pagar) ? (float)$data->total_a_pagar : 0.0;
+            $costoFlete      = isset($data->costo_flete) ? (float)$data->costo_flete : 0.0;
+            $costoCosecha    = isset($data->costo_cosecha) ? (float)$data->costo_cosecha : 0.0;
+            $costoMaquila    = isset($data->costo_maquila) ? (float)$data->costo_maquila : 0.0;
+            $descuentoJabas  = isset($data->descuento_jabas) ? (float)$data->descuento_jabas : 0.0;
+            $totalAdelantos  = isset($data->total_adelantos) ? (float)$data->total_adelantos : 0.0;
+            $estadoPago      = $data->estado_pago ?? 'PENDIENTE';
+
+            // 1. Insertar liquidación principal (campos base)
             $query = "INSERT INTO {$this->tableLiquidaciones}
                       (numero_liquidacion,
-                       lote_id, fecha_liquidacion, total_bruto_fruta,
+                       lote_id, fecha_liquidacion,
+                       total_bruto_fruta,
                        costo_flete, costo_cosecha, costo_maquila,
                        descuento_jabas, total_adelantos, total_a_pagar, estado_pago)
                       VALUES
                       (:numero_liq,
-                       :lote,:fecha,:total_bruto,
-                       :flete,:cosecha,:maquila,
-                       :jabas,:adelantos,:total_pagar,:estado_pago)";
+                       :lote, :fecha,
+                       :total_bruto,
+                       :flete, :cosecha, :maquila,
+                       :jabas, :adelantos, :total_pagar, :estado_pago)";
 
             $stmt = $this->conn->prepare($query);
-
-            $totalBrutoFruta = isset($data->total_bruto_fruta) ? (float)$data->total_bruto_fruta : 0.0;
-            $totalAPagar     = isset($data->total_a_pagar) ? (float)$data->total_a_pagar : 0.0;
-
             $stmt->execute([
                 ':numero_liq'  => $numeroLiquidacion,
                 ':lote'        => (int)$data->lote_id,
                 ':fecha'       => $fecha,
                 ':total_bruto' => $totalBrutoFruta,
-                ':flete'       => isset($data->costo_flete) ? (float)$data->costo_flete : 0.0,
-                ':cosecha'     => isset($data->costo_cosecha) ? (float)$data->costo_cosecha : 0.0,
-                ':maquila'     => isset($data->costo_maquila) ? (float)$data->costo_maquila : 0.0,
-                ':jabas'       => isset($data->descuento_jabas) ? (float)$data->descuento_jabas : 0.0,
-                ':adelantos'   => isset($data->total_adelantos) ? (float)$data->total_adelantos : 0.0,
+                ':flete'       => $costoFlete,
+                ':cosecha'     => $costoCosecha,
+                ':maquila'     => $costoMaquila,
+                ':jabas'       => $descuentoJabas,
+                ':adelantos'   => $totalAdelantos,
                 ':total_pagar' => $totalAPagar,
-                ':estado_pago' => $data->estado_pago ?? 'PENDIENTE'
+                ':estado_pago' => $estadoPago
             ]);
 
             $liquidacionId = (int)$this->conn->lastInsertId();
 
-            // 2. Detalle de categorías + salida en kardex con saldo actualizado
+            // 2. Detalle de categorías + salida en kardex con jabas + humedad
+            //    IMPORTANTE: esta tabla debe tener columnas extra:
+            //    numero_jabas, peso_jabas, porcentaje_humedad, peso_descuento_humedad
             $sqlDet = "INSERT INTO {$this->tableDetalle}
-                       (liquidacion_id, categoria_id, peso_categoria_original,
-                        peso_ajustado, precio_unitario, subtotal)
-                       VALUES (:liq,:cat,:orig,:ajust,:precio,:subtotal)";
+                       (liquidacion_id, categoria_id, 
+                        peso_categoria_original, peso_ajustado, 
+                        precio_unitario, subtotal,
+                        numero_jabas, peso_jabas,
+                        porcentaje_humedad, peso_descuento_humedad)
+                       VALUES
+                       (:liq, :cat,
+                        :orig, :ajust,
+                        :precio, :subtotal,
+                        :num_jabas, :peso_jabas,
+                        :porc_hum, :peso_desc_hum)";
             $stmtDet = $this->conn->prepare($sqlDet);
+
+            $totalBrutoVentas = 0.0;
 
             foreach ($data->detalle_categorias as $d) {
                 // Convertir stdClass → valores seguros
                 $catId       = isset($d->categoria_id) ? (int)$d->categoria_id : 0;
                 $catNombre   = isset($d->nombre_categoria) ? $d->nombre_categoria : (isset($d->categoria) ? $d->categoria : 'exportable');
                 $catNombre   = strtolower(trim($catNombre)); // para kardex: "industrial", "exportable", etc.
+
                 $pesoOrig    = isset($d->peso_categoria_original) ? (float)$d->peso_categoria_original : 0.0;
-                $pesoAjust   = isset($d->peso_ajustado) ? (float)$d->peso_ajustado : $pesoOrig;
+
+                // N° jabas y peso TOTAL de jabas de la categoría (no peso por jaba)
+                $numJabas    = isset($d->numero_jabas) ? (int)$d->numero_jabas : 0;
+                $pesoJabas   = isset($d->peso_jabas) ? (float)$d->peso_jabas : 0.0;
+
+                // 1) Descontar jabas
+                $pesoSinJabas = $pesoOrig - $pesoJabas;
+                if ($pesoSinJabas < 0) {
+                    $pesoSinJabas = 0;
+                }
+
+                // 2) Aplicar humedad por categoría
+                $porcHumedad = isset($d->porcentaje_humedad) ? (float)$d->porcentaje_humedad : 0.0;
+                $factorHum   = $porcHumedad / 100.0;
+                $pesoDescHum = $pesoSinJabas * $factorHum;
+
+                // 3) Peso neto de liquidación (lo que realmente se paga)
+                $pesoAjust   = $pesoSinJabas - $pesoDescHum;
+                if ($pesoAjust < 0) {
+                    $pesoAjust = 0;
+                }
+
                 $precio      = isset($d->precio_unitario) ? (float)$d->precio_unitario : 0.0;
                 $subtotal    = isset($d->subtotal) ? (float)$d->subtotal : ($pesoAjust * $precio);
 
-                if ($pesoAjust <= 0) {
+                // Acumular para total_bruto_ventas
+                $totalBrutoVentas += $subtotal;
+
+                // Si no hay nada que liquidar, saltamos
+                if ($pesoAjust <= 0 && $precio <= 0) {
                     continue;
                 }
 
                 // Insertar detalle
                 $stmtDet->execute([
-                    ':liq'     => $liquidacionId,
-                    ':cat'     => $catId,
-                    ':orig'    => $pesoOrig,
-                    ':ajust'   => $pesoAjust,
-                    ':precio'  => $precio,
-                    ':subtotal'=> $subtotal
+                    ':liq'          => $liquidacionId,
+                    ':cat'          => $catId,
+                    ':orig'         => $pesoOrig,
+                    ':ajust'        => $pesoAjust,
+                    ':precio'       => $precio,
+                    ':subtotal'     => $subtotal,
+                    ':num_jabas'    => $numJabas,
+                    ':peso_jabas'   => $pesoJabas,
+                    ':porc_hum'     => $porcHumedad,
+                    ':peso_desc_hum'=> $pesoDescHum
                 ]);
 
-                // Registrar salida en kardex con saldo_categoria actualizado
+                // Registrar salida en kardex con peso neto liquidable
                 $this->registrarSalidaKardex(
                     (int)$data->lote_id,
                     $catNombre,
@@ -306,7 +361,40 @@ class LiquidacionesController {
                 $this->aplicarAdelantosConLiquidacion($data->adelantos_aplicados, $liquidacionId);
             }
 
-            // 4. Actualizar estado de lote
+            // 4. Actualizar campos globales en liquidaciones (opcional: si los manda el front)
+            $pesoBrutoGlobal        = isset($data->peso_bruto) ? (float)$data->peso_bruto : null;
+            $pesoJabasGlobal        = isset($data->peso_jabas) ? (float)$data->peso_jabas : null;
+            $pesoNetoSinJabasGlobal = isset($data->peso_neto_sin_jabas)
+                ? (float)$data->peso_neto_sin_jabas
+                : (($pesoBrutoGlobal !== null && $pesoJabasGlobal !== null) ? $pesoBrutoGlobal - $pesoJabasGlobal : null);
+
+            $multHumGlobal = isset($data->multiplicador_humedad) ? (float)$data->multiplicador_humedad : null;
+            $pesoFinalAjustadoGlobal = isset($data->peso_final_ajustado)
+                ? (float)$data->peso_final_ajustado
+                : (($pesoNetoSinJabasGlobal !== null && $multHumGlobal !== null) ? $pesoNetoSinJabasGlobal * $multHumGlobal : null);
+
+            $updateTotales = "UPDATE {$this->tableLiquidaciones}
+                              SET peso_bruto = :peso_bruto,
+                                  peso_jabas = :peso_jabas,
+                                  peso_neto_sin_jabas = :peso_neto_sin_jabas,
+                                  multiplicador_humedad = :mult_hum,
+                                  peso_final_ajustado = :peso_final_ajustado,
+                                  total_bruto_ventas = :ventas,
+                                  total_neto_pagar = :neto
+                              WHERE id = :id";
+            $stmtTot = $this->conn->prepare($updateTotales);
+            $stmtTot->execute([
+                ':peso_bruto'        => $pesoBrutoGlobal,
+                ':peso_jabas'        => $pesoJabasGlobal,
+                ':peso_neto_sin_jabas'=> $pesoNetoSinJabasGlobal,
+                ':mult_hum'          => $multHumGlobal,
+                ':peso_final_ajustado'=> $pesoFinalAjustadoGlobal,
+                ':ventas'            => $totalBrutoVentas,
+                ':neto'              => $totalAPagar,
+                ':id'                => $liquidacionId
+            ]);
+
+            // 5. Actualizar estado de lote
             $stmtLote = $this->conn->prepare("UPDATE lotes SET estado = 'liquidado' WHERE id = :id");
             $stmtLote->bindParam(':id', $data->lote_id, PDO::PARAM_INT);
             $stmtLote->execute();
@@ -332,6 +420,7 @@ class LiquidacionesController {
 
     /**
      * Registrar salida en kardex con saldo_categoria actualizado
+     * (usa el peso neto liquidable por categoría)
      */
     private function registrarSalidaKardex(int $loteId, string $categoria, float $peso, string $fecha, string $referencia) {
         if ($peso <= 0) return;
@@ -366,7 +455,7 @@ class LiquidacionesController {
     }
 
     /**
-     * Opción B: marcar adelantos como aplicados y, si existe la columna,
+     * Marcar adelantos como aplicados y, si existe la columna,
      * guardar liquidacion_id en cada adelanto.
      */
     private function aplicarAdelantosConLiquidacion(array $adelantosIds, int $liquidacionId) {
@@ -393,7 +482,7 @@ class LiquidacionesController {
             $stmt->bindParam(':liq', $liquidacionId, PDO::PARAM_INT);
             $stmt->execute();
         } else {
-            // Fallback: solo marcar como aplicado (Opción A)
+            // Fallback: solo marcar como aplicado
             $sql = "UPDATE adelantos 
                     SET estado = 'aplicado'
                     WHERE id IN ($idsList)";
@@ -446,6 +535,7 @@ class LiquidacionesController {
                 return;
             }
 
+            // Detalle con las nuevas columnas incluidas en ld.*
             $queryDetalle = "SELECT ld.*, 
                              COALESCE(cp.nombre, 'Sin categoría') as nombre_categoria,
                              COALESCE(cp.precio_kg, 0) as precio_kg

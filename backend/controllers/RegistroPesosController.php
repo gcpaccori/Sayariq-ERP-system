@@ -80,7 +80,7 @@ class RegistroPesosController {
         ]);
     }
 
-    // GET By ID
+    // GET By ID (incluye detalle por categoría con jabas)
     public function getById($id) {
         $query = "SELECT 
                     pl.*,
@@ -104,6 +104,26 @@ class RegistroPesosController {
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($result) {
+            // Detalle por categoría (peso, numero_jabas, peso_jabas)
+            $qDetalle = "SELECT 
+                            d.id,
+                            d.categoria_id,
+                            c.codigo,
+                            c.nombre,
+                            d.peso,
+                            d.numero_jabas,
+                            d.peso_jabas
+                         FROM pesos_lote_detalle d
+                         INNER JOIN categorias_peso c ON d.categoria_id = c.id
+                         WHERE d.peso_lote_id = :id
+                         ORDER BY c.orden";
+            $stmtDet = $this->conn->prepare($qDetalle);
+            $stmtDet->bindParam(':id', $id);
+            $stmtDet->execute();
+            $detalles = $stmtDet->fetchAll(PDO::FETCH_ASSOC);
+
+            $result['detalles'] = $detalles;
+
             echo json_encode(['success' => true, 'data' => $result]);
         } else {
             http_response_code(404);
@@ -197,7 +217,7 @@ class RegistroPesosController {
         $stmt->execute();
         $resumen = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        // Obtener historial de pesadas
+        // Obtener historial de pesadas (cabecera)
         $queryHistorial = "SELECT * FROM pesos_lote 
                           WHERE lote_id = :lote_id 
                           ORDER BY fecha_pesado DESC, created_at DESC";
@@ -216,7 +236,7 @@ class RegistroPesosController {
         ]);
     }
 
-    // POST Create
+    // POST Create (incluye detalle por categoría con jabas)
     public function create() {
         $data = json_decode(file_get_contents("php://input"), true);
         
@@ -238,26 +258,63 @@ class RegistroPesosController {
             echo json_encode(['success' => false, 'message' => 'El lote especificado no existe']);
             return;
         }
-        
-        $query = "INSERT INTO pesos_lote 
-                  (lote_id, fecha_pesado, peso_bruto, peso_exportable, peso_industrial, peso_descarte, observaciones) 
-                  VALUES 
-                  (:lote_id, :fecha_pesado, :peso_bruto, :peso_exportable, :peso_industrial, :peso_descarte, :observaciones)";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':lote_id', $data['lote_id']);
-        $stmt->bindParam(':fecha_pesado', $data['fecha_pesado']);
-        $stmt->bindParam(':peso_bruto', $data['peso_bruto']);
-        $stmt->bindParam(':peso_exportable', $data['peso_exportable'] ?? 0);
-        $stmt->bindParam(':peso_industrial', $data['peso_industrial'] ?? 0);
-        $stmt->bindParam(':peso_descarte', $data['peso_descarte'] ?? 0);
-        $stmt->bindParam(':observaciones', $data['observaciones'] ?? null);
-        
-        if ($stmt->execute()) {
-            $lastId = $this->conn->lastInsertId();
+
+        try {
+            // Transacción: cabecera + detalle
+            $this->conn->beginTransaction();
+
+            // Insert cabecera
+            $query = "INSERT INTO pesos_lote 
+                      (lote_id, fecha_pesado, peso_bruto, peso_exportable, peso_industrial, peso_descarte, observaciones) 
+                      VALUES 
+                      (:lote_id, :fecha_pesado, :peso_bruto, :peso_exportable, :peso_industrial, :peso_descarte, :observaciones)";
             
-            // Actualizar peso_neto del lote si es necesario
-            $pesoTotal = ($data['peso_exportable'] ?? 0) + ($data['peso_industrial'] ?? 0) + ($data['peso_descarte'] ?? 0);
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':lote_id', $data['lote_id']);
+            $stmt->bindParam(':fecha_pesado', $data['fecha_pesado']);
+            $stmt->bindParam(':peso_bruto', $data['peso_bruto']);
+            $stmt->bindParam(':peso_exportable', $data['peso_exportable'] ?? 0);
+            $stmt->bindParam(':peso_industrial', $data['peso_industrial'] ?? 0);
+            $stmt->bindParam(':peso_descarte', $data['peso_descarte'] ?? 0);
+            $stmt->bindParam(':observaciones', $data['observaciones'] ?? null);
+            
+            if (!$stmt->execute()) {
+                throw new Exception('Error al crear la cabecera del registro de peso');
+            }
+
+            $pesoLoteId = $this->conn->lastInsertId();
+
+            // Insert detalle por categoría (peso, numero_jabas, peso_jabas)
+            if (!empty($data['detalles']) && is_array($data['detalles'])) {
+                $sqlDetalle = "INSERT INTO pesos_lote_detalle 
+                               (peso_lote_id, categoria_id, peso, numero_jabas, peso_jabas)
+                               VALUES (:peso_lote_id, :categoria_id, :peso, :numero_jabas, :peso_jabas)";
+                $stmtDetalle = $this->conn->prepare($sqlDetalle);
+
+                foreach ($data['detalles'] as $detalle) {
+                    $categoriaId  = $detalle['categoria_id']   ?? null;
+                    $pesoCat      = $detalle['peso']           ?? 0;
+                    $numJabas     = $detalle['numero_jabas']   ?? 0;
+                    $pesoJabas    = $detalle['peso_jabas']     ?? 0;
+
+                    if ($categoriaId === null) {
+                        continue;
+                    }
+
+                    $stmtDetalle->execute([
+                        ':peso_lote_id' => $pesoLoteId,
+                        ':categoria_id' => $categoriaId,
+                        ':peso'         => $pesoCat,
+                        ':numero_jabas' => $numJabas,
+                        ':peso_jabas'   => $pesoJabas
+                    ]);
+                }
+            }
+            
+            // Actualizar peso_neto del lote (si corresponde)
+            $pesoTotal = ($data['peso_exportable'] ?? 0) 
+                       + ($data['peso_industrial'] ?? 0) 
+                       + ($data['peso_descarte'] ?? 0);
             if ($pesoTotal > 0) {
                 $updateLote = "UPDATE lotes SET peso_neto = :peso_neto WHERE id = :lote_id";
                 $stmtUpdate = $this->conn->prepare($updateLote);
@@ -265,69 +322,133 @@ class RegistroPesosController {
                 $stmtUpdate->bindParam(':lote_id', $data['lote_id']);
                 $stmtUpdate->execute();
             }
-            
+
+            $this->conn->commit();
+
             echo json_encode([
                 'success' => true,
                 'message' => 'Registro de peso creado exitosamente',
-                'id' => $lastId
+                'id' => $pesoLoteId
             ]);
-        } else {
+        } catch (Exception $e) {
+            $this->conn->rollBack();
             http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Error al crear el registro']);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }
     }
 
-    // PUT Update
+    // PUT Update (incluye actualización de detalle con jabas)
     public function update($id) {
         $data = json_decode(file_get_contents("php://input"), true);
         
-        $query = "UPDATE pesos_lote SET 
-                  fecha_pesado = :fecha_pesado,
-                  peso_bruto = :peso_bruto,
-                  peso_exportable = :peso_exportable,
-                  peso_industrial = :peso_industrial,
-                  peso_descarte = :peso_descarte,
-                  observaciones = :observaciones
-                  WHERE id = :id";
-        
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id);
-        $stmt->bindParam(':fecha_pesado', $data['fecha_pesado']);
-        $stmt->bindParam(':peso_bruto', $data['peso_bruto']);
-        $stmt->bindParam(':peso_exportable', $data['peso_exportable'] ?? 0);
-        $stmt->bindParam(':peso_industrial', $data['peso_industrial'] ?? 0);
-        $stmt->bindParam(':peso_descarte', $data['peso_descarte'] ?? 0);
-        $stmt->bindParam(':observaciones', $data['observaciones'] ?? null);
-        
-        if ($stmt->execute()) {
-            if ($stmt->rowCount() > 0) {
-                echo json_encode(['success' => true, 'message' => 'Registro actualizado exitosamente']);
-            } else {
+        try {
+            $this->conn->beginTransaction();
+
+            // Actualizar cabecera
+            $query = "UPDATE pesos_lote SET 
+                      fecha_pesado = :fecha_pesado,
+                      peso_bruto = :peso_bruto,
+                      peso_exportable = :peso_exportable,
+                      peso_industrial = :peso_industrial,
+                      peso_descarte = :peso_descarte,
+                      observaciones = :observaciones
+                      WHERE id = :id";
+            
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id', $id);
+            $stmt->bindParam(':fecha_pesado', $data['fecha_pesado']);
+            $stmt->bindParam(':peso_bruto', $data['peso_bruto']);
+            $stmt->bindParam(':peso_exportable', $data['peso_exportable'] ?? 0);
+            $stmt->bindParam(':peso_industrial', $data['peso_industrial'] ?? 0);
+            $stmt->bindParam(':peso_descarte', $data['peso_descarte'] ?? 0);
+            $stmt->bindParam(':observaciones', $data['observaciones'] ?? null);
+            
+            if (!$stmt->execute()) {
+                throw new Exception('Error al actualizar la cabecera del registro de peso');
+            }
+
+            if ($stmt->rowCount() === 0) {
+                $this->conn->rollBack();
                 http_response_code(404);
                 echo json_encode(['success' => false, 'message' => 'Registro no encontrado']);
+                return;
             }
-        } else {
+
+            // Borrar detalle anterior
+            $del = $this->conn->prepare("DELETE FROM pesos_lote_detalle WHERE peso_lote_id = :id");
+            $del->bindParam(':id', $id);
+            $del->execute();
+
+            // Insertar nuevo detalle (si viene)
+            if (!empty($data['detalles']) && is_array($data['detalles'])) {
+                $sqlDetalle = "INSERT INTO pesos_lote_detalle 
+                               (peso_lote_id, categoria_id, peso, numero_jabas, peso_jabas)
+                               VALUES (:peso_lote_id, :categoria_id, :peso, :numero_jabas, :peso_jabas)";
+                $stmtDetalle = $this->conn->prepare($sqlDetalle);
+
+                foreach ($data['detalles'] as $detalle) {
+                    $categoriaId  = $detalle['categoria_id']   ?? null;
+                    $pesoCat      = $detalle['peso']           ?? 0;
+                    $numJabas     = $detalle['numero_jabas']   ?? 0;
+                    $pesoJabas    = $detalle['peso_jabas']     ?? 0;
+
+                    if ($categoriaId === null) {
+                        continue;
+                    }
+
+                    $stmtDetalle->execute([
+                        ':peso_lote_id' => $id,
+                        ':categoria_id' => $categoriaId,
+                        ':peso'         => $pesoCat,
+                        ':numero_jabas' => $numJabas,
+                        ':peso_jabas'   => $pesoJabas
+                    ]);
+                }
+            }
+
+            $this->conn->commit();
+
+            echo json_encode(['success' => true, 'message' => 'Registro actualizado exitosamente']);
+        } catch (Exception $e) {
+            $this->conn->rollBack();
             http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Error al actualizar el registro']);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }
     }
 
     // DELETE
     public function delete($id) {
-        $query = "DELETE FROM pesos_lote WHERE id = :id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id);
-        
-        if ($stmt->execute()) {
-            if ($stmt->rowCount() > 0) {
-                echo json_encode(['success' => true, 'message' => 'Registro eliminado exitosamente']);
+        try {
+            $this->conn->beginTransaction();
+
+            // Borrar detalle primero por FK
+            $delDet = $this->conn->prepare("DELETE FROM pesos_lote_detalle WHERE peso_lote_id = :id");
+            $delDet->bindParam(':id', $id);
+            $delDet->execute();
+
+            // Borrar cabecera
+            $query = "DELETE FROM pesos_lote WHERE id = :id";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(':id', $id);
+            
+            if ($stmt->execute()) {
+                if ($stmt->rowCount() > 0) {
+                    $this->conn->commit();
+                    echo json_encode(['success' => true, 'message' => 'Registro eliminado exitosamente']);
+                } else {
+                    $this->conn->rollBack();
+                    http_response_code(404);
+                    echo json_encode(['success' => false, 'message' => 'Registro no encontrado']);
+                }
             } else {
-                http_response_code(404);
-                echo json_encode(['success' => false, 'message' => 'Registro no encontrado']);
+                $this->conn->rollBack();
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Error al eliminar el registro']);
             }
-        } else {
+        } catch (Exception $e) {
+            $this->conn->rollBack();
             http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Error al eliminar el registro']);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }
     }
 }

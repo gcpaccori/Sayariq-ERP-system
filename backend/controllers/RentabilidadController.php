@@ -2,6 +2,7 @@
 require_once 'BaseController.php';
 
 class RentabilidadController extends BaseController {
+
     public function handleRequest($method, $id = null, $action = null) {
         if ($method !== 'GET') {
             http_response_code(405);
@@ -11,22 +12,26 @@ class RentabilidadController extends BaseController {
 
         try {
             $periodo = $action ?? 'diaria';
-            
-            switch($periodo) {
+
+            switch ($periodo) {
+
                 case 'diaria':
                     $fecha = $_GET['fecha'] ?? null;
                     $result = $this->getDiaria($fecha);
                     break;
+
                 case 'semanal':
                     $fechaInicio = $_GET['fechaInicio'] ?? null;
                     $fechaFin = $_GET['fechaFin'] ?? null;
                     $result = $this->getSemanal($fechaInicio, $fechaFin);
                     break;
+
                 case 'mensual':
                     $mes = $_GET['mes'] ?? null;
                     $anio = $_GET['anio'] ?? null;
                     $result = $this->getMensual($mes, $anio);
                     break;
+
                 default:
                     http_response_code(400);
                     echo json_encode(["message" => "Período inválido"]);
@@ -34,110 +39,170 @@ class RentabilidadController extends BaseController {
             }
 
             echo json_encode($result);
+
         } catch (Exception $e) {
             http_response_code(500);
-            echo json_encode(["message" => "Error del servidor", "error" => $e->getMessage()]);
+            echo json_encode([
+                "message" => "Error del servidor",
+                "error"   => $e->getMessage()
+            ]);
         }
     }
 
+    /* ============================================================
+                       RENTABILIDAD DIARIA
+    ============================================================ */
     private function getDiaria($fecha = null) {
         if (!$fecha) $fecha = date('Y-m-d');
-        
-        $stmt = $this->db->prepare("SELECT SUM(total) as suma_ventas FROM ventas WHERE DATE(fecha) = ?");
+
+        // VENTAS
+        $stmt = $this->db->prepare("
+            SELECT SUM(total) AS suma_ventas
+            FROM ventas
+            WHERE DATE(fecha_venta) = ?
+        ");
         $stmt->execute([$fecha]);
         $ventas = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $stmt = $this->db->query("SELECT SUM(sueldo / 30) as suma_personal FROM empleados WHERE estado = 'activo'");
+        // SUELDOS DIARIOS
+        $stmt = $this->db->query("
+            SELECT SUM(sueldo / 30) AS suma_personal
+            FROM empleados
+            WHERE estado = 'activo'
+        ");
         $personal = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        // MATERIA PRIMA
         $stmt = $this->db->prepare("
-            SELECT SUM(ac.total_proceso) as suma_mp
+            SELECT SUM(ac.total_proceso) AS suma_mp
             FROM ventas v
-            JOIN detalles_venta dv ON v.id = dv.venta_id
-            JOIN lotes l ON dv.lote_id = l.id
+            JOIN planificacion_operativa po ON v.pedido_id = po.pedido_id
+            JOIN lotes l ON po.lote_id = l.id
             JOIN ajustes_contables ac ON ac.lote_id = l.id
-            WHERE DATE(v.fecha) = ?
+            WHERE DATE(v.fecha_venta) = ?
         ");
         $stmt->execute([$fecha]);
         $mp = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $ganancia = ($ventas['suma_ventas'] ?? 0) - ($personal['suma_personal'] ?? 0) - ($mp['suma_mp'] ?? 0);
+        $ganancia = ($ventas['suma_ventas'] ?? 0)
+                  - ($personal['suma_personal'] ?? 0)
+                  - ($mp['suma_mp'] ?? 0);
 
         return [
-            'suma_ventas' => $ventas['suma_ventas'] ?? 0,
-            'suma_personal' => $personal['suma_personal'] ?? 0,
-            'suma_mp' => $mp['suma_mp'] ?? 0,
-            'ganancia_dia' => $ganancia
+            "suma_ventas"   => round($ventas['suma_ventas'] ?? 0, 2),
+            "suma_personal" => round($personal['suma_personal'] ?? 0, 2),
+            "suma_mp"       => round($mp['suma_mp'] ?? 0, 2),
+            "ganancia_dia"  => round($ganancia, 2)
         ];
     }
 
+    /* ============================================================
+                       RENTABILIDAD SEMANAL
+    ============================================================ */
     private function getSemanal($fechaInicio = null, $fechaFin = null) {
+
         if (!$fechaInicio) {
             $fechaInicio = date('Y-m-d', strtotime('monday this week'));
-            $fechaFin = date('Y-m-d', strtotime('sunday this week'));
+            $fechaFin    = date('Y-m-d', strtotime('sunday this week'));
         }
 
-        $stmt = $this->db->prepare("SELECT SUM(total) as suma_ventas FROM ventas WHERE fecha BETWEEN ? AND ?");
+        // VENTAS
+        $stmt = $this->db->prepare("
+            SELECT SUM(total) AS suma_ventas
+            FROM ventas
+            WHERE fecha_venta BETWEEN ? AND ?
+        ");
         $stmt->execute([$fechaInicio, $fechaFin]);
         $ventas = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $stmt = $this->db->query("SELECT SUM(sueldo / 30 * 7) as suma_personal FROM empleados WHERE estado = 'activo'");
+        // SUELDOS SEMANALES
+        $stmt = $this->db->query("
+            SELECT SUM(sueldo / 30 * 7) AS suma_personal
+            FROM empleados
+            WHERE estado = 'activo'
+        ");
         $personal = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        // MATERIA PRIMA
         $stmt = $this->db->prepare("
-            SELECT SUM(ac.total_proceso) as suma_mp
+            SELECT SUM(ac.total_proceso) AS suma_mp
             FROM ventas v
-            JOIN detalles_venta dv ON v.id = dv.venta_id
-            JOIN lotes l ON dv.lote_id = l.id
+            JOIN planificacion_operativa po ON v.pedido_id = po.pedido_id
+            JOIN lotes l ON po.lote_id = l.id
             JOIN ajustes_contables ac ON ac.lote_id = l.id
-            WHERE v.fecha BETWEEN ? AND ?
+            WHERE v.fecha_venta BETWEEN ? AND ?
         ");
         $stmt->execute([$fechaInicio, $fechaFin]);
         $mp = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $ganancia = ($ventas['suma_ventas'] ?? 0) - ($personal['suma_personal'] ?? 0) - ($mp['suma_mp'] ?? 0);
+        $ganancia = ($ventas['suma_ventas'] ?? 0)
+                  - ($personal['suma_personal'] ?? 0)
+                  - ($mp['suma_mp'] ?? 0);
 
         return [
-            'suma_ventas' => $ventas['suma_ventas'] ?? 0,
-            'suma_personal' => $personal['suma_personal'] ?? 0,
-            'suma_mp' => $mp['suma_mp'] ?? 0,
-            'ganancia_semanal' => $ganancia
+            "suma_ventas"      => round($ventas['suma_ventas'] ?? 0, 2),
+            "suma_personal"    => round($personal['suma_personal'] ?? 0, 2),
+            "suma_mp"          => round($mp['suma_mp'] ?? 0, 2),
+            "ganancia_semanal" => round($ganancia, 2)
         ];
     }
 
+    /* ============================================================
+                       RENTABILIDAD MENSUAL
+    ============================================================ */
     private function getMensual($mes = null, $anio = null) {
-        if (!$mes) $mes = date('m');
+        if (!$mes)  $mes  = date('m');
         if (!$anio) $anio = date('Y');
 
-        $stmt = $this->db->prepare("SELECT SUM(total) as suma_ventas FROM ventas WHERE MONTH(fecha) = ? AND YEAR(fecha) = ?");
+        // VENTAS
+        $stmt = $this->db->prepare("
+            SELECT SUM(total) AS suma_ventas
+            FROM ventas
+            WHERE MONTH(fecha_venta) = ? AND YEAR(fecha_venta) = ?
+        ");
         $stmt->execute([$mes, $anio]);
         $ventas = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $stmt = $this->db->query("SELECT SUM(sueldo) as suma_personal FROM empleados WHERE estado = 'activo'");
+        // SUELDOS MENSUALES
+        $stmt = $this->db->query("
+            SELECT SUM(sueldo) AS suma_personal
+            FROM empleados
+            WHERE estado = 'activo'
+        ");
         $personal = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        // MATERIA PRIMA
         $stmt = $this->db->prepare("
-            SELECT SUM(ac.total_proceso) as suma_mp
+            SELECT SUM(ac.total_proceso) AS suma_mp
             FROM ventas v
-            JOIN detalles_venta dv ON v.id = dv.venta_id
-            JOIN lotes l ON dv.lote_id = l.id
+            JOIN planificacion_operativa po ON v.pedido_id = po.pedido_id
+            JOIN lotes l ON po.lote_id = l.id
             JOIN ajustes_contables ac ON ac.lote_id = l.id
-            WHERE MONTH(v.fecha) = ? AND YEAR(v.fecha) = ?
+            WHERE MONTH(v.fecha_venta) = ? AND YEAR(v.fecha_venta) = ?
         ");
         $stmt->execute([$mes, $anio]);
         $mp = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $stmt = $this->db->query("SELECT SUM(monto) as costos_fijos FROM costos_fijos WHERE periodo = 'mensual'");
+        // COSTOS FIJOS (solo activos y mensuales)
+        $stmt = $this->db->query("
+            SELECT SUM(monto) AS costos_fijos
+            FROM costos_fijos
+            WHERE estado = 'activo' AND periodicidad = 'mensual'
+        ");
         $costos = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $ganancia = ($ventas['suma_ventas'] ?? 0) - ($personal['suma_personal'] ?? 0) - ($mp['suma_mp'] ?? 0) - ($costos['costos_fijos'] ?? 0);
+        $ganancia = ($ventas['suma_ventas'] ?? 0)
+                  - ($personal['suma_personal'] ?? 0)
+                  - ($mp['suma_mp'] ?? 0)
+                  - ($costos['costos_fijos'] ?? 0);
 
         return [
-            'suma_ventas' => $ventas['suma_ventas'] ?? 0,
-            'suma_personal' => $personal['suma_personal'] ?? 0,
-            'suma_mp' => $mp['suma_mp'] ?? 0,
-            'costos_fijos' => $costos['costos_fijos'] ?? 0,
-            'ganancia_mes' => $ganancia
+            "suma_ventas"   => round($ventas['suma_ventas'] ?? 0, 2),
+            "suma_personal" => round($personal['suma_personal'] ?? 0, 2),
+            "suma_mp"       => round($mp['suma_mp'] ?? 0, 2),
+            "costos_fijos"  => round($costos['costos_fijos'] ?? 0, 2),
+            "ganancia_mes"  => round($ganancia, 2)
         ];
     }
+
 }

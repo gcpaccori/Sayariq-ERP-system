@@ -1,0 +1,32 @@
+[2025-12-09 20:14:55] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"44.199.206.18","user_agent":"node"}
+[2025-12-09 20:14:55] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-12-09 20:14:56] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"44.199.206.18","user_agent":"node"}
+[2025-12-09 20:14:56] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-12-09 21:15:19] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"35.173.249.225","user_agent":"node"}
+[2025-12-09 21:15:19] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-12-09 21:25:11] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"100.31.196.104","user_agent":"node"}
+[2025-12-09 21:25:11] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-12-09 21:25:11] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"100.27.250.249","user_agent":"node"}
+[2025-12-09 21:25:11] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-12-09 21:28:19] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"100.27.250.249","user_agent":"node"}
+[2025-12-09 21:28:19] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"100.31.196.104","user_agent":"node"}
+[2025-12-09 21:28:19] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-12-09 21:28:19] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}
+[2025-12-09 21:28:19] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"107.23.128.43","user_agent":"node"}
+[2025-12-09 21:28:19] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-12-09 21:48:27] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"100.31.96.175","user_agent":"node"}
+[2025-12-09 21:48:27] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-12-09 22:18:41] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"34.203.213.233","user_agent":"node"}
+[2025-12-09 22:18:41] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-12-09 22:38:01] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"54.211.233.191","user_agent":"node"}
+[2025-12-09 22:38:02] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"100.31.83.80","user_agent":"node"}
+[2025-12-09 22:38:02] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"3.238.94.3","user_agent":"node"}
+[2025-12-09 22:38:02] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-12-09 22:38:02] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}
+[2025-12-09 22:38:02] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-12-09 23:59:05] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"44.200.7.188","user_agent":"node"}
+[2025-12-09 23:59:05] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-12-09 23:59:05] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"44.197.250.81","user_agent":"node"}
+[2025-12-09 23:59:05] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"18.235.1.54","user_agent":"node"}
+[2025-12-09 23:59:05] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}
+[2025-12-09 23:59:05] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}

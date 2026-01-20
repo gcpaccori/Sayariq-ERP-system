@@ -1,0 +1,19 @@
+[2025-11-17 11:52:32] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-17 11:52:32] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-17 11:52:33] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-17 11:52:33] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-17 11:54:26] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-17 11:54:26] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-17 11:58:39] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-17 11:58:39] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-17 11:58:40] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-17 11:58:40] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-17 11:58:49] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-17 11:58:49] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-17 11:59:06] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"POST","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-17 11:59:06] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"POST","uri":"\/backend\/personas"}
+[2025-11-17 11:59:06] [EXCEPTION] PDOStatement::bindParam(): Argument #2 ($var) cannot be passed by reference | Context: {"file":"\/home\/fran2869\/citeapurimac.org\/backend\/controllers\/PersonasController.php","line":111}
+[2025-11-17 12:17:52] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-17 12:17:52] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-17 12:17:53] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-17 12:17:53] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}

@@ -26,7 +26,7 @@ try {
     $db = $database->getConnection();
     
     if (!$db) {
-        throw new Exception('No se pudo establecer conexiè»Šn con la base de datos');
+        throw new Exception('No se pudo establecer conexi車n con la base de datos');
     }
     
     $request_method = $_SERVER["REQUEST_METHOD"];
@@ -116,7 +116,7 @@ if (isset($segments[1])) {
         case 'liquidaciones':
             $controller = new LiquidacionesController($db);
             break;
-        case 'categorias-peso':   // ðŸ‘ˆ NUEVO
+        case 'categorias-peso':   // 👈 NUEVO
             $controller = new CategoriasPesoController($db);
             break;
         default:

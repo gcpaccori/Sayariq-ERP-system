@@ -1,0 +1,260 @@
+[2025-11-19 10:36:41] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"51.158.252.220","user_agent":"node"}
+[2025-11-19 10:36:41] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}
+[2025-11-19 10:36:41] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.252.220","user_agent":"node"}
+[2025-11-19 10:36:41] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 10:36:41] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.252.220","user_agent":"node"}
+[2025-11-19 10:36:41] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 10:36:50] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.252.220","user_agent":"node"}
+[2025-11-19 10:36:50] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 10:36:50] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.252.220","user_agent":"node"}
+[2025-11-19 10:36:50] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 10:39:15] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.252.220","user_agent":"node"}
+[2025-11-19 10:39:15] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 10:39:15] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.252.220","user_agent":"node"}
+[2025-11-19 10:39:15] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 10:39:15] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"51.158.252.220","user_agent":"node"}
+[2025-11-19 10:39:15] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}
+[2025-11-19 10:39:21] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.252.220","user_agent":"node"}
+[2025-11-19 10:39:21] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 10:39:21] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.252.220","user_agent":"node"}
+[2025-11-19 10:39:21] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 10:42:34] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.252.220","user_agent":"node"}
+[2025-11-19 10:42:34] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 10:42:34] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"51.158.252.220","user_agent":"node"}
+[2025-11-19 10:42:34] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}
+[2025-11-19 10:42:34] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.252.220","user_agent":"node"}
+[2025-11-19 10:42:34] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 10:42:56] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.252.220","user_agent":"node"}
+[2025-11-19 10:42:56] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 10:42:57] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.252.220","user_agent":"node"}
+[2025-11-19 10:42:57] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 10:43:47] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.154","user_agent":"node"}
+[2025-11-19 10:43:47] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.154","user_agent":"node"}
+[2025-11-19 10:43:47] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 10:43:47] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 10:52:57] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.154","user_agent":"node"}
+[2025-11-19 10:52:57] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 10:59:15] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.252.220","user_agent":"node"}
+[2025-11-19 10:59:15] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.252.220","user_agent":"node"}
+[2025-11-19 10:59:15] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 10:59:15] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 16:14:40] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.157","user_agent":"node"}
+[2025-11-19 16:14:40] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 16:14:40] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.157","user_agent":"node"}
+[2025-11-19 16:14:40] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 16:14:40] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"51.158.254.157","user_agent":"node"}
+[2025-11-19 16:14:40] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}
+[2025-11-19 16:24:59] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.157","user_agent":"node"}
+[2025-11-19 16:24:59] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 16:25:00] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"51.158.254.157","user_agent":"node"}
+[2025-11-19 16:25:00] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}
+[2025-11-19 16:25:00] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.157","user_agent":"node"}
+[2025-11-19 16:25:00] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 16:27:45] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.157","user_agent":"node"}
+[2025-11-19 16:27:45] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.157","user_agent":"node"}
+[2025-11-19 16:27:45] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 16:27:45] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 16:29:01] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"PUT","uri":"\/backend\/lotes\/2","ip":"51.158.254.156","user_agent":"node"}
+[2025-11-19 16:29:01] [DEBUG] Procesando ruta | Context: {"path":"lotes\/2","method":"PUT","uri":"\/backend\/lotes\/2"}
+[2025-11-19 16:29:01] [ERROR] Error en API | Context: {"message":"SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '' for key 'numero_lote'","file":"\/home\/fran2869\/citeapurimac.org\/backend\/controllers\/LotesController.php","line":176}
+[2025-11-19 16:31:43] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.156","user_agent":"node"}
+[2025-11-19 16:31:43] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.156","user_agent":"node"}
+[2025-11-19 16:31:43] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 16:31:43] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 16:37:56] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.156","user_agent":"node"}
+[2025-11-19 16:37:56] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 16:38:01] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"DELETE","uri":"\/backend\/personas\/9","ip":"51.158.254.156","user_agent":"node"}
+[2025-11-19 16:38:01] [DEBUG] Procesando ruta | Context: {"path":"personas\/9","method":"DELETE","uri":"\/backend\/personas\/9"}
+[2025-11-19 16:38:06] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.156","user_agent":"node"}
+[2025-11-19 16:38:06] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 16:38:06] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.156","user_agent":"node"}
+[2025-11-19 16:38:06] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 16:38:08] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.156","user_agent":"node"}
+[2025-11-19 16:38:08] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 16:40:09] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.156","user_agent":"node"}
+[2025-11-19 16:40:09] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 16:40:09] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.156","user_agent":"node"}
+[2025-11-19 16:40:09] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 16:40:09] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"51.158.254.156","user_agent":"node"}
+[2025-11-19 16:40:09] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}
+[2025-11-19 16:40:17] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.156","user_agent":"node"}
+[2025-11-19 16:40:17] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 16:40:17] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.156","user_agent":"node"}
+[2025-11-19 16:40:17] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 16:41:56] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.157","user_agent":"node"}
+[2025-11-19 16:41:56] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 16:42:03] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.157","user_agent":"node"}
+[2025-11-19 16:42:03] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 16:42:03] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.157","user_agent":"node"}
+[2025-11-19 16:42:03] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 16:48:26] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.157","user_agent":"node"}
+[2025-11-19 16:48:26] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 16:48:27] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.157","user_agent":"node"}
+[2025-11-19 16:48:27] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 16:48:28] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"51.158.254.157","user_agent":"node"}
+[2025-11-19 16:48:28] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}
+[2025-11-19 16:53:17] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.156","user_agent":"node"}
+[2025-11-19 16:53:17] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 16:53:18] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.156","user_agent":"node"}
+[2025-11-19 16:53:18] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 16:53:18] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"51.158.254.156","user_agent":"node"}
+[2025-11-19 16:53:18] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}
+[2025-11-19 16:53:31] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.156","user_agent":"node"}
+[2025-11-19 16:53:31] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 16:53:31] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.156","user_agent":"node"}
+[2025-11-19 16:53:31] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:07:12] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:07:12] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 17:07:12] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:07:12] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}
+[2025-11-19 17:07:12] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:07:12] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:07:18] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:07:18] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:07:21] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:07:21] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 17:07:21] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:07:21] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:09:46] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:09:46] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 17:09:46] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:09:46] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}
+[2025-11-19 17:09:46] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:09:46] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:10:08] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:10:08] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:10:48] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 17:10:48] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:10:48] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 17:10:48] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 17:12:42] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:12:42] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:16:04] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:16:04] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 17:16:04] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:16:04] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}
+[2025-11-19 17:16:05] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:16:05] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:17:12] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 17:17:12] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:17:25] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 17:17:25] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 17:17:25] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 17:17:25] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:18:02] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.163","user_agent":"Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/142.0.0.0 Safari\/537.36"}
+[2025-11-19 17:18:02] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:24:01] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 17:24:01] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 17:24:01] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 17:24:01] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:24:01] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 17:24:01] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}
+[2025-11-19 17:24:44] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 17:24:44] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 17:24:44] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 17:24:44] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:25:26] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:25:26] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 17:25:47] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:25:47] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 17:26:57] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:26:57] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:27:19] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"PUT","uri":"\/backend\/personas\/3","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:27:19] [DEBUG] Procesando ruta | Context: {"path":"personas\/3","method":"PUT","uri":"\/backend\/personas\/3"}
+[2025-11-19 17:27:19] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:27:19] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:27:31] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:27:31] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 17:27:31] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:27:31] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:27:57] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personasd","ip":"51.158.254.162","user_agent":"Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/142.0.0.0 Safari\/537.36"}
+[2025-11-19 17:27:57] [DEBUG] Procesando ruta | Context: {"path":"personasd","method":"GET","uri":"\/backend\/personasd"}
+[2025-11-19 17:28:04] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/pedidos","ip":"51.158.254.162","user_agent":"Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/142.0.0.0 Safari\/537.36"}
+[2025-11-19 17:28:04] [DEBUG] Procesando ruta | Context: {"path":"pedidos","method":"GET","uri":"\/backend\/pedidos"}
+[2025-11-19 17:35:44] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 17:35:44] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 17:35:44] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 17:35:44] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}
+[2025-11-19 17:35:44] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 17:35:44] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:37:14] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:37:14] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:37:16] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:37:16] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 17:37:16] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:37:16] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:37:47] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:37:47] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 17:37:47] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"POST","uri":"\/backend\/lotes","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:37:47] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"POST","uri":"\/backend\/lotes"}
+[2025-11-19 17:37:47] [ERROR] Error en API | Context: {"message":"SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry '' for key 'numero_lote'","file":"\/home\/fran2869\/citeapurimac.org\/backend\/controllers\/LotesController.php","line":120}
+[2025-11-19 17:47:25] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:47:25] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:47:25] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:47:25] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 17:47:25] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:47:25] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}
+[2025-11-19 17:47:59] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 17:47:59] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 17:47:59] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 17:47:59] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:47:59] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 17:47:59] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}
+[2025-11-19 17:48:10] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 17:48:10] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 17:48:11] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 17:48:11] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:48:31] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 17:48:31] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 17:48:31] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"POST","uri":"\/backend\/lotes","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 17:48:31] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"POST","uri":"\/backend\/lotes"}
+[2025-11-19 17:48:36] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 17:48:36] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 17:49:54] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:49:54] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:49:54] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 17:49:54] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 17:50:09] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 17:50:09] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 18:07:58] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 18:07:58] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 18:07:58] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 18:07:58] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 18:07:58] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 18:07:58] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}
+[2025-11-19 18:11:35] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 18:11:35] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 18:11:35] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 18:11:35] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}
+[2025-11-19 18:11:35] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 18:11:35] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 18:20:22] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 18:20:22] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 18:20:22] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 18:20:22] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 18:20:22] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 18:20:22] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}
+[2025-11-19 18:21:13] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 18:21:13] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2025-11-19 18:21:13] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 18:21:13] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}
+[2025-11-19 18:21:13] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 18:21:13] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 18:23:20] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 18:23:20] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 18:23:20] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/pedidos","ip":"51.158.254.162","user_agent":"node"}
+[2025-11-19 18:23:20] [DEBUG] Procesando ruta | Context: {"path":"pedidos","method":"GET","uri":"\/backend\/pedidos"}
+[2025-11-19 18:25:24] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"POST","uri":"\/backend\/pedidos","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 18:25:24] [DEBUG] Procesando ruta | Context: {"path":"pedidos","method":"POST","uri":"\/backend\/pedidos"}
+[2025-11-19 18:25:24] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 18:25:24] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 18:25:24] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/pedidos","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 18:25:24] [DEBUG] Procesando ruta | Context: {"path":"pedidos","method":"GET","uri":"\/backend\/pedidos"}
+[2025-11-19 18:25:39] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"PUT","uri":"\/backend\/pedidos\/5","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 18:25:39] [DEBUG] Procesando ruta | Context: {"path":"pedidos\/5","method":"PUT","uri":"\/backend\/pedidos\/5"}
+[2025-11-19 18:25:39] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 18:25:39] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-19 18:25:39] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/pedidos","ip":"51.158.254.163","user_agent":"node"}
+[2025-11-19 18:25:39] [DEBUG] Procesando ruta | Context: {"path":"pedidos","method":"GET","uri":"\/backend\/pedidos"}
+[2025-11-19 21:21:28] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/p","ip":"51.158.254.163","user_agent":"Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/142.0.0.0 Safari\/537.36"}
+[2025-11-19 21:21:28] [DEBUG] Procesando ruta | Context: {"path":"p","method":"GET","uri":"\/backend\/p"}

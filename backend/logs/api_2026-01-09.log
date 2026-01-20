@@ -1,0 +1,6 @@
+[2026-01-09 04:13:41] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/lotes","ip":"98.82.137.98","user_agent":"node"}
+[2026-01-09 04:13:41] [DEBUG] Procesando ruta | Context: {"path":"lotes","method":"GET","uri":"\/backend\/lotes"}
+[2026-01-09 04:13:41] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"34.236.38.229","user_agent":"node"}
+[2026-01-09 04:13:41] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2026-01-09 04:13:41] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/adelantos","ip":"100.48.19.9","user_agent":"node"}
+[2026-01-09 04:13:41] [DEBUG] Procesando ruta | Context: {"path":"adelantos","method":"GET","uri":"\/backend\/adelantos"}

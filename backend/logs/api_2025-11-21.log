@@ -1,0 +1,12 @@
+[2025-11-21 00:08:10] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"PUT","uri":"\/backend\/banco\/4","ip":"51.158.254.157","user_agent":"node"}
+[2025-11-21 00:08:10] [DEBUG] Procesando ruta | Context: {"path":"banco\/4","method":"PUT","uri":"\/backend\/banco\/4"}
+[2025-11-21 00:08:10] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/banco","ip":"51.158.254.157","user_agent":"node"}
+[2025-11-21 00:08:10] [DEBUG] Procesando ruta | Context: {"path":"banco","method":"GET","uri":"\/backend\/banco"}
+[2025-11-21 00:08:10] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.157","user_agent":"node"}
+[2025-11-21 00:08:10] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-21 00:38:22] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/personas","ip":"51.158.254.156","user_agent":"node"}
+[2025-11-21 00:38:22] [DEBUG] Procesando ruta | Context: {"path":"personas","method":"GET","uri":"\/backend\/personas"}
+[2025-11-21 00:38:32] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/banco1.","ip":"51.158.254.157","user_agent":"Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/142.0.0.0 Safari\/537.36"}
+[2025-11-21 00:38:32] [DEBUG] Procesando ruta | Context: {"path":"banco1.","method":"GET","uri":"\/backend\/banco1."}
+[2025-11-21 00:39:02] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/ajustes-contables","ip":"51.158.254.157","user_agent":"Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/142.0.0.0 Safari\/537.36"}
+[2025-11-21 00:39:02] [DEBUG] Procesando ruta | Context: {"path":"ajustes-contables","method":"GET","uri":"\/backend\/ajustes-contables"}

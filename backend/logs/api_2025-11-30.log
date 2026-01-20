@@ -1,0 +1,2 @@
+[2025-11-30 00:29:03] [INFO] Backend Sayariq v1.1 iniciado | Context: {"method":"GET","uri":"\/backend\/pagos-campo\/adelantos\/procesar-descuentos","ip":"51.158.254.166","user_agent":"Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/142.0.0.0 Safari\/537.36"}
+[2025-11-30 00:29:03] [DEBUG] Procesando ruta | Context: {"path":"pagos-campo\/adelantos\/procesar-descuentos","method":"GET","uri":"\/backend\/pagos-campo\/adelantos\/procesar-descuentos"}

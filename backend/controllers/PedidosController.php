@@ -10,61 +10,40 @@ class PedidosController {
     public function handleRequest($method, $id, $action) {
         switch ($method) {
 
-            /* =======================
-               CONSULTAS GET
-            ========================*/
             case 'GET':
-                // Lotes disponibles para asignar a pedidos
                 if ($action === 'lotes-disponibles') {
                     $this->getLotesDisponibles();
                 }
-                // Lotes asignados a un pedido (acepto 'pedido-lotes' o 'lotes')
                 else if (($action === 'pedido-lotes' || $action === 'lotes') && $id) {
                     $this->getLotesPorPedido($id);
                 }
-                // Un solo pedido
                 else if ($id) {
                     $this->getOne($id);
                 }
-                // Pedidos por cliente
                 else if ($action === 'por-cliente') {
                     $this->getByCliente();
                 }
-                // Todos los pedidos
                 else {
                     $this->getAll();
                 }
                 break;
 
-            /* =======================
-               CREAR / ASIGNAR
-            ========================*/
             case 'POST':
-
-                // Asignar lote a pedido
                 if ($action === 'asignar-lote') {
                     $this->asignarLote();
                 }
-                // Quitar lote de pedido
                 else if ($action === 'quitar-lote') {
                     $this->quitarLote();
                 }
-                // Crear pedido
                 else {
                     $this->create();
                 }
                 break;
 
-            /* =======================
-               ACTUALIZAR PEDIDO
-            ========================*/
             case 'PUT':
                 $this->update($id);
                 break;
 
-            /* =======================
-               ELIMINAR PEDIDO
-            ========================*/
             case 'DELETE':
                 $this->delete($id);
                 break;
@@ -72,7 +51,7 @@ class PedidosController {
     }
 
     /* =============================================
-       CRUD ORIGINAL (CASI SIN TOCAR)
+       CRUD ORIGINAL
     ==============================================*/
 
     public function getAll() {
@@ -215,25 +194,11 @@ class PedidosController {
     }
 
     /* ========================================
-       FUNCIONES PARA LOTES - CORREGIDAS v2
-       ==========================================
-       IMPORTANTE: Usa pesos_lote_detalle como fuente de peso original (clasificación),
-       NO usa vw_saldos_kardex. Esto permite asignar lotes aunque estén "liquidados"
-       en kardex, ya que lo que importa es el peso clasificado original.
+       LOTES: DISPONIBLES (✅ con productor/fecha)
     ==========================================*/
 
-    /**
-     * Lotes disponibles para asignar a pedidos.
-     * Obtiene el peso ORIGINAL de pesos_lote_detalle (clasificación)
-     * y resta lo ya asignado en pedido_lotes para calcular disponibilidad.
-     * 
-     * Esto permite usar lotes liquidados parcial o completamente.
-     * Un lote puede participar en varios pedidos hasta que se agote
-     * el peso clasificado original.
-     */
     public function getLotesDisponibles() {
         try {
-            // Ya NO depende de vw_saldos_kardex
             $sql = "
                 SELECT 
                     l.id AS lote_id,
@@ -241,48 +206,64 @@ class PedidosController {
                     l.producto,
                     l.estado AS estado_lote,
                     l.estado_proceso,
+
+                    -- ✅ datos extra
+                    COALESCE(l.fecha_ingreso, l.fecha_recepcion) AS fecha_ingreso,
+                    prod.nombre_completo AS productor_nombre,
+                    prod.documento_identidad AS productor_dni,
+
                     cp.id AS categoria_id,
                     cp.nombre AS categoria_nombre,
                     cp.codigo AS categoria_codigo,
                     cp.precio_kg,
+
                     pld.peso AS peso_original,
                     COALESCE(asig.total_asignado, 0) AS total_asignado,
                     (pld.peso - COALESCE(asig.total_asignado, 0)) AS saldo_disponible
-                FROM pesos_lote pl
-                INNER JOIN pesos_lote_detalle pld ON pld.peso_lote_id = pl.id
-                INNER JOIN lotes l ON l.id = pl.lote_id
+
+                FROM lotes l
+
+                -- ✅ último pesos_lote por lote (evita duplicados)
+                INNER JOIN (
+                    SELECT lote_id, MAX(id) AS peso_lote_id
+                    FROM pesos_lote
+                    GROUP BY lote_id
+                ) plx ON plx.lote_id = l.id
+
+                INNER JOIN pesos_lote_detalle pld ON pld.peso_lote_id = plx.peso_lote_id
                 INNER JOIN categorias_peso cp ON cp.id = pld.categoria_id
+
+                LEFT JOIN personas prod ON prod.id = l.productor_id
+
+                -- ✅ suma asignaciones incluso si hay registros viejos con categoria_id NULL (resuelve por nombre)
                 LEFT JOIN (
                     SELECT 
-                        lote_id, 
-                        categoria_id,
-                        SUM(kg_asignado) AS total_asignado
-                    FROM pedido_lotes
-                    WHERE categoria_id IS NOT NULL
-                    GROUP BY lote_id, categoria_id
+                        pl2.lote_id,
+                        COALESCE(pl2.categoria_id, cp2.id) AS categoria_id_res,
+                        SUM(COALESCE(pl2.kg_asignado, pl2.peso_asignado, 0)) AS total_asignado
+                    FROM pedido_lotes pl2
+                    LEFT JOIN categorias_peso cp2 
+                        ON cp2.id = pl2.categoria_id
+                        OR (pl2.categoria_id IS NULL AND LOWER(cp2.nombre) = LOWER(pl2.categoria))
+                    GROUP BY pl2.lote_id, COALESCE(pl2.categoria_id, cp2.id)
                 ) asig ON asig.lote_id = l.id 
-                      AND asig.categoria_id = cp.id
+                      AND asig.categoria_id_res = cp.id
+
                 WHERE pld.peso > 0
                   AND cp.estado = 'activo'
-                ORDER BY l.fecha_recepcion DESC, l.numero_lote ASC, cp.orden ASC
+                  AND (pld.peso - COALESCE(asig.total_asignado, 0)) > 0
+
+                ORDER BY COALESCE(l.fecha_ingreso, l.fecha_recepcion) DESC, l.numero_lote ASC, cp.orden ASC
             ";
 
             $stmt = $this->conn->prepare($sql);
             $stmt->execute();
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Filtrar solo los que tienen saldo disponible > 0
-            $disponibles = array_filter($rows, function($row) {
-                return floatval($row['saldo_disponible']) > 0;
-            });
-
-            // Re-indexar array
-            $disponibles = array_values($disponibles);
-
             echo json_encode([
                 'success' => true,
-                'data'    => $disponibles,
-                'total'   => count($disponibles)
+                'data'    => $rows,
+                'total'   => count($rows)
             ]);
         } catch (Exception $e) {
             http_response_code(500);
@@ -294,9 +275,10 @@ class PedidosController {
         }
     }
 
-    /**
-     * Lotes ya asignados a un pedido (con categoria y kg_asignado)
-     */
+    /* ========================================
+       LOTES: ASIGNADOS (✅ con productor/fecha/peso/saldo)
+    ==========================================*/
+
     public function getLotesPorPedido($pedidoId) {
         try {
             $sql = "
@@ -306,14 +288,60 @@ class PedidosController {
                     pl.lote_id,
                     l.numero_lote,
                     l.producto,
-                    pl.categoria,
-                    pl.categoria_id,
-                    pl.kg_asignado AS peso_asignado,
+
+                    -- categoría: si no hay categoria_id, resolver por nombre
+                    COALESCE(cp_pl.nombre, pl.categoria) AS categoria,
+                    COALESCE(pl.categoria_id, cp_pl.id) AS categoria_id,
+
+                    COALESCE(pl.kg_asignado, pl.peso_asignado, 0) AS peso_asignado,
                     pl.fecha_asignacion,
-                    cp.precio_kg
+
+                    -- ✅ extra datos
+                    l.estado_proceso,
+                    COALESCE(l.fecha_ingreso, l.fecha_recepcion) AS fecha_ingreso,
+                    prod.nombre_completo AS productor_nombre,
+                    prod.documento_identidad AS productor_dni,
+
+                    -- ✅ peso original según clasificación
+                    pld.peso AS peso_original,
+
+                    -- ✅ saldo actual (calculado con todas las asignaciones, incluso legacy)
+                    COALESCE(asig.total_asignado, 0) AS total_asignado,
+                    GREATEST(COALESCE(pld.peso, 0) - COALESCE(asig.total_asignado, 0), 0) AS saldo_disponible
+
                 FROM pedido_lotes pl
                 INNER JOIN lotes l ON l.id = pl.lote_id
-                LEFT JOIN categorias_peso cp ON cp.id = pl.categoria_id
+                LEFT JOIN personas prod ON prod.id = l.productor_id
+
+                LEFT JOIN categorias_peso cp_pl 
+                    ON cp_pl.id = pl.categoria_id
+                    OR (pl.categoria_id IS NULL AND LOWER(cp_pl.nombre) = LOWER(pl.categoria))
+
+                -- ✅ último pesos_lote por lote
+                LEFT JOIN (
+                    SELECT lote_id, MAX(id) AS peso_lote_id
+                    FROM pesos_lote
+                    GROUP BY lote_id
+                ) plx ON plx.lote_id = l.id
+
+                LEFT JOIN pesos_lote_detalle pld
+                    ON pld.peso_lote_id = plx.peso_lote_id
+                    AND pld.categoria_id = cp_pl.id
+
+                -- ✅ suma asignaciones (incluye legacy categoria_id NULL)
+                LEFT JOIN (
+                    SELECT 
+                        pl2.lote_id,
+                        COALESCE(pl2.categoria_id, cp2.id) AS categoria_id_res,
+                        SUM(COALESCE(pl2.kg_asignado, pl2.peso_asignado, 0)) AS total_asignado
+                    FROM pedido_lotes pl2
+                    LEFT JOIN categorias_peso cp2 
+                        ON cp2.id = pl2.categoria_id
+                        OR (pl2.categoria_id IS NULL AND LOWER(cp2.nombre) = LOWER(pl2.categoria))
+                    GROUP BY pl2.lote_id, COALESCE(pl2.categoria_id, cp2.id)
+                ) asig ON asig.lote_id = l.id 
+                      AND asig.categoria_id_res = cp_pl.id
+
                 WHERE pl.pedido_id = :pedido
                 ORDER BY pl.fecha_asignacion ASC, l.numero_lote ASC
             ";
@@ -336,21 +364,10 @@ class PedidosController {
         }
     }
 
-    /**
-     * Asignar parte de un lote (por categoria) a un pedido.
-     * 
-     * IMPORTANTE: Usa peso original de pesos_lote_detalle, NO kardex.
-     * Permite asignar lotes aunque estén liquidados.
-     * Un lote puede participar en varios pedidos hasta que se agote.
-     * 
-     * Entrada JSON:
-     * {
-     *   "pedido_id": 5,
-     *   "lote_id": 10,
-     *   "categoria": "Exportable",
-     *   "kg_asignado": 80.50
-     * }
-     */
+    /* ========================================
+       ASIGNAR LOTE (✅ reservado robusto)
+    ==========================================*/
+
     public function asignarLote() {
         $data = json_decode(file_get_contents("php://input"), true);
 
@@ -369,7 +386,6 @@ class PedidosController {
         }
 
         try {
-            // La búsqueda es por nombre de categoría (case-insensitive)
             $sqlPesoOriginal = "
                 SELECT 
                     pld.peso AS peso_original,
@@ -380,8 +396,10 @@ class PedidosController {
                 INNER JOIN categorias_peso cp ON cp.id = pld.categoria_id
                 WHERE pl.lote_id = :lote
                   AND LOWER(cp.nombre) = LOWER(:categoria)
+                ORDER BY pl.id DESC
                 LIMIT 1
             ";
+
             $stmtPeso = $this->conn->prepare($sqlPesoOriginal);
             $stmtPeso->execute([
                 ':lote'      => $loteId,
@@ -393,10 +411,7 @@ class PedidosController {
                 http_response_code(400);
                 echo json_encode([
                     'success' => false,
-                    'message' => 'El lote no tiene clasificación registrada para la categoría "' . $categoria . '". Verifica que el lote tenga pesos en pesos_lote_detalle para esta categoría.',
-                    'lote_id' => $loteId,
-                    'categoria' => $categoria,
-                    'debug_info' => 'No se encontró registro en pesos_lote -> pesos_lote_detalle -> categorias_peso con ese lote_id y categoria'
+                    'message' => 'El lote no tiene clasificación registrada para la categoría "' . $categoria . '".'
                 ]);
                 return;
             }
@@ -405,9 +420,9 @@ class PedidosController {
             $categoriaId = (int)$rowPeso['categoria_id'];
             $categoriaNombre = $rowPeso['categoria_nombre'];
 
-            // Ahora usa categoria_id para mayor precisión
+            // ✅ reservado robusto
             $sqlReservado = "
-                SELECT COALESCE(SUM(kg_asignado), 0) AS reservado
+                SELECT COALESCE(SUM(COALESCE(kg_asignado, peso_asignado, 0)), 0) AS reservado
                 FROM pedido_lotes
                 WHERE lote_id = :lote
                   AND categoria_id = :categoria_id
@@ -452,16 +467,7 @@ class PedidosController {
             echo json_encode([
                 'success' => true,
                 'message' => 'Lote asignado al pedido correctamente',
-                'id'      => $this->conn->lastInsertId(),
-                'detalle' => [
-                    'lote_id'        => $loteId,
-                    'categoria'      => $categoriaNombre,
-                    'categoria_id'   => $categoriaId,
-                    'kg_asignado'    => $kgAsignado,
-                    'peso_original'  => $pesoOriginal,
-                    'total_reservado'=> $reservado + $kgAsignado,
-                    'saldo_restante' => $disponible - $kgAsignado
-                ]
+                'id'      => $this->conn->lastInsertId()
             ]);
         } catch (Exception $e) {
             http_response_code(500);
@@ -473,19 +479,13 @@ class PedidosController {
         }
     }
 
-    /**
-     * Quitar lote del pedido (borra la reserva en pedido_lotes).
-     * Ahora acepta también quitar por categoria específica o por id de asignación.
-     * 
-     * Entrada JSON: 
-     * { "pedido_id": 5, "lote_id": 10 } - quita todas las asignaciones del lote
-     * { "pedido_id": 5, "lote_id": 10, "categoria": "Exportable" } - quita solo esa categoría
-     * { "id": 123 } - quita por id de asignación
-     */
+    /* ========================================
+       QUITAR LOTE (igual)
+    ==========================================*/
+
     public function quitarLote() {
         $data = json_decode(file_get_contents("php://input"), true);
 
-        // Opción 1: quitar por ID de asignación
         if (isset($data['id']) && $data['id']) {
             $asignacionId = (int)$data['id'];
             try {
@@ -509,7 +509,6 @@ class PedidosController {
             }
         }
 
-        // Opción 2: quitar por pedido_id + lote_id (+ categoria opcional)
         $pedidoId  = isset($data['pedido_id']) ? (int)$data['pedido_id'] : 0;
         $loteId    = isset($data['lote_id'])   ? (int)$data['lote_id']   : 0;
         $categoria = isset($data['categoria']) ? trim($data['categoria']) : null;
@@ -525,7 +524,6 @@ class PedidosController {
 
         try {
             if ($categoria) {
-                // Quitar solo la categoría específica
                 $sql = "DELETE FROM pedido_lotes 
                         WHERE pedido_id = :p 
                           AND lote_id = :l
@@ -537,7 +535,6 @@ class PedidosController {
                     ':c' => $categoria
                 ]);
             } else {
-                // Quitar todas las asignaciones del lote en ese pedido
                 $sql = "DELETE FROM pedido_lotes 
                         WHERE pedido_id = :p 
                           AND lote_id = :l";
