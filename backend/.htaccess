@@ -1,0 +1,43 @@
+RewriteEngine On
+
+# Habilitar logging de rewrite para debugging
+# RewriteLog /tmp/rewrite.log
+# RewriteLogLevel 3
+
+# Configuración CORS - debe ir antes de las reglas de rewrite
+Header always set Access-Control-Allow-Origin "*"
+Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+Header always set Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-API-Version"
+Header always set Access-Control-Max-Age "86400"
+
+# Manejar preflight OPTIONS requests
+RewriteCond %{REQUEST_METHOD} OPTIONS
+RewriteRule ^(.*)$ public/index.php [QSA,L]
+
+# Redirigir todo el tráfico que no sea archivo físico a public/index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ public/index.php [QSA,L]
+
+# Configuración de seguridad
+Header always set X-Content-Type-Options nosniff
+Header always set X-Frame-Options SAMEORIGIN
+Header always set X-XSS-Protection "1; mode=block"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+# Configuración de límites
+php_value upload_max_filesize 100M
+php_value post_max_size 100M
+php_value max_execution_time 300
+php_value memory_limit 256M
+
+php_flag display_errors On
+php_flag display_startup_errors On
+php_value error_reporting 32767
+php_flag log_errors On
+php_value error_log /tmp/php_errors.log
+
+# Configuración de tipos MIME
+AddType application/json .json
+AddType text/css .css
+AddType application/javascript .js
