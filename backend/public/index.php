@@ -37,6 +37,7 @@ if (preg_match('#/backend(/public(/index\.php)?)?/?$#', $path)) {
             'pagos-campo' => '/backend/pagos-campo',
             'pedidos' => '/backend/pedidos',
             'kardex' => '/backend/kardex',
+            'kardex-integral' => '/backend/kardex-integral',
             'ventas' => '/backend/ventas',
             'banco' => '/backend/banco',
             'costos-fijos' => '/backend/costos-fijos',

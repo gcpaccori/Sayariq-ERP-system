@@ -19,6 +19,7 @@ require_once '../controllers/RegistroPesosController.php';
 require_once '../controllers/PesosLoteController.php';
 require_once '../controllers/LiquidacionesController.php';
 require_once '../controllers/CategoriasPesoController.php';
+require_once '../controllers/KardexIntegralController.php';
 
 
 try {
@@ -119,6 +120,9 @@ if (isset($segments[1])) {
         case 'categorias-peso':   // 👈 NUEVO
             $controller = new CategoriasPesoController($db);
             break;
+        case 'kardex-integral':   // 👈 KARDEX INTEGRAL
+            $controller = new KardexIntegralController($db);
+            break;
         default:
             http_response_code(404);
             jsonResponse([
@@ -130,7 +134,8 @@ if (isset($segments[1])) {
                     'personas', 'lotes', 'pesos', 'pesos-lote', 'ajustes-contables',
                     'pagos-campo', 'pedidos', 'kardex', 'ventas',
                     'banco', 'costos-fijos', 'empleados', 'rentabilidad', 
-                    'adelantos', 'analisis-lotes-pedidos', 'registro-pesos', 'liquidaciones'
+                    'adelantos', 'analisis-lotes-pedidos', 'registro-pesos', 
+                    'liquidaciones', 'categorias-peso', 'kardex-integral'
                 ],
                 'timestamp' => date('Y-m-d H:i:s')
             ], 404);
