@@ -89,6 +89,21 @@ export const API_ENDPOINTS = {
   REGISTRO_PESOS_BY_ID: (id: string | number) => `/registro-pesos/${id}`,
   REGISTRO_PESOS_ESTADISTICAS: "/registro-pesos/estadisticas",
   REGISTRO_PESOS_RESUMEN_LOTE: (loteId: string | number) => `/registro-pesos/${loteId}/resumen-lote`,
+
+  // Kardex Integral (NEW)
+  KARDEX_INTEGRAL: "/kardex-integral",
+  KARDEX_INTEGRAL_BY_ID: (id: string | number) => `/kardex-integral/${id}`,
+  KARDEX_INTEGRAL_SALDOS_FISICO: "/kardex-integral/saldos/fisico",
+  KARDEX_INTEGRAL_SALDOS_FINANCIERO: "/kardex-integral/saldos/financiero",
+  KARDEX_INTEGRAL_POR_PRODUCTOR: (productorId: string | number) => `/kardex-integral/por-productor/${productorId}`,
+  KARDEX_INTEGRAL_POR_DOCUMENTO: "/kardex-integral/por-documento",
+  KARDEX_INTEGRAL_ESTADO_CUENTA: (productorId: string | number) => `/kardex-integral/reporte/estado-cuenta/${productorId}`,
+  KARDEX_INTEGRAL_FLUJO_CAJA: "/kardex-integral/reporte/flujo-caja",
+  KARDEX_INTEGRAL_INVENTARIO: "/kardex-integral/reporte/inventario",
+  KARDEX_INTEGRAL_REGISTRAR_LIQUIDACION: "/kardex-integral/liquidacion",
+  KARDEX_INTEGRAL_REGISTRAR_VENTA: "/kardex-integral/venta",
+  KARDEX_INTEGRAL_REGISTRAR_ADELANTO: "/kardex-integral/adelanto",
+  KARDEX_INTEGRAL_REGISTRAR_MANUAL: "/kardex-integral/manual",
 } as const
 
 export interface ApiRequestOptions {
