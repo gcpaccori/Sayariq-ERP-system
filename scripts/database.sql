@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: localhost:3306
--- Tiempo de generación: 29-11-2025 a las 23:08:08
+-- Tiempo de generación: 20-01-2026 a las 21:30:13
 -- Versión del servidor: 10.11.14-MariaDB-cll-lve
 -- Versión de PHP: 8.4.14
 
@@ -341,7 +341,31 @@ INSERT INTO `kardex_lotes` (`id`, `lote_id`, `tipo_movimiento`, `categoria`, `pe
 (78, 10, 'ingreso', 'nacional', 10000.00, '2025-11-27', 'Ajuste pesaje #12 (nuevo)', 10000.00, '2025-11-28 21:55:39'),
 (79, 10, 'salida', 'industrial', 9500.00, '2025-11-28', 'Liquidación #15', 500.00, '2025-11-28 21:55:52'),
 (80, 10, 'salida', 'nacional', 9500.00, '2025-11-28', 'Liquidación #15', 500.00, '2025-11-28 21:55:52'),
-(81, 6, 'ingreso', 'exportable', 1.00, '2025-11-27', 'Ajuste pesaje #6 (nuevo)', 1.00, '2025-11-28 22:36:56');
+(81, 6, 'ingreso', 'exportable', 1.00, '2025-11-27', 'Ajuste pesaje #6 (nuevo)', 1.00, '2025-11-28 22:36:56'),
+(82, 12, 'ingreso', 'exportable', 1650.00, '2025-11-30', 'Registro peso #14', 1650.00, '2025-11-30 04:00:17'),
+(83, 12, 'salida', 'exportable', 1650.00, '2025-11-30', 'Ajuste pesaje #14 (reverso)', 0.00, '2025-11-30 04:06:36'),
+(84, 12, 'ingreso', 'exportable', 400.00, '2025-11-30', 'Ajuste pesaje #14 (nuevo)', 400.00, '2025-11-30 04:06:36'),
+(85, 12, 'ingreso', 'industrial', 400.00, '2025-11-30', 'Ajuste pesaje #14 (nuevo)', 400.00, '2025-11-30 04:06:36'),
+(86, 12, 'ingreso', 'nacional', 600.00, '2025-11-30', 'Ajuste pesaje #14 (nuevo)', 600.00, '2025-11-30 04:06:36'),
+(87, 12, 'ingreso', 'segunda', 250.00, '2025-11-30', 'Ajuste pesaje #14 (nuevo)', 250.00, '2025-11-30 04:06:36'),
+(88, 12, 'salida', 'exportable', 380.00, '2025-11-29', 'Liquidación #16', 20.00, '2025-11-30 04:07:41'),
+(89, 12, 'salida', 'industrial', 380.00, '2025-11-29', 'Liquidación #16', 20.00, '2025-11-30 04:07:41'),
+(90, 12, 'salida', 'nacional', 570.00, '2025-11-29', 'Liquidación #16', 30.00, '2025-11-30 04:07:41'),
+(91, 12, 'salida', 'segunda', 237.50, '2025-11-29', 'Liquidación #16', 12.50, '2025-11-30 04:07:41'),
+(92, 13, 'ingreso', 'exportable', 500.00, '2025-11-30', 'Registro peso #15', 500.00, '2025-11-30 04:11:05'),
+(93, 13, 'ingreso', 'industrial', 500.00, '2025-11-30', 'Registro peso #15', 500.00, '2025-11-30 04:11:05'),
+(94, 13, 'ingreso', 'descarte', 100.00, '2025-11-30', 'Registro peso #15', 100.00, '2025-11-30 04:11:05'),
+(95, 13, 'ingreso', 'primera', 300.00, '2025-11-30', 'Registro peso #15', 300.00, '2025-11-30 04:11:05'),
+(96, 13, 'ingreso', 'segunda', 1000.00, '2025-11-30', 'Registro peso #15', 1000.00, '2025-11-30 04:11:05'),
+(97, 13, 'salida', 'exportable', 475.00, '2025-11-29', 'Liquidación #17', 25.00, '2025-11-30 04:17:03'),
+(98, 13, 'salida', 'industrial', 475.00, '2025-11-29', 'Liquidación #17', 25.00, '2025-11-30 04:17:03'),
+(99, 13, 'salida', 'descarte', 95.00, '2025-11-29', 'Liquidación #17', 5.00, '2025-11-30 04:17:03'),
+(100, 13, 'salida', 'primera', 285.00, '2025-11-29', 'Liquidación #17', 15.00, '2025-11-30 04:17:03'),
+(101, 13, 'salida', 'segunda', 950.00, '2025-11-29', 'Liquidación #17', 50.00, '2025-11-30 04:17:03'),
+(102, 14, 'ingreso', 'exportable', 20.00, '2025-12-01', 'Registro peso #16', 20.00, '2025-12-01 19:16:46'),
+(103, 14, 'salida', 'exportable', 19.00, '2025-12-01', 'Liquidación #18', 1.00, '2025-12-01 20:04:13'),
+(104, 15, 'ingreso', 'exportable', 1.00, '2025-12-01', 'Registro peso #17', 1.00, '2025-12-01 20:23:51'),
+(105, 15, 'ingreso', 'industrial', 1.00, '2025-12-01', 'Registro peso #17', 1.00, '2025-12-01 20:23:51');
 
 -- --------------------------------------------------------
 
@@ -420,7 +444,10 @@ INSERT INTO `liquidaciones` (`id`, `numero_liquidacion`, `lote_id`, `fecha_liqui
 (12, 'LIQ-0006-2025', 2, '2025-11-28 16:50:51', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'pendiente', 12066.35, 0.00, 0.00, 0.00, 300.00, 0.00, 12066.35, 'PENDIENTE'),
 (13, 'LIQ-0007-2025', 3, '2025-11-28 16:51:01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'pendiente', 9696.06, 0.00, 0.00, 0.00, 190.00, 2000.00, 7696.06, 'PENDIENTE'),
 (14, 'LIQ-0008-2025', 4, '2025-11-28 16:54:01', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'pendiente', 807.42, 0.00, 0.00, 0.00, 330.00, 0.00, 807.42, 'PENDIENTE'),
-(15, 'LIQ-0009-2025', 10, '2025-11-28 16:55:52', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'pendiente', 80750.00, 0.00, 0.00, 0.00, 400.00, 0.00, 80750.00, 'PENDIENTE');
+(15, 'LIQ-0009-2025', 10, '2025-11-28 16:55:52', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'pendiente', 80750.00, 0.00, 0.00, 0.00, 400.00, 0.00, 80750.00, 'PENDIENTE'),
+(16, 'LIQ-0010-2025', 12, '2025-11-29 23:07:41', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'pendiente', 8716.25, 0.00, 0.00, 0.00, 80.00, 0.00, 8716.25, 'PENDIENTE'),
+(17, 'LIQ-0011-2025', 13, '2025-11-29 23:17:03', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'pendiente', 20710.00, 0.00, 0.00, 0.00, 74.00, 0.00, 20710.00, 'PENDIENTE'),
+(18, 'LIQ-0012-2025', 14, '2025-12-01 15:04:12', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'pendiente', 145.35, 0.00, 0.00, 0.00, 40.00, 0.00, 145.35, 'PENDIENTE');
 
 --
 -- Disparadores `liquidaciones`
@@ -456,6 +483,10 @@ CREATE TABLE `liquidaciones_detalle` (
   `peso_ajustado` decimal(10,2) NOT NULL,
   `precio_unitario` decimal(10,2) NOT NULL,
   `subtotal` decimal(10,2) NOT NULL,
+  `numero_jabas` int(11) NOT NULL DEFAULT 0,
+  `peso_jabas` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `porcentaje_humedad` decimal(5,2) NOT NULL DEFAULT 0.00,
+  `peso_descuento_humedad` decimal(10,2) NOT NULL DEFAULT 0.00,
   `created_at` timestamp NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -463,28 +494,38 @@ CREATE TABLE `liquidaciones_detalle` (
 -- Volcado de datos para la tabla `liquidaciones_detalle`
 --
 
-INSERT INTO `liquidaciones_detalle` (`id`, `liquidacion_id`, `categoria_id`, `peso_categoria_original`, `peso_ajustado`, `precio_unitario`, `subtotal`, `created_at`) VALUES
-(1, 7, 1, 12.00, 12.00, 8.50, 102.00, '2025-11-27 16:10:49'),
-(3, 9, 2, 8100.00, 7695.00, 3.50, 26932.50, '2025-11-28 21:09:03'),
-(4, 10, 1, 12.00, 11.40, 8.50, 96.90, '2025-11-28 21:48:57'),
-(5, 11, 1, 100.00, 95.00, 8.50, 807.50, '2025-11-28 21:50:35'),
-(6, 11, 2, 100.00, 95.00, 3.50, 332.50, '2025-11-28 21:50:35'),
-(7, 11, 3, 100.00, 95.00, 5.00, 475.00, '2025-11-28 21:50:35'),
-(8, 11, 4, 100.00, 95.00, 2.50, 237.50, '2025-11-28 21:50:35'),
-(9, 11, 5, 100.00, 95.00, 1.00, 95.00, '2025-11-28 21:50:35'),
-(10, 11, 6, 100.00, 95.00, 7.00, 665.00, '2025-11-28 21:50:35'),
-(11, 11, 7, 100.00, 95.00, 5.50, 522.50, '2025-11-28 21:50:35'),
-(12, 11, 8, 100.00, 95.00, 4.00, 380.00, '2025-11-28 21:50:35'),
-(13, 11, 9, 100.00, 95.00, 3.00, 285.00, '2025-11-28 21:50:35'),
-(14, 11, 10, 100.00, 95.00, 2.00, 190.00, '2025-11-28 21:50:35'),
-(15, 11, 11, 100.00, 95.00, 1.50, 142.50, '2025-11-28 21:50:35'),
-(16, 12, 1, 1350.75, 1283.21, 8.50, 10907.31, '2025-11-28 21:50:52'),
-(17, 12, 2, 320.40, 304.38, 3.50, 1065.33, '2025-11-28 21:50:52'),
-(18, 12, 5, 98.65, 93.72, 1.00, 93.72, '2025-11-28 21:50:52'),
-(19, 13, 1, 1200.75, 1140.71, 8.50, 9696.06, '2025-11-28 21:51:01'),
-(20, 14, 1, 99.99, 94.99, 8.50, 807.42, '2025-11-28 21:54:01'),
-(21, 15, 2, 10000.00, 9500.00, 3.50, 33250.00, '2025-11-28 21:55:52'),
-(22, 15, 3, 10000.00, 9500.00, 5.00, 47500.00, '2025-11-28 21:55:52');
+INSERT INTO `liquidaciones_detalle` (`id`, `liquidacion_id`, `categoria_id`, `peso_categoria_original`, `peso_ajustado`, `precio_unitario`, `subtotal`, `numero_jabas`, `peso_jabas`, `porcentaje_humedad`, `peso_descuento_humedad`, `created_at`) VALUES
+(1, 7, 1, 12.00, 12.00, 8.50, 102.00, 0, 0.00, 0.00, 0.00, '2025-11-27 16:10:49'),
+(3, 9, 2, 8100.00, 7695.00, 3.50, 26932.50, 0, 0.00, 0.00, 0.00, '2025-11-28 21:09:03'),
+(4, 10, 1, 12.00, 11.40, 8.50, 96.90, 0, 0.00, 0.00, 0.00, '2025-11-28 21:48:57'),
+(5, 11, 1, 100.00, 95.00, 8.50, 807.50, 0, 0.00, 0.00, 0.00, '2025-11-28 21:50:35'),
+(6, 11, 2, 100.00, 95.00, 3.50, 332.50, 0, 0.00, 0.00, 0.00, '2025-11-28 21:50:35'),
+(7, 11, 3, 100.00, 95.00, 5.00, 475.00, 0, 0.00, 0.00, 0.00, '2025-11-28 21:50:35'),
+(8, 11, 4, 100.00, 95.00, 2.50, 237.50, 0, 0.00, 0.00, 0.00, '2025-11-28 21:50:35'),
+(9, 11, 5, 100.00, 95.00, 1.00, 95.00, 0, 0.00, 0.00, 0.00, '2025-11-28 21:50:35'),
+(10, 11, 6, 100.00, 95.00, 7.00, 665.00, 0, 0.00, 0.00, 0.00, '2025-11-28 21:50:35'),
+(11, 11, 7, 100.00, 95.00, 5.50, 522.50, 0, 0.00, 0.00, 0.00, '2025-11-28 21:50:35'),
+(12, 11, 8, 100.00, 95.00, 4.00, 380.00, 0, 0.00, 0.00, 0.00, '2025-11-28 21:50:35'),
+(13, 11, 9, 100.00, 95.00, 3.00, 285.00, 0, 0.00, 0.00, 0.00, '2025-11-28 21:50:35'),
+(14, 11, 10, 100.00, 95.00, 2.00, 190.00, 0, 0.00, 0.00, 0.00, '2025-11-28 21:50:35'),
+(15, 11, 11, 100.00, 95.00, 1.50, 142.50, 0, 0.00, 0.00, 0.00, '2025-11-28 21:50:35'),
+(16, 12, 1, 1350.75, 1283.21, 8.50, 10907.31, 0, 0.00, 0.00, 0.00, '2025-11-28 21:50:52'),
+(17, 12, 2, 320.40, 304.38, 3.50, 1065.33, 0, 0.00, 0.00, 0.00, '2025-11-28 21:50:52'),
+(18, 12, 5, 98.65, 93.72, 1.00, 93.72, 0, 0.00, 0.00, 0.00, '2025-11-28 21:50:52'),
+(19, 13, 1, 1200.75, 1140.71, 8.50, 9696.06, 0, 0.00, 0.00, 0.00, '2025-11-28 21:51:01'),
+(20, 14, 1, 99.99, 94.99, 8.50, 807.42, 0, 0.00, 0.00, 0.00, '2025-11-28 21:54:01'),
+(21, 15, 2, 10000.00, 9500.00, 3.50, 33250.00, 0, 0.00, 0.00, 0.00, '2025-11-28 21:55:52'),
+(22, 15, 3, 10000.00, 9500.00, 5.00, 47500.00, 0, 0.00, 0.00, 0.00, '2025-11-28 21:55:52'),
+(23, 16, 1, 400.00, 380.00, 8.50, 3230.00, 0, 0.00, 0.00, 0.00, '2025-11-30 04:07:41'),
+(24, 16, 2, 400.00, 380.00, 3.50, 1330.00, 0, 0.00, 0.00, 0.00, '2025-11-30 04:07:41'),
+(25, 16, 3, 600.00, 570.00, 5.00, 2850.00, 0, 0.00, 0.00, 0.00, '2025-11-30 04:07:41'),
+(26, 16, 7, 250.00, 237.50, 5.50, 1306.25, 0, 0.00, 0.00, 0.00, '2025-11-30 04:07:41'),
+(27, 17, 1, 500.00, 475.00, 18.00, 8550.00, 0, 0.00, 0.00, 0.00, '2025-11-30 04:17:03'),
+(28, 17, 2, 500.00, 475.00, 4.00, 1900.00, 0, 0.00, 0.00, 0.00, '2025-11-30 04:17:03'),
+(29, 17, 5, 100.00, 95.00, 1.00, 95.00, 0, 0.00, 0.00, 0.00, '2025-11-30 04:17:03'),
+(30, 17, 6, 300.00, 285.00, 9.00, 2565.00, 0, 0.00, 0.00, 0.00, '2025-11-30 04:17:03'),
+(31, 17, 7, 1000.00, 950.00, 8.00, 7600.00, 0, 0.00, 0.00, 0.00, '2025-11-30 04:17:03'),
+(32, 18, 1, 20.00, 19.00, 8.50, 145.35, 10, 2.00, 10.00, 1.90, '2025-12-01 20:04:13');
 
 -- --------------------------------------------------------
 
@@ -529,7 +570,13 @@ INSERT INTO `lotes` (`id`, `numero_lote`, `guia_ingreso`, `productor_id`, `produ
 (8, 'LOT-2025-001', 'GI-1763592511886', 3, 'jengibre', '2025-11-19', NULL, 12.00, NULL, 12, 'liquidado', 'optimo', '12', '2025-11-19 22:48:31', '2025-11-28 21:48:57', 'TERCERO', '2025-11-23 23:44:59', 'EN_RECEPCION', NULL, NULL),
 (9, 'LOT-2025-002', 'GI-1764258207998', 3, 'jengibre', '2025-11-27', NULL, 100000.00, 12.00, 12, 'liquidado', 'optimo', '', '2025-11-27 15:54:45', '2025-11-27 16:10:49', 'TERCERO', '2025-11-27 15:54:45', 'EN_RECEPCION', NULL, NULL),
 (10, 'LOT-2025-003', 'GI-1764287865309', 3, 'jengibre', '2025-11-27', NULL, 20000.00, 20000.00, 200, 'liquidado', 'optimo', '', '2025-11-27 23:57:45', '2025-11-28 21:55:52', 'TERCERO', '2025-11-27 23:57:45', 'EN_RECEPCION', NULL, NULL),
-(11, 'LOT-2025-004', 'GI-1764288837279', 3, 'jengibre', '2025-11-28', NULL, 40000.00, 40000.00, 4000, 'liquidado', 'optimo', '', '2025-11-28 00:13:57', '2025-11-28 21:09:03', 'TERCERO', '2025-11-28 00:13:57', 'EN_RECEPCION', NULL, NULL);
+(11, 'LOT-2025-004', 'GI-1764288837279', 3, 'jengibre', '2025-11-28', NULL, 40000.00, 40000.00, 4000, 'liquidado', 'optimo', '', '2025-11-28 00:13:57', '2025-11-28 21:09:03', 'TERCERO', '2025-11-28 00:13:57', 'EN_RECEPCION', NULL, NULL),
+(12, 'LOT-2025-005', 'GI-1764475130231', 10, 'jengibre', '2025-11-30', NULL, 1650.00, 1650.00, 40, 'liquidado', 'optimo', '', '2025-11-30 03:58:49', '2025-11-30 04:07:41', 'TERCERO', '2025-11-30 03:58:49', 'EN_RECEPCION', NULL, NULL),
+(13, 'LOT-2025-006', 'GI-1764475766556', 10, 'jengibre', '2025-11-30', NULL, 2400.00, 2400.00, 80, 'liquidado', 'optimo', '', '2025-11-30 04:09:25', '2025-11-30 04:17:03', 'TERCERO', '2025-11-30 04:09:25', 'EN_RECEPCION', NULL, NULL),
+(14, 'LOT-2025-007', 'GI-1764616570567', 10, 'jengibre', '2025-12-01', NULL, 20.00, 20.00, 20, 'liquidado', 'optimo', '', '2025-12-01 19:16:11', '2025-12-01 20:04:13', 'TERCERO', '2025-12-01 19:16:11', 'EN_RECEPCION', NULL, NULL),
+(15, 'LOT-2025-008', 'GI-1764620590392', 10, 'jengibre', '2025-12-01', NULL, 10.00, 2.00, 10, 'pendiente', 'optimo', '', '2025-12-01 20:23:11', '2025-12-01 20:23:51', 'TERCERO', '2025-12-01 20:23:11', 'EN_RECEPCION', NULL, NULL),
+(16, 'LOT-2025-009', 'GI-1764805942893', 12, 'jengibre', '2025-12-03', NULL, 1900.00, NULL, 80, 'pendiente', 'optimo', 'Producto guardado con moho', '2025-12-03 23:52:23', '2025-12-03 23:52:23', 'TERCERO', '2025-12-03 23:52:23', 'EN_RECEPCION', NULL, NULL),
+(17, 'LOT-2025-010', 'GI-1764848571199', 3, 'jengibre', '2025-12-04', NULL, 1900.00, NULL, 90, 'pendiente', 'optimo', '', '2025-12-04 11:42:51', '2025-12-04 11:42:51', 'TERCERO', '2025-12-04 11:42:51', 'EN_RECEPCION', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -596,8 +643,12 @@ INSERT INTO `pedidos` (`id`, `numero_pedido`, `cliente_id`, `producto`, `categor
 (2, 'PED-2024-002', 5, 'Espárragos Blancos', 'Extra', 750.00, 2.00, 735.00, 11.80, 8673.00, '2024-01-22', 'proceso', 'Pedido para mercado europeo', '2025-11-13 15:19:28', '2025-11-13 15:19:28'),
 (3, 'PED-2024-003', 2, 'Espárragos Verdes', 'Standard', 300.00, 2.80, 291.60, 10.50, 3061.80, '2024-01-25', 'pendiente', 'Pedido regular para supermercados', '2025-11-13 15:19:28', '2025-11-13 15:19:28'),
 (4, 'PED-2024-004', 5, 'Espárragos Blancos', 'Premium', 600.00, 2.20, 586.80, 13.20, 7745.76, '2024-01-28', 'pendiente', 'Pedido especial para restaurante', '2025-11-13 15:19:28', '2025-11-13 15:19:28'),
-(5, 'PED-2025-005', 5, 'f', 'Extra', 120.00, 2.50, 117.00, 12.00, 1404.00, '2025-11-19', 'pendiente', '12', '2025-11-19 23:25:24', '2025-11-19 23:25:39'),
-(6, 'PED-2025-006', 1, 'k', 'Exportable', 10.00, 2.50, 9.75, 10.00, 97.50, '2025-11-29', 'pendiente', '', '2025-11-29 23:06:06', '2025-11-29 23:06:06');
+(5, 'PED-2025-005', 5, 'Jengibre', 'Nacional', 120.00, 2.50, 117.00, 12.00, 1404.00, '2025-11-19', 'pendiente', '12', '2025-11-19 23:25:24', '2025-12-04 11:43:55'),
+(6, 'PED-2025-006', 1, 'Cúrcuma', 'Exportable', 10.00, 2.50, 9.75, 10.00, 97.50, '2025-11-29', 'pendiente', '', '2025-11-29 23:06:06', '2025-12-04 11:44:06'),
+(7, 'PED-2025-007', 2, 'Curcuma', 'Exportable', 4000.00, 0.00, 4000.00, 15.00, 60000.00, '2025-11-30', 'pendiente', '', '2025-11-30 04:20:51', '2025-11-30 04:20:51'),
+(8, 'PED-2025-008', 2, 'jenjibre', 'Exportable', 1000.00, 0.00, 1000.00, 700.00, 700000.00, '2025-11-30', 'pendiente', '', '2025-11-30 04:28:44', '2025-11-30 04:28:44'),
+(9, 'PED-2025-009', 12, 'Jengibre', 'Exportable', 2000.00, 0.00, 2000.00, 2.60, 5200.00, '2025-12-04', 'pendiente', 'Presentación caja de 14.20 pero se paga por 14 kg', '2025-12-04 00:01:32', '2025-12-04 00:01:32'),
+(10, 'PED-2025-010', 25, 'Jengibre', 'Exportable', 2000.00, 0.00, 2000.00, 2.90, 5800.00, '2025-12-04', 'pendiente', '', '2025-12-04 21:14:01', '2025-12-04 21:14:01');
 
 -- --------------------------------------------------------
 
@@ -610,11 +661,24 @@ CREATE TABLE `pedido_lotes` (
   `pedido_id` int(11) NOT NULL,
   `lote_id` int(11) NOT NULL,
   `categoria` varchar(50) DEFAULT NULL,
-  `kg_asignado` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `kg_asignado` decimal(12,2) NOT NULL DEFAULT 0.00,
   `categoria_id` int(11) DEFAULT NULL,
-  `peso_asignado` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `peso_asignado` decimal(12,2) NOT NULL DEFAULT 0.00,
   `fecha_asignacion` datetime DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+--
+-- Volcado de datos para la tabla `pedido_lotes`
+--
+
+INSERT INTO `pedido_lotes` (`id`, `pedido_id`, `lote_id`, `categoria`, `kg_asignado`, `categoria_id`, `peso_asignado`, `fecha_asignacion`) VALUES
+(1, 6, 6, 'Exportable', 1.00, 1, 1.00, '2025-11-29 23:43:18'),
+(2, 6, 8, 'Exportable', 8.75, 1, 8.75, '2025-11-29 23:44:05'),
+(5, 7, 13, 'Exportable', 500.00, 1, 500.00, '2025-11-30 04:24:24'),
+(6, 7, 12, 'Exportable', 400.00, 1, 400.00, '2025-11-30 04:24:42'),
+(14, 9, 10, 'Nacional', 2000.00, 3, 2000.00, '2025-12-04 00:03:35'),
+(17, 10, 14, 'Exportable', 20.00, 1, 20.00, '2025-12-19 04:20:59'),
+(18, 10, 8, 'Exportable', 1.00, 1, 1.00, '2025-12-19 05:27:39');
 
 -- --------------------------------------------------------
 
@@ -635,22 +699,63 @@ CREATE TABLE `personas` (
   `banco` varchar(100) DEFAULT NULL,
   `estado` enum('activo','inactivo') DEFAULT 'activo',
   `created_at` timestamp NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `nombres` varchar(150) DEFAULT NULL,
+  `apellidos` varchar(150) DEFAULT NULL,
+  `ruc` varchar(20) DEFAULT NULL,
+  `razon_social` varchar(255) DEFAULT NULL,
+  `distrito` varchar(100) DEFAULT NULL,
+  `provincia` varchar(100) DEFAULT NULL,
+  `departamento` varchar(100) DEFAULT NULL,
+  `cci` varchar(30) DEFAULT NULL,
+  `observaciones` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Volcado de datos para la tabla `personas`
 --
 
-INSERT INTO `personas` (`id`, `nombre_completo`, `documento_identidad`, `tipo_documento`, `telefono`, `email`, `direccion`, `tipo_persona`, `cuenta_bancaria`, `banco`, `estado`, `created_at`, `updated_at`) VALUES
-(1, 'María Elena Quispe', '401233', 'DNI', '987654321', 'maria.quispe@email.com', 'Av. Los Olivos 123, Lima', 'cliente', '001-123456-789', 'Banco de la Nación', 'activo', '2025-11-13 15:19:27', '2025-11-13 16:48:57'),
-(2, 'Carlos Rodríguez S.A.C.', '20123456789', 'RUC', '012345678', 'ventas@carlosrodriguez.com', 'Calle Las Flores 456, Ica', 'cliente', '001-987654-321', 'BCP', 'activo', '2025-11-13 15:19:27', '2025-11-13 15:19:27'),
-(3, 'Juan m', '40876543', 'DNI', '987654322', 'juan.perez@email.com', 'Jr. Union 789, Chincha', 'productor', '001-456789-123', 'Interbank', 'activo', '2025-11-13 15:19:27', '2025-11-19 22:27:19'),
-(4, 'Ana María Gómez', '40765432', 'DNI', '987654323', 'ana.gomez@email.com', 'Av. Progreso 321, Pisco', 'empleado', '001-321654-987', 'BBVA', 'activo', '2025-11-13 15:19:27', '2025-11-13 15:19:27'),
-(5, 'Distribuidora San Martín', '20198765432', 'RUC', '012345679', 'compras@sanmar.com', 'Carretera Panamericana Km 245, Ica', 'cliente', '001-741852-963', 'Scotiabank', 'activo', '2025-11-13 15:19:27', '2025-11-13 15:19:27'),
-(6, 'Roberto Silva Castro', '40654321', 'DNI', '987654324', 'roberto.silva@email.com', 'Mz. L Lt. 15, Villa El Salvador', 'productor', '001-159753-486', 'Banco de la Nación', 'activo', '2025-11-13 15:19:27', '2025-11-13 15:19:27'),
-(7, 'Luz Marina Díaz', '40543219', 'DNI', '987654325', 'luz.diaz@email.com', 'Calle Los Pinos 654, Cañete', 'empleado', '001-357159-482', 'BCP', 'activo', '2025-11-13 15:19:27', '2025-11-13 15:19:27'),
-(8, 'Agroexportadora Del Sur', '20234567891', 'RUC', '012345680', 'administracion@agroexportadora.com', 'Av. Industrial 789, Arequipa', 'proveedor', '001-852741-963', 'Interbank', 'activo', '2025-11-13 15:19:27', '2025-11-13 15:19:27');
+INSERT INTO `personas` (`id`, `nombre_completo`, `documento_identidad`, `tipo_documento`, `telefono`, `email`, `direccion`, `tipo_persona`, `cuenta_bancaria`, `banco`, `estado`, `created_at`, `updated_at`, `nombres`, `apellidos`, `ruc`, `razon_social`, `distrito`, `provincia`, `departamento`, `cci`, `observaciones`) VALUES
+(1, 'María Juana Quispe', '401233', 'DNI', '987654321', 'maria.quispe@email.com', 'Av. Los Olivos 123, Lima', 'cliente', '001-123456-789', 'Banco de la Nación', 'activo', '2025-11-13 15:19:27', '2025-12-04 14:00:20', 'María', 'Quispe', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(2, 'Carlos Rodríguez S.A.C.', '20123456789', 'RUC', '012345678', 'ventas@carlosrodriguez.com', 'Calle Las Flores 456, Ica', 'cliente', '001-987654-321', 'BCP', 'activo', '2025-11-13 15:19:27', '2025-12-04 14:00:20', 'Carlos', 'S.A.C.', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(3, 'Juan Carlos Castro', '40876543', 'DNI', '987654322', 'juan.perez@email.com', 'Jr. Union 789, Chincha', 'productor', '001-456789-123', 'Interbank', 'activo', '2025-11-13 15:19:27', '2025-12-04 14:00:20', 'Juan', 'Castro', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(4, 'Ana María Gómez', '40765432', 'DNI', '987654323', 'ana.gomez@email.com', 'Av. Progreso 321, Pisco', 'empleado', '001-321654-987', 'BBVA', 'activo', '2025-11-13 15:19:27', '2025-12-04 14:00:20', 'Ana', 'Gómez', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(5, 'Distribuidora San Martín', '20198765432', 'RUC', '012345679', 'compras@sanmar.com', 'Carretera Panamericana Km 245, Ica', 'cliente', '001-741852-963', 'Scotiabank', 'activo', '2025-11-13 15:19:27', '2025-12-04 14:00:20', 'Distribuidora', 'Martín', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(6, 'Roberto Silva Castro', '40654321', 'DNI', '987654324', 'roberto.silva@email.com', 'Mz. L Lt. 15, Villa El Salvador', 'productor', '001-159753-486', 'Banco de la Nación', 'activo', '2025-11-13 15:19:27', '2025-12-04 14:00:20', 'Roberto', 'Castro', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(7, 'Luz Marina Díaz', '40543219', 'DNI', '987654325', 'luz.diaz@email.com', 'Calle Los Pinos 654, Cañete', 'empleado', '001-357159-482', 'BCP', 'activo', '2025-11-13 15:19:27', '2025-12-04 14:00:20', 'Luz', 'Díaz', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(8, 'Agroexportadora Del Sur', '20234567891', 'RUC', '012345680', 'administracion@agroexportadora.com', 'Av. Industrial 789, Arequipa', 'proveedor', '001-852741-963', 'Interbank', 'activo', '2025-11-13 15:19:27', '2025-12-04 14:00:20', 'Agroexportadora', 'Sur', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(10, 'Gabriel Isaias Ccansaya', '70206904', 'DNI', '971698621', 'gccansayapaccori@gmail.com', '', 'productor', '', '', 'activo', '2025-11-30 03:50:50', '2025-12-04 14:00:20', 'Gabriel', 'Ccansaya', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(12, 'Lizeth Huayta', '73353257', 'DNI', '912988853', 'lizethhuaytav@gmail.com', 'Lima 1', 'productor', '1910142014234', 'BCP', 'activo', '2025-12-03 23:49:06', '2025-12-04 20:49:01', 'Lizeth', 'Huayta', '', '', '', '', '', '', ''),
+(13, 'Lizeth Cruz Lopez', '12345678', 'DNI', '987654321', 'lopez@gmail.com', 'Lima 1', 'cliente', '', '', 'activo', '2025-12-04 11:33:55', '2025-12-04 14:00:20', 'Lizeth', 'Lopez', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(14, 'Juan Luis Rivera', '87654321', 'DNI', '963852147', 'River@hotmail.com', 'av. Playa Escondida', 'productor', '', '', 'activo', '2025-12-04 11:37:48', '2025-12-04 14:00:20', 'Juan', 'Rivera', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(25, 'Franco Mamani Quispe', 'ss', 'DNI', '1', '2@2.com', '3', 'cliente', '22', '12', 'activo', '2025-12-04 13:54:00', '2025-12-04 20:48:37', 'Franco', 'Mamani Quispe', '', '', '', '', '', '', ''),
+(26, 'Dionisio Cardenas Quelar', '122', 'DNI', '123', '32@com.com', '1233', 'productor', '1', '1', 'activo', '2025-12-04 14:08:35', '2025-12-04 15:49:27', 'Dionisio Cardenas', 'Quelar', '332323', 'ff', '3', '3', '3', '1', '1');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `persona_roles`
+--
+
+CREATE TABLE `persona_roles` (
+  `id` int(11) NOT NULL,
+  `persona_id` int(11) NOT NULL,
+  `rol_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+--
+-- Volcado de datos para la tabla `persona_roles`
+--
+
+INSERT INTO `persona_roles` (`id`, `persona_id`, `rol_id`) VALUES
+(35, 12, 1),
+(33, 12, 2),
+(36, 12, 5),
+(34, 12, 6),
+(31, 25, 2),
+(32, 25, 6),
+(29, 26, 1),
+(30, 26, 4);
 
 -- --------------------------------------------------------
 
@@ -694,7 +799,11 @@ INSERT INTO `pesos_lote` (`id`, `lote_id`, `fecha_pesado`, `peso_bruto`, `peso_e
 (10, 5, '2025-11-27', 1600.30, 0.00, 0.00, 0.00, '', '2025-11-27 22:20:28', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00),
 (11, 4, '2025-11-27', 1890.50, 0.00, 0.00, 0.00, '', '2025-11-27 23:04:20', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00),
 (12, 10, '2025-11-27', 20000.00, 0.00, 10000.00, 0.00, '', '2025-11-27 23:58:25', 10000.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00),
-(13, 11, '2025-11-28', 40000.00, 0.00, 8100.00, 0.00, '', '2025-11-28 00:14:32', 1000.00, 900.00, 10000.00, 0.00, 10000.00, 10000.00, 0.00, 0.00);
+(13, 11, '2025-11-28', 40000.00, 0.00, 8100.00, 0.00, '', '2025-11-28 00:14:32', 1000.00, 900.00, 10000.00, 0.00, 10000.00, 10000.00, 0.00, 0.00),
+(14, 12, '2025-11-30', 1650.00, 400.00, 400.00, 0.00, '', '2025-11-30 04:00:17', 600.00, 0.00, 0.00, 250.00, 0.00, 0.00, 0.00, 0.00),
+(15, 13, '2025-11-30', 2400.00, 500.00, 500.00, 100.00, '', '2025-11-30 04:11:05', 0.00, 0.00, 300.00, 1000.00, 0.00, 0.00, 0.00, 0.00),
+(16, 14, '2025-12-01', 20.00, 20.00, 0.00, 0.00, '', '2025-12-01 19:16:46', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00),
+(17, 15, '2025-12-01', 10.00, 1.00, 1.00, 0.00, '', '2025-12-01 20:23:51', 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00);
 
 -- --------------------------------------------------------
 
@@ -706,37 +815,51 @@ CREATE TABLE `pesos_lote_detalle` (
   `id` int(11) NOT NULL,
   `peso_lote_id` int(11) NOT NULL,
   `categoria_id` int(11) NOT NULL,
-  `peso` decimal(10,2) NOT NULL DEFAULT 0.00
+  `peso` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `numero_jabas` int(11) NOT NULL DEFAULT 0,
+  `peso_jabas` decimal(10,2) NOT NULL DEFAULT 0.00
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 --
 -- Volcado de datos para la tabla `pesos_lote_detalle`
 --
 
-INSERT INTO `pesos_lote_detalle` (`id`, `peso_lote_id`, `categoria_id`, `peso`) VALUES
-(4, 8, 1, 12.00),
-(5, 9, 1, 1200.75),
-(7, 10, 1, 100.00),
-(8, 10, 2, 100.00),
-(9, 10, 3, 100.00),
-(10, 10, 4, 100.00),
-(11, 10, 5, 100.00),
-(12, 10, 6, 100.00),
-(13, 10, 7, 100.00),
-(14, 10, 8, 100.00),
-(15, 10, 9, 100.00),
-(16, 10, 10, 100.00),
-(17, 10, 11, 100.00),
-(18, 11, 1, 99.99),
-(30, 13, 2, 8100.00),
-(31, 13, 3, 1000.00),
-(32, 13, 4, 900.00),
-(33, 13, 6, 10000.00),
-(34, 13, 8, 10000.00),
-(35, 13, 9, 10000.00),
-(38, 12, 2, 10000.00),
-(39, 12, 3, 10000.00),
-(40, 6, 1, 1.00);
+INSERT INTO `pesos_lote_detalle` (`id`, `peso_lote_id`, `categoria_id`, `peso`, `numero_jabas`, `peso_jabas`) VALUES
+(4, 8, 1, 12.00, 0, 0.00),
+(5, 9, 1, 1200.75, 0, 0.00),
+(7, 10, 1, 100.00, 0, 0.00),
+(8, 10, 2, 100.00, 0, 0.00),
+(9, 10, 3, 100.00, 0, 0.00),
+(10, 10, 4, 100.00, 0, 0.00),
+(11, 10, 5, 100.00, 0, 0.00),
+(12, 10, 6, 100.00, 0, 0.00),
+(13, 10, 7, 100.00, 0, 0.00),
+(14, 10, 8, 100.00, 0, 0.00),
+(15, 10, 9, 100.00, 0, 0.00),
+(16, 10, 10, 100.00, 0, 0.00),
+(17, 10, 11, 100.00, 0, 0.00),
+(18, 11, 1, 99.99, 0, 0.00),
+(30, 13, 2, 8100.00, 0, 0.00),
+(31, 13, 3, 1000.00, 0, 0.00),
+(32, 13, 4, 900.00, 0, 0.00),
+(33, 13, 6, 10000.00, 0, 0.00),
+(34, 13, 8, 10000.00, 0, 0.00),
+(35, 13, 9, 10000.00, 0, 0.00),
+(38, 12, 2, 10000.00, 0, 0.00),
+(39, 12, 3, 10000.00, 0, 0.00),
+(40, 6, 1, 1.00, 0, 0.00),
+(42, 14, 1, 400.00, 0, 0.00),
+(43, 14, 2, 400.00, 0, 0.00),
+(44, 14, 3, 600.00, 0, 0.00),
+(45, 14, 7, 250.00, 0, 0.00),
+(46, 15, 1, 500.00, 0, 0.00),
+(47, 15, 2, 500.00, 0, 0.00),
+(48, 15, 5, 100.00, 0, 0.00),
+(49, 15, 6, 300.00, 0, 0.00),
+(50, 15, 7, 1000.00, 0, 0.00),
+(51, 16, 1, 20.00, 0, 0.00),
+(52, 17, 1, 1.00, 0, 0.00),
+(53, 17, 2, 1.00, 0, 0.00);
 
 -- --------------------------------------------------------
 
@@ -762,6 +885,32 @@ INSERT INTO `planificacion_operativa` (`id`, `lote_id`, `pedido_id`, `peso_asign
 (1, 1, 1, 500.00, '2024-01-20', 'completado', '2025-11-13 15:19:28'),
 (2, 2, 2, 750.00, '2024-01-22', 'en_proceso', '2025-11-13 15:19:28'),
 (3, 4, 4, 600.00, '2024-01-28', 'planificado', '2025-11-13 15:19:28');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `roles`
+--
+
+CREATE TABLE `roles` (
+  `id` int(11) NOT NULL,
+  `codigo` varchar(50) NOT NULL,
+  `nombre` varchar(100) NOT NULL,
+  `estado` enum('activo','inactivo') DEFAULT 'activo',
+  `created_at` timestamp NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+
+--
+-- Volcado de datos para la tabla `roles`
+--
+
+INSERT INTO `roles` (`id`, `codigo`, `nombre`, `estado`, `created_at`) VALUES
+(1, 'productor', 'Productor', 'activo', '2025-12-04 13:22:23'),
+(2, 'comprador', 'Comprador', 'activo', '2025-12-04 13:22:23'),
+(3, 'jornalero', 'Jornalero', 'activo', '2025-12-04 13:22:23'),
+(4, 'transportista', 'Transportista', 'activo', '2025-12-04 13:22:23'),
+(5, 'supervisor', 'Supervisor', 'activo', '2025-12-04 13:22:23'),
+(6, 'control_calidad', 'Control de Calidad', 'activo', '2025-12-04 13:22:23');
 
 -- --------------------------------------------------------
 
@@ -1065,6 +1214,14 @@ ALTER TABLE `personas`
   ADD KEY `idx_tipo` (`tipo_persona`);
 
 --
+-- Indices de la tabla `persona_roles`
+--
+ALTER TABLE `persona_roles`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `persona_id` (`persona_id`,`rol_id`),
+  ADD KEY `rol_id` (`rol_id`);
+
+--
 -- Indices de la tabla `pesos_lote`
 --
 ALTER TABLE `pesos_lote`
@@ -1088,6 +1245,13 @@ ALTER TABLE `planificacion_operativa`
   ADD PRIMARY KEY (`id`),
   ADD KEY `idx_lote` (`lote_id`),
   ADD KEY `idx_pedido` (`pedido_id`);
+
+--
+-- Indices de la tabla `roles`
+--
+ALTER TABLE `roles`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `codigo` (`codigo`);
 
 --
 -- Indices de la tabla `ventas`
@@ -1143,7 +1307,7 @@ ALTER TABLE `empleados`
 -- AUTO_INCREMENT de la tabla `kardex_lotes`
 --
 ALTER TABLE `kardex_lotes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=82;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=106;
 
 --
 -- AUTO_INCREMENT de la tabla `libro_banco`
@@ -1155,19 +1319,19 @@ ALTER TABLE `libro_banco`
 -- AUTO_INCREMENT de la tabla `liquidaciones`
 --
 ALTER TABLE `liquidaciones`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT de la tabla `liquidaciones_detalle`
 --
 ALTER TABLE `liquidaciones_detalle`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
 
 --
 -- AUTO_INCREMENT de la tabla `lotes`
 --
 ALTER TABLE `lotes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT de la tabla `pagos_campo`
@@ -1179,37 +1343,49 @@ ALTER TABLE `pagos_campo`
 -- AUTO_INCREMENT de la tabla `pedidos`
 --
 ALTER TABLE `pedidos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT de la tabla `pedido_lotes`
 --
 ALTER TABLE `pedido_lotes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT de la tabla `personas`
 --
 ALTER TABLE `personas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+
+--
+-- AUTO_INCREMENT de la tabla `persona_roles`
+--
+ALTER TABLE `persona_roles`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
 
 --
 -- AUTO_INCREMENT de la tabla `pesos_lote`
 --
 ALTER TABLE `pesos_lote`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- AUTO_INCREMENT de la tabla `pesos_lote_detalle`
 --
 ALTER TABLE `pesos_lote_detalle`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=54;
 
 --
 -- AUTO_INCREMENT de la tabla `planificacion_operativa`
 --
 ALTER TABLE `planificacion_operativa`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT de la tabla `roles`
+--
+ALTER TABLE `roles`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT de la tabla `ventas`
@@ -1346,6 +1522,13 @@ ALTER TABLE `pedido_lotes`
   ADD CONSTRAINT `fk_pedido_lotes_categoria` FOREIGN KEY (`categoria_id`) REFERENCES `categorias_peso` (`id`),
   ADD CONSTRAINT `pedido_lotes_ibfk_1` FOREIGN KEY (`pedido_id`) REFERENCES `pedidos` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `pedido_lotes_ibfk_2` FOREIGN KEY (`lote_id`) REFERENCES `lotes` (`id`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `persona_roles`
+--
+ALTER TABLE `persona_roles`
+  ADD CONSTRAINT `persona_roles_ibfk_1` FOREIGN KEY (`persona_id`) REFERENCES `personas` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `persona_roles_ibfk_2` FOREIGN KEY (`rol_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE;
 
 --
 -- Filtros para la tabla `pesos_lote`
