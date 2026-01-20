@@ -39,6 +39,8 @@ import {
   ShoppingBag,
   LineChart,
   Receipt,
+  Database,
+  Activity,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -75,6 +77,12 @@ const navigationItems: NavItem[] = [
         title: "Almacén",
         href: "/almacen",
         icon: Package,
+      },
+      {
+        title: "Kardex Integral",
+        href: "/kardex-integral",
+        icon: Database,
+        badge: "NEW",
       },
     ],
   },
@@ -119,6 +127,12 @@ const navigationItems: NavItem[] = [
     title: "Contabilidad",
     icon: Calculator,
     children: [
+      {
+        title: "Kardex Integral",
+        href: "/kardex-integral",
+        icon: Activity,
+        badge: "NEW",
+      },
       {
         title: "Ajuste Pesos-precio contable",
         href: "/ajuste-contable",
@@ -258,6 +272,11 @@ export function AppSidebar() {
                             <Link href={child.href || "#"}>
                               <child.icon className="mr-2 h-3 w-3" />
                               <span className="truncate">{child.title}</span>
+                              {child.badge && (
+                                <span className="ml-auto text-[10px] bg-green-600 text-white px-1.5 py-0.5 rounded-full font-semibold">
+                                  {child.badge}
+                                </span>
+                              )}
                             </Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>

@@ -74,24 +74,25 @@ Se ha implementado el **mejor sistema de Kardex Industrial** para Sayariq ERP co
 
 ### Paso 1: Ejecutar Migración de Base de Datos
 
-Conectar a la base de datos MySQL:
+**IMPORTANTE:** Si usas **phpMyAdmin** (InfinityFree), usa el archivo especial:
+
+#### Opción A: phpMyAdmin (RECOMENDADO para InfinityFree)
+
+1. Ir a phpMyAdmin en tu hosting
+2. Seleccionar base de datos `if0_40375920_sayariq`
+3. Ir a la pestaña "SQL"
+4. Abrir el archivo: `backend/migrations/create_kardex_integral_phpmyadmin.sql`
+5. Copiar TODO el contenido
+6. Pegarlo en el editor SQL
+7. Click en "Continuar" o "Go"
+
+**Nota:** Este archivo está optimizado para phpMyAdmin y no usa triggers (que pueden no estar disponibles en InfinityFree). La integración se hará desde PHP.
+
+#### Opción B: Terminal MySQL (Si tienes acceso SSH)
 
 ```bash
-mysql -h sql308.infinityfree.com -u if0_40375920 -p if0_40375920_sayariq
+mysql -h sql308.infinityfree.com -u if0_40375920 -p if0_40375920_sayariq < backend/migrations/create_kardex_integral_phpmyadmin.sql
 ```
-
-Luego ejecutar:
-
-```sql
-source /workspaces/Sayariq-ERP-system/backend/migrations/create_kardex_integral.sql;
-```
-
-O si tienes phpMyAdmin:
-1. Ir a phpMyAdmin
-2. Seleccionar base de datos `if0_40375920_sayariq`
-3. Ir a "SQL"
-4. Copiar y pegar el contenido de `create_kardex_integral.sql`
-5. Ejecutar
 
 ### Paso 2: Verificar que las Tablas se Crearon
 
