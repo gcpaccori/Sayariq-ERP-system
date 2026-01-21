@@ -128,7 +128,7 @@ SELECT
   'venta' AS documento_tipo,
   v.id AS documento_id,
   CONCAT('VENTA-', v.id) AS documento_numero,
-  p.lote_id,
+  NULL AS lote_id,
   NULL AS categoria_id,
   v.categoria AS categoria_nombre,
   v.kg AS peso_kg,
