@@ -52,7 +52,7 @@ SELECT
   NULL AS cuenta_tipo,
   NULL AS monto,
   lt.productor_id AS persona_id,
-  p.nombres_apellidos AS persona_nombre,
+  p.nombre_completo AS persona_nombre,
   'productor' AS persona_tipo,
   CONCAT('Liquidación ', COALESCE(l.numero_liquidacion, CONCAT('LIQ-', l.id)), ' - Lote ', lt.numero_lote) AS concepto,
   l.observaciones,
@@ -90,7 +90,7 @@ SELECT
   'banco' AS cuenta_tipo,
   l.total_a_pagar AS monto,
   lt.productor_id AS persona_id,
-  p.nombres_apellidos AS persona_nombre,
+  p.nombre_completo AS persona_nombre,
   'productor' AS persona_tipo,
   CONCAT('Pago liquidación ', COALESCE(l.numero_liquidacion, CONCAT('LIQ-', l.id))) AS concepto,
   'migracion' AS usuario_registro
