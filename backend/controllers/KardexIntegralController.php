@@ -24,6 +24,15 @@ class KardexIntegralController extends BaseController
     /**
      * GET /kardex-integral
      * Obtiene todos los movimientos con filtros opcionales
+     * Método principal llamado por BaseController::handleRequest()
+     */
+    public function index()
+    {
+        return $this->getAll();
+    }
+    
+    /**
+     * Implementación real de la consulta
      */
     public function getAll()
     {
@@ -134,6 +143,15 @@ class KardexIntegralController extends BaseController
     /**
      * GET /kardex-integral/:id
      * Obtiene un movimiento específico
+     * Método principal llamado por BaseController::handleRequest()
+     */
+    public function show($id)
+    {
+        return $this->getById($id);
+    }
+    
+    /**
+     * Implementación real de la consulta individual
      */
     public function getById($id)
     {

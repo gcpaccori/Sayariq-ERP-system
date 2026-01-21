@@ -112,4 +112,40 @@ class BaseController {
     public function delete($id) {
         return false;
     }
+    
+    // Helper methods for JSON responses
+    protected function success($data = null, $message = null, $code = 200) {
+        http_response_code($code);
+        $response = ['success' => true];
+        
+        if ($data !== null) {
+            $response['data'] = $data;
+        }
+        
+        if ($message !== null) {
+            $response['message'] = $message;
+        }
+        
+        return $response;
+    }
+    
+    protected function error($message, $code = 400, $data = null) {
+        http_response_code($code);
+        $response = [
+            'success' => false,
+            'error' => $message
+        ];
+        
+        if ($data !== null) {
+            $response['data'] = $data;
+        }
+        
+        return $response;
+    }
+    
+    // Get request data helper
+    protected function getRequestData() {
+        $json = file_get_contents('php://input');
+        return json_decode($json, true) ?? [];
+    }
 }
