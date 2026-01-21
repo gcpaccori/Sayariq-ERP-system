@@ -243,16 +243,16 @@ SELECT
   pld.id AS documento_id,
   pl.lote_id,
   pld.categoria_id,
-  c.nombre AS categoria_nombre,
+  cp.nombre AS categoria_nombre,
   pld.peso AS peso_kg,
   l.productor_id AS persona_id,
   per.nombre_completo AS persona_nombre,
   'productor' AS persona_tipo,
-  CONCAT('Pesaje categoría ', c.nombre, ' - Lote ', l.numero_lote) AS concepto,
+  CONCAT('Pesaje categoría ', COALESCE(cp.nombre, 'SIN CATEGORIA'), ' - Lote ', l.numero_lote) AS concepto,
   'migracion' AS usuario_registro
 FROM pesos_lote_detalle pld
 INNER JOIN pesos_lote pl ON pld.peso_lote_id = pl.id
-LEFT JOIN categorias c ON pld.categoria_id = c.id
+LEFT JOIN categorias_peso cp ON pld.categoria_id = cp.id
 LEFT JOIN lotes l ON pl.lote_id = l.id
 LEFT JOIN personas per ON l.productor_id = per.id
 WHERE pld.id IS NOT NULL AND pld.peso > 0;
