@@ -42,20 +42,24 @@ SELECT
   l.id AS documento_id,
   l.numero_liquidacion AS documento_numero,
   l.lote_id,
-  NULL AS categoria_id,  -- Ajustar si tienes esta info
+  NULL AS categoria_id,
   'MIXTO' AS categoria_nombre,
-  l.peso_total AS peso_kg,
+  COALESCE(
+    (SELECT SUM(ld.peso_ajustado) FROM liquidaciones_detalle ld WHERE ld.liquidacion_id = l.id),
+    l.peso_final_ajustado,
+    0
+  ) AS peso_kg,
   NULL AS cuenta_tipo,
   NULL AS monto,
-  l.productor_id AS persona_id,
+  lt.productor_id AS persona_id,
   p.nombres_apellidos AS persona_nombre,
   'productor' AS persona_tipo,
-  CONCAT('Liquidación ', l.numero_liquidacion, ' - Lote ', lt.nombre) AS concepto,
+  CONCAT('Liquidación ', COALESCE(l.numero_liquidacion, CONCAT('LIQ-', l.id)), ' - Lote ', lt.numero_lote) AS concepto,
   l.observaciones,
   'migracion' AS usuario_registro
 FROM liquidaciones l
-LEFT JOIN personas p ON l.productor_id = p.id
 LEFT JOIN lotes lt ON l.lote_id = lt.id
+LEFT JOIN personas p ON lt.productor_id = p.id
 WHERE l.id IS NOT NULL;
 
 -- Movimientos financieros de liquidaciones (EGRESO de banco/caja)
@@ -83,16 +87,17 @@ SELECT
   l.id AS documento_id,
   l.numero_liquidacion AS documento_numero,
   l.lote_id,
-  'banco' AS cuenta_tipo,  -- Ajustar según tu caso (puede ser 'caja')
-  l.total_pagar AS monto,
-  l.productor_id AS persona_id,
+  'banco' AS cuenta_tipo,
+  l.total_a_pagar AS monto,
+  lt.productor_id AS persona_id,
   p.nombres_apellidos AS persona_nombre,
   'productor' AS persona_tipo,
-  CONCAT('Pago liquidación ', l.numero_liquidacion) AS concepto,
+  CONCAT('Pago liquidación ', COALESCE(l.numero_liquidacion, CONCAT('LIQ-', l.id))) AS concepto,
   'migracion' AS usuario_registro
 FROM liquidaciones l
-LEFT JOIN personas p ON l.productor_id = p.id
-WHERE l.id IS NOT NULL AND l.total_pagar > 0;
+LEFT JOIN lotes lt ON l.lote_id = lt.id
+LEFT JOIN personas p ON lt.productor_id = p.id
+WHERE l.id IS NOT NULL AND l.total_a_pagar > 0;
 
 -- =====================================================
 -- 2. MIGRAR VENTAS (movimientos físicos + financieros)
@@ -122,21 +127,21 @@ SELECT
   'salida' AS tipo_movimiento,
   'venta' AS documento_tipo,
   v.id AS documento_id,
-  v.numero_factura AS documento_numero,
-  v.lote_id,
-  v.categoria_id,
-  c.nombre AS categoria_nombre,
-  v.peso_kg AS peso_kg,
+  CONCAT('VENTA-', v.id) AS documento_numero,
+  p.lote_id,
+  NULL AS categoria_id,
+  v.categoria AS categoria_nombre,
+  v.kg AS peso_kg,
   NULL AS cuenta_tipo,
   NULL AS monto,
-  v.cliente_id AS persona_id,
-  p.nombres_apellidos AS persona_nombre,
+  p.cliente_id AS persona_id,
+  per.nombre_completo AS persona_nombre,
   'cliente' AS persona_tipo,
-  CONCAT('Venta ', v.numero_factura, ' - ', c.nombre) AS concepto,
+  CONCAT('Venta ', v.producto, ' - ', v.categoria) AS concepto,
   'migracion' AS usuario_registro
 FROM ventas v
-LEFT JOIN personas p ON v.cliente_id = p.id
-LEFT JOIN categorias c ON v.categoria_id = c.id
+LEFT JOIN pedidos p ON v.pedido_id = p.id
+LEFT JOIN personas per ON p.cliente_id = per.id
 WHERE v.id IS NOT NULL;
 
 -- Movimientos financieros de ventas (INGRESO a banco/caja)
@@ -161,17 +166,18 @@ SELECT
   'ingreso' AS tipo_movimiento,
   'venta' AS documento_tipo,
   v.id AS documento_id,
-  v.numero_factura AS documento_numero,
-  'banco' AS cuenta_tipo,  -- Ajustar según tu caso
-  v.monto_total AS monto,
-  v.cliente_id AS persona_id,
-  p.nombres_apellidos AS persona_nombre,
+  CONCAT('VENTA-', v.id) AS documento_numero,
+  'banco' AS cuenta_tipo,
+  v.total AS monto,
+  p.cliente_id AS persona_id,
+  per.nombre_completo AS persona_nombre,
   'cliente' AS persona_tipo,
-  CONCAT('Cobro venta ', v.numero_factura) AS concepto,
+  CONCAT('Cobro venta ', v.producto) AS concepto,
   'migracion' AS usuario_registro
 FROM ventas v
-LEFT JOIN personas p ON v.cliente_id = p.id
-WHERE v.id IS NOT NULL AND v.monto_total > 0;
+LEFT JOIN pedidos p ON v.pedido_id = p.id
+LEFT JOIN personas per ON p.cliente_id = per.id
+WHERE v.id IS NOT NULL AND v.total > 0;
 
 -- =====================================================
 -- 3. MIGRAR ADELANTOS (solo movimientos financieros)
@@ -197,22 +203,22 @@ SELECT
   'egreso' AS tipo_movimiento,
   'adelanto' AS documento_tipo,
   a.id AS documento_id,
-  'caja' AS cuenta_tipo,  -- Los adelantos suelen ser en efectivo
+  'caja' AS cuenta_tipo,
   a.monto AS monto,
   a.productor_id AS persona_id,
-  p.nombres_apellidos AS persona_nombre,
+  p.nombre_completo AS persona_nombre,
   'productor' AS persona_tipo,
-  CONCAT('Adelanto a ', p.nombres_apellidos) AS concepto,
+  CONCAT('Adelanto a ', p.nombre_completo) AS concepto,
   a.motivo AS observaciones,
   'migracion' AS usuario_registro
 FROM adelantos a
 LEFT JOIN personas p ON a.productor_id = p.id
-WHERE a.id IS NOT NULL AND a.estado = 'activo';
+WHERE a.id IS NOT NULL;
 
 -- =====================================================
 -- 4. MIGRAR PESOS/PESAJES (movimientos físicos - INGRESO)
 -- =====================================================
--- Si tienes tabla de pesos o clasificación:
+-- Migramos desde pesos_lote_detalle que tiene el desglose por categoría
 INSERT INTO kardex_integral (
   fecha_movimiento,
   tipo_kardex,
@@ -230,26 +236,26 @@ INSERT INTO kardex_integral (
   usuario_registro
 )
 SELECT 
-  p.fecha_registro AS fecha_movimiento,
+  pl.fecha_pesado AS fecha_movimiento,
   'fisico' AS tipo_kardex,
   'ingreso' AS tipo_movimiento,
   'pesaje' AS documento_tipo,
-  p.id AS documento_id,
-  p.lote_id,
-  p.categoria_id,
+  pld.id AS documento_id,
+  pl.lote_id,
+  pld.categoria_id,
   c.nombre AS categoria_nombre,
-  p.peso_kg AS peso_kg,
+  pld.peso AS peso_kg,
   l.productor_id AS persona_id,
-  per.nombres_apellidos AS persona_nombre,
+  per.nombre_completo AS persona_nombre,
   'productor' AS persona_tipo,
-  CONCAT('Pesaje categoría ', c.nombre, ' - Lote ', lt.nombre) AS concepto,
+  CONCAT('Pesaje categoría ', c.nombre, ' - Lote ', l.numero_lote) AS concepto,
   'migracion' AS usuario_registro
-FROM pesos p
-LEFT JOIN categorias c ON p.categoria_id = c.id
-LEFT JOIN lotes l ON p.lote_id = l.id
-LEFT JOIN lotes lt ON p.lote_id = lt.id
+FROM pesos_lote_detalle pld
+INNER JOIN pesos_lote pl ON pld.peso_lote_id = pl.id
+LEFT JOIN categorias c ON pld.categoria_id = c.id
+LEFT JOIN lotes l ON pl.lote_id = l.id
 LEFT JOIN personas per ON l.productor_id = per.id
-WHERE p.id IS NOT NULL;
+WHERE pld.id IS NOT NULL AND pld.peso > 0;
 
 -- =====================================================
 -- 5. RECALCULAR SALDOS
