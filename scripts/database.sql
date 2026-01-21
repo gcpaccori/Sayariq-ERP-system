@@ -3,13 +3,14 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: localhost:3306
--- Tiempo de generación: 20-01-2026 a las 21:30:13
+-- Tiempo de generación: 20-01-2026 a las 22:57:03
 -- Versión del servidor: 10.11.14-MariaDB-cll-lve
 -- Versión de PHP: 8.4.14
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
+SET FOREIGN_KEY_CHECKS = 0;
 
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -25,6 +26,7 @@ DELIMITER $$
 --
 -- Procedimientos
 --
+DROP PROCEDURE IF EXISTS `sp_liquidar_lote`$$
 CREATE DEFINER=`fran2869`@`localhost` PROCEDURE `sp_liquidar_lote` (IN `p_lote_id` INT)   BEGIN
   DECLARE v_total DECIMAL(12,2) DEFAULT 0;
 
@@ -75,6 +77,269 @@ CREATE DEFINER=`fran2869`@`localhost` PROCEDURE `sp_liquidar_lote` (IN `p_lote_i
 
 END$$
 
+DROP PROCEDURE IF EXISTS `sp_registrar_adelanto_kardex`$$
+CREATE DEFINER=`fran2869`@`localhost` PROCEDURE `sp_registrar_adelanto_kardex` (IN `p_adelanto_id` INT, IN `p_productor_id` INT, IN `p_monto` DECIMAL(12,2))   BEGIN
+  DECLARE v_productor_nombre VARCHAR(255);
+  
+  SELECT nombre_completo INTO v_productor_nombre
+  FROM personas WHERE id = p_productor_id;
+  
+  -- Solo movimiento financiero: dinero SALE (adelanto)
+  INSERT INTO kardex_integral (
+    fecha_movimiento,
+    tipo_kardex,
+    tipo_movimiento,
+    documento_tipo,
+    documento_id,
+    cuenta_tipo,
+    monto,
+    persona_id,
+    persona_nombre,
+    persona_tipo,
+    concepto
+  ) VALUES (
+    NOW(),
+    'financiero',
+    'egreso',
+    'adelanto',
+    p_adelanto_id,
+    'adelantos',
+    p_monto,
+    p_productor_id,
+    v_productor_nombre,
+    'productor',
+    CONCAT('Adelanto a productor - ID: ', p_adelanto_id)
+  );
+  
+END$$
+
+DROP PROCEDURE IF EXISTS `sp_registrar_liquidacion_kardex`$$
+CREATE DEFINER=`fran2869`@`localhost` PROCEDURE `sp_registrar_liquidacion_kardex` (IN `p_liquidacion_id` INT, IN `p_lote_id` INT, IN `p_productor_id` INT, IN `p_numero_liquidacion` VARCHAR(100), IN `p_total_pagar` DECIMAL(12,2))   BEGIN
+  DECLARE v_productor_nombre VARCHAR(255);
+  DECLARE v_lote_numero VARCHAR(50);
+  DECLARE v_producto VARCHAR(100);
+  DECLARE v_categoria_id INT;
+  DECLARE v_categoria_nombre VARCHAR(100);
+  DECLARE v_peso_ajustado DECIMAL(12,3);
+  DECLARE done INT DEFAULT 0;
+  
+  -- Cursor para recorrer detalle de liquidación
+  DECLARE cur_detalle CURSOR FOR 
+    SELECT 
+      ld.categoria_id,
+      cp.nombre AS categoria_nombre,
+      ld.peso_ajustado
+    FROM liquidaciones_detalle ld
+    JOIN categorias_peso cp ON ld.categoria_id = cp.id
+    WHERE ld.liquidacion_id = p_liquidacion_id;
+  
+  DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+  
+  -- Obtener datos del productor y lote
+  SELECT nombre_completo INTO v_productor_nombre
+  FROM personas WHERE id = p_productor_id;
+  
+  SELECT numero_lote, producto INTO v_lote_numero, v_producto
+  FROM lotes WHERE id = p_lote_id;
+  
+  -- PARTE 1: MOVIMIENTOS FÍSICOS (producto ENTRA al inventario)
+  OPEN cur_detalle;
+  read_loop: LOOP
+    FETCH cur_detalle INTO v_categoria_id, v_categoria_nombre, v_peso_ajustado;
+    IF done THEN
+      LEAVE read_loop;
+    END IF;
+    
+    -- Registrar INGRESO físico por cada categoría
+    INSERT INTO kardex_integral (
+      fecha_movimiento,
+      tipo_kardex,
+      tipo_movimiento,
+      documento_tipo,
+      documento_id,
+      documento_numero,
+      lote_id,
+      categoria_id,
+      categoria_nombre,
+      peso_kg,
+      persona_id,
+      persona_nombre,
+      persona_tipo,
+      concepto,
+      observaciones
+    ) VALUES (
+      NOW(),
+      'fisico',
+      'ingreso',  -- INGRESO porque el producto entra a tu inventario
+      'liquidacion',
+      p_liquidacion_id,
+      p_numero_liquidacion,
+      p_lote_id,
+      v_categoria_id,
+      v_categoria_nombre,
+      v_peso_ajustado,
+      p_productor_id,
+      v_productor_nombre,
+      'productor',
+      CONCAT('Compra de ', v_producto, ' - ', v_categoria_nombre, ' a productor'),
+      CONCAT('Liquidación ', p_numero_liquidacion, ' - Lote ', v_lote_numero)
+    );
+  END LOOP;
+  CLOSE cur_detalle;
+  
+  -- PARTE 2: MOVIMIENTO FINANCIERO (dinero SALE)
+  INSERT INTO kardex_integral (
+    fecha_movimiento,
+    tipo_kardex,
+    tipo_movimiento,
+    documento_tipo,
+    documento_id,
+    documento_numero,
+    cuenta_tipo,
+    monto,
+    persona_id,
+    persona_nombre,
+    persona_tipo,
+    concepto,
+    observaciones
+  ) VALUES (
+    NOW(),
+    'financiero',
+    'egreso',  -- EGRESO porque el dinero sale de tu caja
+    'liquidacion',
+    p_liquidacion_id,
+    p_numero_liquidacion,
+    'banco',
+    p_total_pagar,
+    p_productor_id,
+    v_productor_nombre,
+    'productor',
+    CONCAT('Pago liquidación ', p_numero_liquidacion, ' a productor'),
+    CONCAT('Total: S/. ', FORMAT(p_total_pagar, 2))
+  );
+  
+END$$
+
+DROP PROCEDURE IF EXISTS `sp_registrar_venta_kardex`$$
+CREATE DEFINER=`fran2869`@`localhost` PROCEDURE `sp_registrar_venta_kardex` (IN `p_pedido_id` INT, IN `p_lote_id` INT, IN `p_cliente_id` INT, IN `p_categoria_id` INT, IN `p_peso_vendido` DECIMAL(12,3), IN `p_monto_venta` DECIMAL(12,2))   BEGIN
+  DECLARE v_cliente_nombre VARCHAR(255);
+  DECLARE v_categoria_nombre VARCHAR(100);
+  DECLARE v_numero_pedido VARCHAR(50);
+  
+  -- Obtener datos
+  SELECT nombre_completo INTO v_cliente_nombre
+  FROM personas WHERE id = p_cliente_id;
+  
+  SELECT nombre INTO v_categoria_nombre
+  FROM categorias_peso WHERE id = p_categoria_id;
+  
+  SELECT numero_pedido INTO v_numero_pedido
+  FROM pedidos WHERE id = p_pedido_id;
+  
+  -- MOVIMIENTO FÍSICO: producto SALE del inventario
+  INSERT INTO kardex_integral (
+    fecha_movimiento,
+    tipo_kardex,
+    tipo_movimiento,
+    documento_tipo,
+    documento_id,
+    documento_numero,
+    lote_id,
+    categoria_id,
+    categoria_nombre,
+    peso_kg,
+    persona_id,
+    persona_nombre,
+    persona_tipo,
+    concepto
+  ) VALUES (
+    NOW(),
+    'fisico',
+    'salida',
+    'venta',
+    p_pedido_id,
+    v_numero_pedido,
+    p_lote_id,
+    p_categoria_id,
+    v_categoria_nombre,
+    p_peso_vendido,
+    p_cliente_id,
+    v_cliente_nombre,
+    'cliente',
+    CONCAT('Venta pedido ', v_numero_pedido, ' - ', v_categoria_nombre)
+  );
+  
+  -- MOVIMIENTO FINANCIERO: dinero ENTRA
+  INSERT INTO kardex_integral (
+    fecha_movimiento,
+    tipo_kardex,
+    tipo_movimiento,
+    documento_tipo,
+    documento_id,
+    documento_numero,
+    cuenta_tipo,
+    monto,
+    persona_id,
+    persona_nombre,
+    persona_tipo,
+    concepto
+  ) VALUES (
+    NOW(),
+    'financiero',
+    'ingreso',
+    'venta',
+    p_pedido_id,
+    v_numero_pedido,
+    'ventas',
+    p_monto_venta,
+    p_cliente_id,
+    v_cliente_nombre,
+    'cliente',
+    CONCAT('Cobro venta pedido ', v_numero_pedido)
+  );
+  
+END$$
+
+--
+-- Funciones
+--
+DROP FUNCTION IF EXISTS `fn_saldo_financiero`$$
+CREATE DEFINER=`fran2869`@`localhost` FUNCTION `fn_saldo_financiero` (`p_cuenta_tipo` VARCHAR(50)) RETURNS DECIMAL(12,2) DETERMINISTIC READS SQL DATA BEGIN
+  DECLARE v_saldo DECIMAL(12,2);
+  
+  SELECT IFNULL(SUM(
+    CASE 
+      WHEN tipo_movimiento = 'ingreso' THEN monto
+      WHEN tipo_movimiento = 'egreso' THEN -monto
+      ELSE 0
+    END
+  ), 0) INTO v_saldo
+  FROM kardex_integral
+  WHERE tipo_kardex = 'financiero'
+    AND cuenta_tipo = p_cuenta_tipo;
+  
+  RETURN v_saldo;
+END$$
+
+DROP FUNCTION IF EXISTS `fn_saldo_fisico`$$
+CREATE DEFINER=`fran2869`@`localhost` FUNCTION `fn_saldo_fisico` (`p_lote_id` INT, `p_categoria_id` INT) RETURNS DECIMAL(12,3) DETERMINISTIC READS SQL DATA BEGIN
+  DECLARE v_saldo DECIMAL(12,3);
+  
+  SELECT IFNULL(SUM(
+    CASE 
+      WHEN tipo_movimiento = 'ingreso' THEN peso_kg
+      WHEN tipo_movimiento IN ('salida', 'egreso') THEN -peso_kg
+      ELSE 0
+    END
+  ), 0) INTO v_saldo
+  FROM kardex_integral
+  WHERE tipo_kardex = 'fisico'
+    AND lote_id = p_lote_id
+    AND categoria_id = p_categoria_id;
+  
+  RETURN v_saldo;
+END$$
+
 DELIMITER ;
 
 -- --------------------------------------------------------
@@ -83,6 +348,7 @@ DELIMITER ;
 -- Estructura de tabla para la tabla `adelantos`
 --
 
+DROP TABLE IF EXISTS `adelantos`;
 CREATE TABLE `adelantos` (
   `id` int(11) NOT NULL,
   `productor_id` int(11) NOT NULL,
@@ -112,6 +378,7 @@ INSERT INTO `adelantos` (`id`, `productor_id`, `lote_id`, `monto`, `fecha_adelan
 -- Estructura de tabla para la tabla `ajustes_contables`
 --
 
+DROP TABLE IF EXISTS `ajustes_contables`;
 CREATE TABLE `ajustes_contables` (
   `id` int(11) NOT NULL,
   `lote_id` int(11) NOT NULL,
@@ -153,6 +420,7 @@ INSERT INTO `ajustes_contables` (`id`, `lote_id`, `tipo_ajuste`, `peso_exportabl
 -- Estructura de tabla para la tabla `categorias_peso`
 --
 
+DROP TABLE IF EXISTS `categorias_peso`;
 CREATE TABLE `categorias_peso` (
   `id` int(11) NOT NULL,
   `codigo` varchar(20) NOT NULL,
@@ -188,6 +456,7 @@ INSERT INTO `categorias_peso` (`id`, `codigo`, `nombre`, `descripcion`, `precio_
 -- Estructura de tabla para la tabla `costos_fijos`
 --
 
+DROP TABLE IF EXISTS `costos_fijos`;
 CREATE TABLE `costos_fijos` (
   `id` int(11) NOT NULL,
   `concepto` varchar(255) NOT NULL,
@@ -218,6 +487,7 @@ INSERT INTO `costos_fijos` (`id`, `concepto`, `categoria`, `monto`, `periodicida
 -- Estructura de tabla para la tabla `empleados`
 --
 
+DROP TABLE IF EXISTS `empleados`;
 CREATE TABLE `empleados` (
   `id` int(11) NOT NULL,
   `persona_id` int(11) NOT NULL,
@@ -243,9 +513,43 @@ INSERT INTO `empleados` (`id`, `persona_id`, `cargo`, `area`, `sueldo`, `fecha_i
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `kardex_integral`
+--
+
+DROP TABLE IF EXISTS `kardex_integral`;
+CREATE TABLE `kardex_integral` (
+  `id` int(11) NOT NULL,
+  `fecha_movimiento` datetime NOT NULL DEFAULT current_timestamp(),
+  `tipo_kardex` enum('fisico','financiero') NOT NULL COMMENT 'Tipo de kardex',
+  `tipo_movimiento` enum('ingreso','egreso','salida') NOT NULL COMMENT 'Dirección del movimiento',
+  `documento_tipo` varchar(50) NOT NULL COMMENT 'liquidacion, venta, adelanto, pesaje, ajuste',
+  `documento_id` int(11) DEFAULT NULL COMMENT 'ID del documento origen',
+  `documento_numero` varchar(100) DEFAULT NULL COMMENT 'Número de documento',
+  `lote_id` int(11) DEFAULT NULL COMMENT 'Lote relacionado',
+  `categoria_id` int(11) DEFAULT NULL COMMENT 'Categoría del producto',
+  `categoria_nombre` varchar(100) DEFAULT NULL COMMENT 'Nombre de categoría',
+  `peso_kg` decimal(12,3) DEFAULT 0.000 COMMENT 'Peso en kilogramos',
+  `saldo_fisico_kg` decimal(12,3) DEFAULT 0.000 COMMENT 'Saldo físico acumulado',
+  `cuenta_tipo` enum('caja','banco','adelantos','ventas','produccion') DEFAULT NULL COMMENT 'Tipo de cuenta',
+  `monto` decimal(12,2) DEFAULT 0.00 COMMENT 'Monto en soles',
+  `saldo_financiero` decimal(12,2) DEFAULT 0.00 COMMENT 'Saldo financiero acumulado',
+  `persona_id` int(11) DEFAULT NULL COMMENT 'Productor/Cliente/Empleado',
+  `persona_nombre` varchar(255) DEFAULT NULL COMMENT 'Nombre de la persona',
+  `persona_tipo` enum('productor','cliente','empleado','proveedor') DEFAULT NULL,
+  `concepto` varchar(255) NOT NULL COMMENT 'Descripción del movimiento',
+  `observaciones` text DEFAULT NULL,
+  `usuario_registro` varchar(100) DEFAULT 'sistema',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Kardex integral con movimientos físicos y financieros unificados';
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `kardex_lotes`
 --
 
+DROP TABLE IF EXISTS `kardex_lotes`;
 CREATE TABLE `kardex_lotes` (
   `id` int(11) NOT NULL,
   `lote_id` int(11) NOT NULL,
@@ -373,6 +677,7 @@ INSERT INTO `kardex_lotes` (`id`, `lote_id`, `tipo_movimiento`, `categoria`, `pe
 -- Estructura de tabla para la tabla `libro_banco`
 --
 
+DROP TABLE IF EXISTS `libro_banco`;
 CREATE TABLE `libro_banco` (
   `id` int(11) NOT NULL,
   `fecha` date NOT NULL,
@@ -407,6 +712,7 @@ INSERT INTO `libro_banco` (`id`, `fecha`, `operacion`, `de_quien`, `a_quien`, `m
 -- Estructura de tabla para la tabla `liquidaciones`
 --
 
+DROP TABLE IF EXISTS `liquidaciones`;
 CREATE TABLE `liquidaciones` (
   `id` int(11) NOT NULL,
   `numero_liquidacion` varchar(50) DEFAULT NULL,
@@ -475,6 +781,7 @@ DELIMITER ;
 -- Estructura de tabla para la tabla `liquidaciones_detalle`
 --
 
+DROP TABLE IF EXISTS `liquidaciones_detalle`;
 CREATE TABLE `liquidaciones_detalle` (
   `id` int(11) NOT NULL,
   `liquidacion_id` int(11) NOT NULL,
@@ -533,6 +840,7 @@ INSERT INTO `liquidaciones_detalle` (`id`, `liquidacion_id`, `categoria_id`, `pe
 -- Estructura de tabla para la tabla `lotes`
 --
 
+DROP TABLE IF EXISTS `lotes`;
 CREATE TABLE `lotes` (
   `id` int(11) NOT NULL,
   `numero_lote` varchar(50) NOT NULL,
@@ -584,6 +892,7 @@ INSERT INTO `lotes` (`id`, `numero_lote`, `guia_ingreso`, `productor_id`, `produ
 -- Estructura de tabla para la tabla `pagos_campo`
 --
 
+DROP TABLE IF EXISTS `pagos_campo`;
 CREATE TABLE `pagos_campo` (
   `id` int(11) NOT NULL,
   `lote_id` int(11) NOT NULL,
@@ -616,6 +925,7 @@ INSERT INTO `pagos_campo` (`id`, `lote_id`, `productor_id`, `total_liquidacion`,
 -- Estructura de tabla para la tabla `pedidos`
 --
 
+DROP TABLE IF EXISTS `pedidos`;
 CREATE TABLE `pedidos` (
   `id` int(11) NOT NULL,
   `numero_pedido` varchar(50) NOT NULL,
@@ -656,6 +966,7 @@ INSERT INTO `pedidos` (`id`, `numero_pedido`, `cliente_id`, `producto`, `categor
 -- Estructura de tabla para la tabla `pedido_lotes`
 --
 
+DROP TABLE IF EXISTS `pedido_lotes`;
 CREATE TABLE `pedido_lotes` (
   `id` int(11) NOT NULL,
   `pedido_id` int(11) NOT NULL,
@@ -686,6 +997,7 @@ INSERT INTO `pedido_lotes` (`id`, `pedido_id`, `lote_id`, `categoria`, `kg_asign
 -- Estructura de tabla para la tabla `personas`
 --
 
+DROP TABLE IF EXISTS `personas`;
 CREATE TABLE `personas` (
   `id` int(11) NOT NULL,
   `nombre_completo` varchar(255) NOT NULL,
@@ -737,6 +1049,7 @@ INSERT INTO `personas` (`id`, `nombre_completo`, `documento_identidad`, `tipo_do
 -- Estructura de tabla para la tabla `persona_roles`
 --
 
+DROP TABLE IF EXISTS `persona_roles`;
 CREATE TABLE `persona_roles` (
   `id` int(11) NOT NULL,
   `persona_id` int(11) NOT NULL,
@@ -763,6 +1076,7 @@ INSERT INTO `persona_roles` (`id`, `persona_id`, `rol_id`) VALUES
 -- Estructura de tabla para la tabla `pesos_lote`
 --
 
+DROP TABLE IF EXISTS `pesos_lote`;
 CREATE TABLE `pesos_lote` (
   `id` int(11) NOT NULL,
   `lote_id` int(11) NOT NULL,
@@ -811,6 +1125,7 @@ INSERT INTO `pesos_lote` (`id`, `lote_id`, `fecha_pesado`, `peso_bruto`, `peso_e
 -- Estructura de tabla para la tabla `pesos_lote_detalle`
 --
 
+DROP TABLE IF EXISTS `pesos_lote_detalle`;
 CREATE TABLE `pesos_lote_detalle` (
   `id` int(11) NOT NULL,
   `peso_lote_id` int(11) NOT NULL,
@@ -867,6 +1182,7 @@ INSERT INTO `pesos_lote_detalle` (`id`, `peso_lote_id`, `categoria_id`, `peso`, 
 -- Estructura de tabla para la tabla `planificacion_operativa`
 --
 
+DROP TABLE IF EXISTS `planificacion_operativa`;
 CREATE TABLE `planificacion_operativa` (
   `id` int(11) NOT NULL,
   `lote_id` int(11) NOT NULL,
@@ -892,6 +1208,7 @@ INSERT INTO `planificacion_operativa` (`id`, `lote_id`, `pedido_id`, `peso_asign
 -- Estructura de tabla para la tabla `roles`
 --
 
+DROP TABLE IF EXISTS `roles`;
 CREATE TABLE `roles` (
   `id` int(11) NOT NULL,
   `codigo` varchar(50) NOT NULL,
@@ -918,6 +1235,7 @@ INSERT INTO `roles` (`id`, `codigo`, `nombre`, `estado`, `created_at`) VALUES
 -- Estructura de tabla para la tabla `ventas`
 --
 
+DROP TABLE IF EXISTS `ventas`;
 CREATE TABLE `ventas` (
   `id` int(11) NOT NULL,
   `pedido_id` int(11) NOT NULL,
@@ -960,6 +1278,7 @@ CREATE TABLE `venta_lotes` (
 -- Estructura Stand-in para la vista `vw_datos_liquidacion`
 -- (Véase abajo para la vista actual)
 --
+DROP TABLE IF EXISTS `vw_datos_liquidacion`;
 CREATE TABLE `vw_datos_liquidacion` (
 `lote_id` int(11)
 ,`numero_lote` varchar(50)
@@ -989,6 +1308,7 @@ CREATE TABLE `vw_datos_liquidacion` (
 -- Estructura Stand-in para la vista `vw_saldos_kardex`
 -- (Véase abajo para la vista actual)
 --
+DROP TABLE IF EXISTS `vw_saldos_kardex`;
 CREATE TABLE `vw_saldos_kardex` (
 `lote_id` int(11)
 ,`categoria` enum('exportable','industrial','descarte','nacional','jugo','primera','segunda','tercera','cuarta','quinta','dedos')
@@ -998,9 +1318,97 @@ CREATE TABLE `vw_saldos_kardex` (
 -- --------------------------------------------------------
 
 --
+-- Estructura Stand-in para la vista `v_kardex_financiero_saldos`
+-- (Véase abajo para la vista actual)
+--
+DROP TABLE IF EXISTS `v_kardex_financiero_saldos`;
+CREATE TABLE `v_kardex_financiero_saldos` (
+`cuenta_tipo` enum('caja','banco','adelantos','ventas','produccion')
+,`total_ingresos` decimal(34,2)
+,`total_egresos` decimal(34,2)
+,`saldo_actual` decimal(34,2)
+);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura Stand-in para la vista `v_kardex_fisico_saldos`
+-- (Véase abajo para la vista actual)
+--
+DROP TABLE IF EXISTS `v_kardex_fisico_saldos`;
+CREATE TABLE `v_kardex_fisico_saldos` (
+`lote_id` int(11)
+,`lote_codigo` varchar(50)
+,`numero_lote` varchar(50)
+,`producto_nombre` varchar(100)
+,`producto` varchar(100)
+,`categoria_id` int(11)
+,`categoria_nombre` varchar(100)
+,`total_ingresos` decimal(34,3)
+,`total_salidas` decimal(34,3)
+,`total_egresos` decimal(34,3)
+,`saldo_actual` decimal(34,3)
+);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura Stand-in para la vista `v_kardex_por_documento`
+-- (Véase abajo para la vista actual)
+--
+DROP TABLE IF EXISTS `v_kardex_por_documento`;
+CREATE TABLE `v_kardex_por_documento` (
+`documento_tipo` varchar(50)
+,`documento_numero` varchar(100)
+,`documento_id` int(11)
+,`fecha_movimiento` datetime
+,`persona_nombre` varchar(255)
+,`peso_total` decimal(34,3)
+,`monto_total` decimal(34,2)
+);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura Stand-in para la vista `v_kardex_por_productor`
+-- (Véase abajo para la vista actual)
+--
+DROP TABLE IF EXISTS `v_kardex_por_productor`;
+CREATE TABLE `v_kardex_por_productor` (
+`persona_id` int(11)
+,`persona_nombre` varchar(255)
+,`tipo_kardex` enum('fisico','financiero')
+,`tipo_movimiento` enum('ingreso','egreso','salida')
+,`documento_tipo` varchar(50)
+,`cantidad_movimientos` bigint(21)
+,`total_peso_kg` decimal(34,3)
+,`total_monto` decimal(34,2)
+);
+
+-- --------------------------------------------------------
+
+--
+-- Estructura Stand-in para la vista `v_kardex_resumen_documentos`
+-- (Véase abajo para la vista actual)
+--
+DROP TABLE IF EXISTS `v_kardex_resumen_documentos`;
+CREATE TABLE `v_kardex_resumen_documentos` (
+`documento_tipo` varchar(50)
+,`documento_numero` varchar(100)
+,`documento_id` int(11)
+,`fecha_movimiento` datetime
+,`persona_nombre` varchar(255)
+,`peso_total` decimal(34,3)
+,`monto_total` decimal(34,2)
+);
+
+-- --------------------------------------------------------
+
+--
 -- Estructura Stand-in para la vista `v_liquidacion_desde_kardex`
 -- (Véase abajo para la vista actual)
 --
+DROP TABLE IF EXISTS `v_liquidacion_desde_kardex`;
 CREATE TABLE `v_liquidacion_desde_kardex` (
 `lote_id` int(11)
 ,`numero_lote` varchar(50)
@@ -1029,6 +1437,7 @@ CREATE TABLE `v_liquidacion_desde_kardex` (
 -- Estructura Stand-in para la vista `v_pesos_consolidados_lote`
 -- (Véase abajo para la vista actual)
 --
+DROP TABLE IF EXISTS `v_pesos_consolidados_lote`;
 CREATE TABLE `v_pesos_consolidados_lote` (
 `lote_id` int(11)
 ,`peso_bruto_total` decimal(32,2)
@@ -1053,6 +1462,7 @@ CREATE TABLE `v_pesos_consolidados_lote` (
 -- Estructura Stand-in para la vista `v_stock_kardex_lote`
 -- (Véase abajo para la vista actual)
 --
+DROP TABLE IF EXISTS `v_stock_kardex_lote`;
 CREATE TABLE `v_stock_kardex_lote` (
 `lote_id` int(11)
 ,`numero_lote` varchar(50)
@@ -1071,6 +1481,7 @@ CREATE TABLE `v_stock_kardex_lote` (
 -- Estructura Stand-in para la vista `v_stock_real_kardex`
 -- (Véase abajo para la vista actual)
 --
+DROP TABLE IF EXISTS `v_stock_real_kardex`;
 CREATE TABLE `v_stock_real_kardex` (
 `lote_id` int(11)
 ,`numero_lote` varchar(50)
@@ -1128,6 +1539,20 @@ ALTER TABLE `empleados`
   ADD KEY `persona_id` (`persona_id`),
   ADD KEY `idx_area` (`area`),
   ADD KEY `idx_estado` (`estado`);
+
+--
+-- Indices de la tabla `kardex_integral`
+--
+ALTER TABLE `kardex_integral`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_fecha` (`fecha_movimiento`),
+  ADD KEY `idx_tipo_kardex` (`tipo_kardex`),
+  ADD KEY `idx_tipo_mov` (`tipo_movimiento`),
+  ADD KEY `idx_documento` (`documento_tipo`,`documento_id`),
+  ADD KEY `idx_lote` (`lote_id`),
+  ADD KEY `idx_categoria` (`categoria_id`),
+  ADD KEY `idx_persona` (`persona_id`),
+  ADD KEY `idx_fecha_tipo` (`fecha_movimiento`,`tipo_kardex`);
 
 --
 -- Indices de la tabla `kardex_lotes`
@@ -1304,6 +1729,12 @@ ALTER TABLE `empleados`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
+-- AUTO_INCREMENT de la tabla `kardex_integral`
+--
+ALTER TABLE `kardex_integral`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de la tabla `kardex_lotes`
 --
 ALTER TABLE `kardex_lotes`
@@ -1416,6 +1847,51 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`fran2869`@`localhost` SQL SECURITY DEFINER V
 DROP TABLE IF EXISTS `vw_saldos_kardex`;
 
 CREATE ALGORITHM=UNDEFINED DEFINER=`fran2869`@`localhost` SQL SECURITY DEFINER VIEW `vw_saldos_kardex`  AS SELECT `kardex_lotes`.`lote_id` AS `lote_id`, `kardex_lotes`.`categoria` AS `categoria`, sum(case when `kardex_lotes`.`tipo_movimiento` = 'ingreso' then `kardex_lotes`.`peso` else -`kardex_lotes`.`peso` end) AS `saldo` FROM `kardex_lotes` GROUP BY `kardex_lotes`.`lote_id`, `kardex_lotes`.`categoria` HAVING `saldo` > 0 ;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura para la vista `v_kardex_financiero_saldos`
+--
+DROP TABLE IF EXISTS `v_kardex_financiero_saldos`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`fran2869`@`localhost` SQL SECURITY DEFINER VIEW `v_kardex_financiero_saldos`  AS SELECT `k`.`cuenta_tipo` AS `cuenta_tipo`, sum(case when `k`.`tipo_movimiento` = 'ingreso' then `k`.`monto` else 0 end) AS `total_ingresos`, sum(case when `k`.`tipo_movimiento` = 'egreso' then `k`.`monto` else 0 end) AS `total_egresos`, sum(case when `k`.`tipo_movimiento` = 'ingreso' then `k`.`monto` else -`k`.`monto` end) AS `saldo_actual` FROM `kardex_integral` AS `k` WHERE `k`.`tipo_kardex` = 'financiero' GROUP BY `k`.`cuenta_tipo` ;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura para la vista `v_kardex_fisico_saldos`
+--
+DROP TABLE IF EXISTS `v_kardex_fisico_saldos`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`fran2869`@`localhost` SQL SECURITY DEFINER VIEW `v_kardex_fisico_saldos`  AS SELECT `k`.`lote_id` AS `lote_id`, `l`.`numero_lote` AS `lote_codigo`, `l`.`numero_lote` AS `numero_lote`, `l`.`producto` AS `producto_nombre`, `l`.`producto` AS `producto`, `k`.`categoria_id` AS `categoria_id`, `k`.`categoria_nombre` AS `categoria_nombre`, sum(case when `k`.`tipo_movimiento` = 'ingreso' then `k`.`peso_kg` else 0 end) AS `total_ingresos`, sum(case when `k`.`tipo_movimiento` in ('salida','egreso') then `k`.`peso_kg` else 0 end) AS `total_salidas`, sum(case when `k`.`tipo_movimiento` in ('salida','egreso') then `k`.`peso_kg` else 0 end) AS `total_egresos`, sum(case when `k`.`tipo_movimiento` = 'ingreso' then `k`.`peso_kg` when `k`.`tipo_movimiento` in ('salida','egreso') then -`k`.`peso_kg` else 0 end) AS `saldo_actual` FROM (`kardex_integral` `k` left join `lotes` `l` on(`k`.`lote_id` = `l`.`id`)) WHERE `k`.`tipo_kardex` = 'fisico' GROUP BY `k`.`lote_id`, `k`.`categoria_id`, `k`.`categoria_nombre`, `l`.`numero_lote`, `l`.`producto` ;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura para la vista `v_kardex_por_documento`
+--
+DROP TABLE IF EXISTS `v_kardex_por_documento`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`fran2869`@`localhost` SQL SECURITY DEFINER VIEW `v_kardex_por_documento`  AS SELECT `k`.`documento_tipo` AS `documento_tipo`, `k`.`documento_numero` AS `documento_numero`, `k`.`documento_id` AS `documento_id`, `k`.`fecha_movimiento` AS `fecha_movimiento`, `k`.`persona_nombre` AS `persona_nombre`, sum(case when `k`.`tipo_kardex` = 'fisico' then `k`.`peso_kg` else 0 end) AS `peso_total`, sum(case when `k`.`tipo_kardex` = 'financiero' then `k`.`monto` else 0 end) AS `monto_total` FROM `kardex_integral` AS `k` GROUP BY `k`.`documento_tipo`, `k`.`documento_numero`, `k`.`documento_id`, `k`.`fecha_movimiento`, `k`.`persona_nombre` ORDER BY `k`.`fecha_movimiento` DESC ;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura para la vista `v_kardex_por_productor`
+--
+DROP TABLE IF EXISTS `v_kardex_por_productor`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`fran2869`@`localhost` SQL SECURITY DEFINER VIEW `v_kardex_por_productor`  AS SELECT `k`.`persona_id` AS `persona_id`, `k`.`persona_nombre` AS `persona_nombre`, `k`.`tipo_kardex` AS `tipo_kardex`, `k`.`tipo_movimiento` AS `tipo_movimiento`, `k`.`documento_tipo` AS `documento_tipo`, count(0) AS `cantidad_movimientos`, sum(ifnull(`k`.`peso_kg`,0)) AS `total_peso_kg`, sum(ifnull(`k`.`monto`,0)) AS `total_monto` FROM `kardex_integral` AS `k` WHERE `k`.`persona_tipo` = 'productor' GROUP BY `k`.`persona_id`, `k`.`persona_nombre`, `k`.`tipo_kardex`, `k`.`tipo_movimiento`, `k`.`documento_tipo` ;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura para la vista `v_kardex_resumen_documentos`
+--
+DROP TABLE IF EXISTS `v_kardex_resumen_documentos`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`fran2869`@`localhost` SQL SECURITY DEFINER VIEW `v_kardex_resumen_documentos`  AS SELECT `k`.`documento_tipo` AS `documento_tipo`, `k`.`documento_numero` AS `documento_numero`, `k`.`documento_id` AS `documento_id`, `k`.`fecha_movimiento` AS `fecha_movimiento`, `k`.`persona_nombre` AS `persona_nombre`, sum(ifnull(`k`.`peso_kg`,0)) AS `peso_total`, sum(ifnull(`k`.`monto`,0)) AS `monto_total` FROM `kardex_integral` AS `k` GROUP BY `k`.`documento_tipo`, `k`.`documento_numero`, `k`.`documento_id`, `k`.`fecha_movimiento`, `k`.`persona_nombre` ;
 
 -- --------------------------------------------------------
 
@@ -1562,8 +2038,11 @@ ALTER TABLE `ventas`
 ALTER TABLE `venta_lotes`
   ADD CONSTRAINT `venta_lotes_lote_id_foreign` FOREIGN KEY (`lote_id`) REFERENCES `lotes` (`id`),
   ADD CONSTRAINT `venta_lotes_venta_id_foreign` FOREIGN KEY (`venta_id`) REFERENCES `ventas` (`id`) ON DELETE CASCADE;
+
+SET FOREIGN_KEY_CHECKS = 1;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

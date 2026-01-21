@@ -265,8 +265,12 @@ export function KardexIntegralERP() {
       </div>
 
       {/* TABS PRINCIPALES */}
-      <Tabs defaultValue="movimientos" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs defaultValue="detallado" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="detallado">
+            <FileText className="mr-2 h-4 w-4" />
+            Detallado
+          </TabsTrigger>
           <TabsTrigger value="movimientos">
             <Activity className="mr-2 h-4 w-4" />
             Movimientos
@@ -280,10 +284,175 @@ export function KardexIntegralERP() {
             Cuentas
           </TabsTrigger>
           <TabsTrigger value="reportes">
-            <FileText className="mr-2 h-4 w-4" />
+            <BarChart3 className="mr-2 h-4 w-4" />
             Reportes
           </TabsTrigger>
         </TabsList>
+
+        {/* TAB: VISTA DETALLADA COMBINADA */}
+        <TabsContent value="detallado" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">Registro Detallado de Operaciones</CardTitle>
+                  <CardDescription className="text-xs">
+                    Vista combinada: físico + financiero con detalles de calidades y kilajes
+                  </CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={cargarDatos}>
+                    <RefreshCw className="mr-2 h-3 w-3" />
+                    Actualizar
+                  </Button>
+                  <Button size="sm">
+                    <Download className="mr-2 h-3 w-3" />
+                    Exportar
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="w-[90px] text-xs">Fecha</TableHead>
+                      <TableHead className="w-[100px] text-xs">Operación</TableHead>
+                      <TableHead className="w-[110px] text-xs">Documento</TableHead>
+                      <TableHead className="w-[150px] text-xs">Persona</TableHead>
+                      <TableHead className="w-[120px] text-xs">Producto/Cuenta</TableHead>
+                      <TableHead className="w-[100px] text-xs">Calidad</TableHead>
+                      <TableHead className="w-[80px] text-xs text-right">Kg</TableHead>
+                      <TableHead className="w-[90px] text-xs text-right">Monto S/</TableHead>
+                      <TableHead className="w-[80px] text-xs text-right">Saldo Kg</TableHead>
+                      <TableHead className="w-[90px] text-xs text-right">Saldo S/</TableHead>
+                      <TableHead className="w-[80px] text-xs">Estado</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {movimientosFiltrados.slice(0, 10).map((mov) => (
+                      <TableRow key={mov.id} className="text-xs hover:bg-muted/30">
+                        <TableCell className="py-2 font-mono">
+                          {format(new Date(mov.fecha_movimiento), "dd/MM/yy HH:mm", { locale: es })}
+                        </TableCell>
+                        <TableCell className="py-2">
+                          <div className="flex items-center gap-1">
+                            {mov.tipo_movimiento === "ingreso" ? (
+                              <TrendingUp className="h-3 w-3 text-green-600" />
+                            ) : (
+                              <TrendingDown className="h-3 w-3 text-red-600" />
+                            )}
+                            <span className="capitalize">
+                              {mov.tipo_kardex === "fisico" ? "Entrada" : ""}
+                              {mov.tipo_kardex === "financiero" && mov.tipo_movimiento === "egreso" ? "Pago" : ""}
+                              {mov.tipo_kardex === "financiero" && mov.tipo_movimiento === "ingreso" ? "Cobro" : ""}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-2">
+                          <div>
+                            <div className="font-medium text-xs">{mov.documento_tipo.toUpperCase()}</div>
+                            <div className="text-[10px] text-muted-foreground">
+                              {mov.documento_numero || `#${mov.documento_id}`}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-2">
+                          <div>
+                            <div className="font-medium text-xs truncate max-w-[140px]">
+                              {mov.persona_nombre || "—"}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground capitalize">
+                              {mov.persona_tipo || "—"}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-2">
+                          {mov.tipo_kardex === "fisico" ? (
+                            <div>
+                              <div className="text-xs font-medium">{mov.producto_nombre || "Producto"}</div>
+                              <div className="text-[10px] text-muted-foreground">
+                                Lote: {mov.lote_codigo || mov.lote_id}
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-xs capitalize">{mov.cuenta_descripcion || mov.cuenta_tipo}</div>
+                          )}
+                        </TableCell>
+                        <TableCell className="py-2">
+                          {mov.categoria_nombre ? (
+                            <Badge variant="outline" className="text-[10px] px-1 py-0">
+                              {mov.categoria_nombre}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="py-2 text-right font-mono text-xs">
+                          {mov.peso_kg ? (
+                            <span className={mov.tipo_movimiento === "ingreso" ? "text-green-700" : "text-red-700"}>
+                              {mov.tipo_movimiento === "ingreso" ? "+" : "-"}
+                              {parseFloat(mov.peso_kg.toString()).toFixed(2)}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="py-2 text-right font-mono text-xs">
+                          {mov.monto ? (
+                            <span className={mov.tipo_movimiento === "egreso" ? "text-red-700" : "text-green-700"}>
+                              {mov.tipo_movimiento === "egreso" ? "-" : "+"}
+                              {parseFloat(mov.monto.toString()).toFixed(2)}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="py-2 text-right font-mono text-xs font-semibold">
+                          {mov.saldo_fisico_kg
+                            ? parseFloat(mov.saldo_fisico_kg.toString()).toFixed(2)
+                            : <span className="text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell className="py-2 text-right font-mono text-xs font-semibold">
+                          {mov.saldo_financiero
+                            ? parseFloat(mov.saldo_financiero.toString()).toFixed(2)
+                            : <span className="text-muted-foreground">—</span>}
+                        </TableCell>
+                        <TableCell className="py-2">
+                          {mov.tipo_movimiento === "ingreso" ? (
+                            <Badge variant="default" className="bg-green-100 text-green-800 text-[10px] px-1 py-0">
+                              Activo
+                            </Badge>
+                          ) : (
+                            <Badge variant="default" className="bg-red-100 text-red-800 text-[10px] px-1 py-0">
+                              Procesado
+                            </Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+              
+              {/* Paginación */}
+              <div className="flex items-center justify-between px-4 py-3 border-t">
+                <div className="text-xs text-muted-foreground">
+                  Mostrando {Math.min(10, movimientosFiltrados.length)} de {movimientosFiltrados.length} registros
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" disabled>
+                    Anterior
+                  </Button>
+                  <Button size="sm" variant="outline">
+                    Siguiente
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* TAB: MOVIMIENTOS */}
         <TabsContent value="movimientos" className="space-y-4">
