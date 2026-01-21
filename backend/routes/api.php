@@ -21,6 +21,8 @@ require_once '../controllers/LiquidacionesController.php';
 require_once '../controllers/CategoriasPesoController.php';
 require_once '../controllers/KardexIntegralController.php';
 
+// ✨ Helper para kardex integral
+require_once '../helpers/KardexIntegralHelper.php';
 
 try {
     $database = new Database();

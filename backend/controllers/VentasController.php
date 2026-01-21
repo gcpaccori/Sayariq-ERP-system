@@ -104,8 +104,42 @@ class VentasController {
         $stmt->bindParam(':obs', $obs);
         
         if($stmt->execute()) {
+            $ventaId = (int)$this->conn->lastInsertId();
+            
+            // ✨ Registrar en kardex integral
+            try {
+                $kardexHelper = new KardexIntegralHelper($this->conn);
+                
+                // Obtener info del cliente y lote (si aplica)
+                $queryInfo = "SELECT p.cliente_id, per.nombre_completo as cliente_nombre,
+                                     p.lote_id, l.nombre as lote_nombre
+                              FROM pedidos p
+                              LEFT JOIN personas per ON p.cliente_id = per.id
+                              LEFT JOIN lotes l ON p.lote_id = l.id
+                              WHERE p.id = :pedido_id";
+                $stmtInfo = $this->conn->prepare($queryInfo);
+                $stmtInfo->execute([':pedido_id' => $pedido]);
+                $info = $stmtInfo->fetch(PDO::FETCH_ASSOC);
+                
+                $kardexHelper->registrarVenta([
+                    'venta_id' => $ventaId,
+                    'numero_factura' => 'VENTA-' . $ventaId,
+                    'fecha_venta' => $fecha,
+                    'lote_id' => $info['lote_id'] ?? null,
+                    'categoria_id' => null,
+                    'categoria_nombre' => $cat,
+                    'peso_kg' => $kg,
+                    'cliente_id' => $info['cliente_id'] ?? null,
+                    'cliente_nombre' => $info['cliente_nombre'] ?? 'Cliente',
+                    'monto_total' => $total,
+                    'forma_pago' => 'banco'
+                ]);
+            } catch (Exception $kex) {
+                error_log("Error al registrar venta en kardex integral: " . $kex->getMessage());
+            }
+            
             http_response_code(201);
-            echo json_encode(["message" => "Venta creada", "id" => $this->conn->lastInsertId()]);
+            echo json_encode(["message" => "Venta creada", "id" => $ventaId]);
         } else {
             http_response_code(500);
             echo json_encode(["message" => "Error al crear venta"]);

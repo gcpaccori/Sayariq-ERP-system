@@ -531,6 +531,40 @@ class PesosLoteController {
                 );
             }
 
+            // ✨ Registrar en kardex integral
+            try {
+                $kardexHelper = new KardexIntegralHelper($this->conn);
+                
+                // Obtener info del lote y productor
+                $queryInfo = "SELECT l.nombre as lote_nombre, l.productor_id,
+                                     p.nombre_completo as productor_nombre
+                              FROM lotes l
+                              LEFT JOIN personas p ON l.productor_id = p.id
+                              WHERE l.id = :lote_id";
+                $stmtInfo = $this->conn->prepare($queryInfo);
+                $stmtInfo->execute([':lote_id' => $data['lote_id']]);
+                $info = $stmtInfo->fetch(PDO::FETCH_ASSOC);
+                
+                // Registrar cada categoría como movimiento independiente
+                foreach ($detallesNorm as $d) {
+                    if ($d['peso'] > 0) {
+                        $kardexHelper->registrarPesaje([
+                            'peso_id' => $pesoLoteId,
+                            'fecha_registro' => $data['fecha_pesado'],
+                            'lote_id' => $data['lote_id'],
+                            'lote_nombre' => $info['lote_nombre'] ?? 'Lote',
+                            'categoria_id' => $d['categoria_id'],
+                            'categoria_nombre' => $d['nombre'],
+                            'peso_kg' => $d['peso'],
+                            'productor_id' => $info['productor_id'] ?? null,
+                            'productor_nombre' => $info['productor_nombre'] ?? null
+                        ]);
+                    }
+                }
+            } catch (Exception $kex) {
+                error_log("Error al registrar pesaje en kardex integral: " . $kex->getMessage());
+            }
+
             $this->conn->commit();
 
             echo json_encode([

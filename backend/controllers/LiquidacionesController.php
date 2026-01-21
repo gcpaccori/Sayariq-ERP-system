@@ -399,6 +399,38 @@ class LiquidacionesController {
             $stmtLote->bindParam(':id', $data->lote_id, PDO::PARAM_INT);
             $stmtLote->execute();
 
+            // ✨ 6. Registrar en kardex integral
+            try {
+                $kardexHelper = new KardexIntegralHelper($this->conn);
+                
+                // Obtener info del lote y productor
+                $queryInfo = "SELECT l.nombre as lote_nombre, l.productor_id,
+                                     p.nombre_completo as productor_nombre
+                              FROM lotes l
+                              LEFT JOIN personas p ON l.productor_id = p.id
+                              WHERE l.id = :lote_id";
+                $stmtInfo = $this->conn->prepare($queryInfo);
+                $stmtInfo->execute([':lote_id' => $data->lote_id]);
+                $info = $stmtInfo->fetch(PDO::FETCH_ASSOC);
+                
+                $kardexHelper->registrarLiquidacion([
+                    'liquidacion_id' => $liquidacionId,
+                    'numero_liquidacion' => $numeroLiquidacion,
+                    'fecha_liquidacion' => $fecha,
+                    'lote_id' => (int)$data->lote_id,
+                    'lote_nombre' => $info['lote_nombre'] ?? 'N/A',
+                    'productor_id' => $info['productor_id'],
+                    'productor_nombre' => $info['productor_nombre'],
+                    'peso_total' => $totalBrutoFruta,
+                    'total_pagar' => $totalAPagar,
+                    'forma_pago' => 'banco',
+                    'observaciones' => $data->observaciones ?? null
+                ]);
+            } catch (Exception $kex) {
+                // Log error pero no interrumpir el flujo
+                error_log("Error al registrar liquidación en kardex integral: " . $kex->getMessage());
+            }
+
             $this->conn->commit();
 
             http_response_code(201);

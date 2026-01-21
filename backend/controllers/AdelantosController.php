@@ -66,6 +66,22 @@ class AdelantosController extends BaseController {
                 'estado' => 'pendiente'
             ]);
 
+            // ✨ Registrar en kardex integral
+            try {
+                $kardexHelper = new KardexIntegralHelper($this->db);
+                
+                $kardexHelper->registrarAdelanto([
+                    'adelanto_id' => $adelanto['id'],
+                    'fecha_adelanto' => $data['fecha_adelanto'] ?? date('Y-m-d'),
+                    'productor_id' => $data['productor_id'],
+                    'productor_nombre' => $data['productor_nombre'] ?? 'Productor',
+                    'monto' => $data['monto_original'],
+                    'motivo' => $data['concepto'] ?? null
+                ]);
+            } catch (Exception $kex) {
+                error_log("Error al registrar adelanto en kardex integral: " . $kex->getMessage());
+            }
+
             logMessage('INFO', 'Adelanto creado exitosamente', ['id' => $adelanto['id']]);
             http_response_code(201);
             return jsonResponse($adelanto);
