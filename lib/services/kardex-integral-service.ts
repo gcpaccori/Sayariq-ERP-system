@@ -39,23 +39,36 @@ class KardexIntegralService {
     movimientos: MovimientoKardexIntegral[]
     pagination: any
   }> {
-    const params = new URLSearchParams()
+    try {
+      const params = new URLSearchParams()
 
-    if (filtros) {
-      Object.entries(filtros).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          params.append(key, String(value))
+      if (filtros) {
+        Object.entries(filtros).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            params.append(key, String(value))
+          }
+        })
+      }
+
+      const url = `${BASE_PATH}${params.toString() ? `?${params.toString()}` : ""}`
+      const response = await ApiService.get<ResponseKardex<{
+        movimientos: MovimientoKardexIntegral[]
+        pagination: any
+      }>>(url)
+
+      // Validar que la respuesta tenga la estructura correcta
+      if (response.data && typeof response.data === 'object') {
+        return {
+          movimientos: Array.isArray(response.data.movimientos) ? response.data.movimientos : [],
+          pagination: response.data.pagination || { total: 0, limit: 100, offset: 0, pages: 0 }
         }
-      })
+      }
+
+      return { movimientos: [], pagination: { total: 0, limit: 100, offset: 0, pages: 0 } }
+    } catch (error) {
+      console.error('[KardexIntegralService] Error en obtenerMovimientos:', error)
+      return { movimientos: [], pagination: { total: 0, limit: 100, offset: 0, pages: 0 } }
     }
-
-    const url = `${BASE_PATH}${params.toString() ? `?${params.toString()}` : ""}`
-    const response = await ApiService.get<ResponseKardex<{
-      movimientos: MovimientoKardexIntegral[]
-      pagination: any
-    }>>(url)
-
-    return response.data || { movimientos: [], pagination: {} }
   }
 
   /**
@@ -83,19 +96,45 @@ class KardexIntegralService {
    * Obtener saldos físicos (stock por lote y categoría)
    */
   async obtenerSaldosFisicos(loteId?: number): Promise<SaldoFisico[]> {
-    const url = loteId ? `${BASE_PATH}/saldos/fisico?lote_id=${loteId}` : `${BASE_PATH}/saldos/fisico`
-    const response = await ApiService.get<ResponseKardex<SaldoFisico[]>>(url)
-    return response.data || []
+    try {
+      const url = loteId ? `${BASE_PATH}/saldos/fisico?lote_id=${loteId}` : `${BASE_PATH}/saldos/fisico`
+      const response = await ApiService.get<ResponseKardex<SaldoFisico[]>>(url)
+      
+      // Asegurar que siempre devolvemos un array
+      if (Array.isArray(response.data)) {
+        return response.data
+      }
+      
+      // Si data no es un array, devolver array vacío
+      console.warn('[KardexIntegralService] obtenerSaldosFisicos: data no es un array', response)
+      return []
+    } catch (error) {
+      console.error('[KardexIntegralService] Error en obtenerSaldosFisicos:', error)
+      return []
+    }
   }
 
   /**
    * Obtener saldos financieros (cuentas)
    */
   async obtenerSaldosFinancieros(): Promise<SaldoFinanciero[]> {
-    const response = await ApiService.get<ResponseKardex<SaldoFinanciero[]>>(
-      `${BASE_PATH}/saldos/financiero`
-    )
-    return response.data || []
+    try {
+      const response = await ApiService.get<ResponseKardex<SaldoFinanciero[]>>(
+        `${BASE_PATH}/saldos/financiero`
+      )
+      
+      // Asegurar que siempre devolvemos un array
+      if (Array.isArray(response.data)) {
+        return response.data
+      }
+      
+      // Si data no es un array, devolver array vacío
+      console.warn('[KardexIntegralService] obtenerSaldosFinancieros: data no es un array', response)
+      return []
+    } catch (error) {
+      console.error('[KardexIntegralService] Error en obtenerSaldosFinancieros:', error)
+      return []
+    }
   }
 
   /**
@@ -232,9 +271,27 @@ class KardexIntegralService {
       const response = await ApiService.get<ResponseKardex<ReporteInventario>>(
         `${BASE_PATH}/reporte/inventario`
       )
-      return response.data || null
+      
+      // Verificar que la respuesta tenga la estructura correcta
+      if (response.data && typeof response.data === 'object') {
+        // Asegurar que inventario sea un array
+        if (!Array.isArray(response.data.inventario)) {
+          console.warn('[KardexIntegralService] obtenerReporteInventario: inventario no es un array', response)
+          return {
+            resumen: response.data.resumen || {
+              total_items: 0,
+              peso_total_kg: 0,
+              valor_total: 0
+            },
+            inventario: []
+          }
+        }
+        return response.data
+      }
+      
+      return null
     } catch (error) {
-      console.error("Error al obtener reporte de inventario:", error)
+      console.error('[KardexIntegralService] Error en obtenerReporteInventario:', error)
       return null
     }
   }
@@ -258,22 +315,27 @@ class KardexIntegralService {
         this.obtenerMovimientos({ limit: 10 }),
       ])
 
+      // Validar que todos los datos sean arrays
+      const saldosFisicosArray = Array.isArray(saldosFisicos) ? saldosFisicos : []
+      const saldosFinancierosArray = Array.isArray(saldosFinancieros) ? saldosFinancieros : []
+      const movimientosArray = Array.isArray(movimientos.movimientos) ? movimientos.movimientos : []
+
       // Calcular resumen físico
       const resumen_fisico = {
-        total_stock_kg: saldosFisicos.reduce((sum, s) => sum + s.saldo_actual, 0),
-        total_lotes_activos: new Set(saldosFisicos.map((s) => s.lote_id)).size,
-        total_categorias: new Set(saldosFisicos.map((s) => s.categoria_id)).size,
-        valor_inventario: inventario?.resumen.valor_total || 0,
+        total_stock_kg: saldosFisicosArray.reduce((sum, s) => sum + (s.saldo_actual || 0), 0),
+        total_lotes_activos: new Set(saldosFisicosArray.map((s) => s.lote_id)).size,
+        total_categorias: new Set(saldosFisicosArray.map((s) => s.categoria_id)).size,
+        valor_inventario: inventario?.resumen?.valor_total || 0,
       }
 
       // Calcular resumen financiero
-      const saldoBanco = saldosFinancieros.find((s) => s.cuenta_tipo === "banco")?.saldo_actual || 0
-      const saldoCaja = saldosFinancieros.find((s) => s.cuenta_tipo === "caja")?.saldo_actual || 0
-      const saldoVentas = saldosFinancieros.find((s) => s.cuenta_tipo === "ventas")?.saldo_actual || 0
+      const saldoBanco = saldosFinancierosArray.find((s) => s.cuenta_tipo === "banco")?.saldo_actual || 0
+      const saldoCaja = saldosFinancierosArray.find((s) => s.cuenta_tipo === "caja")?.saldo_actual || 0
+      const saldoVentas = saldosFinancierosArray.find((s) => s.cuenta_tipo === "ventas")?.saldo_actual || 0
 
       // Filtrar movimientos financieros del mes actual
       const mesActual = new Date().toISOString().slice(0, 7)
-      const movimientosFinancieros = movimientos.movimientos.filter(
+      const movimientosFinancieros = movimientosArray.filter(
         (m) => m.tipo_kardex === "financiero" && m.fecha_movimiento.startsWith(mesActual)
       )
 
@@ -311,16 +373,16 @@ class KardexIntegralService {
       }
 
       // Generar datos para gráficos
-      const stock_por_categoria = saldosFisicos.map((s) => ({
+      const stock_por_categoria = saldosFisicosArray.map((s) => ({
         categoria: s.categoria_nombre,
-        peso: s.saldo_actual,
-        valor: s.saldo_actual * 5, // Estimado
+        peso: s.saldo_actual || 0,
+        valor: (s.saldo_actual || 0) * 5, // Estimado
       }))
 
       return {
         resumen_fisico,
         resumen_financiero,
-        movimientos_recientes: movimientos.movimientos,
+        movimientos_recientes: movimientosArray,
         alertas,
         graficos: {
           movimientos_diarios: [],
@@ -329,7 +391,7 @@ class KardexIntegralService {
         },
       }
     } catch (error) {
-      console.error("Error al obtener dashboard:", error)
+      console.error('[KardexIntegralService] Error al obtener dashboard:', error)
       return null
     }
   }
