@@ -118,8 +118,36 @@ class LotesController {
         $stmt->bindParam(':obs', $obs);
         
         if($stmt->execute()) {
+            $loteId = (int)$this->conn->lastInsertId();
+
+            if ($peso > 0) {
+                try {
+                    $productorNombre = null;
+                    if ($productor) {
+                        $stmtProd = $this->conn->prepare("SELECT nombre_completo FROM personas WHERE id = :id");
+                        $stmtProd->execute([':id' => $productor]);
+                        $prodRow = $stmtProd->fetch(PDO::FETCH_ASSOC);
+                        $productorNombre = $prodRow['nombre_completo'] ?? null;
+                    }
+
+                    $kardexHelper = new KardexIntegralHelper($this->conn);
+                    $kardexHelper->registrarIngresoLote([
+                        'lote_id' => $loteId,
+                        'numero_lote' => $numero,
+                        'producto' => $producto,
+                        'fecha_ingreso' => $fecha,
+                        'peso_inicial' => (float)$peso,
+                        'productor_id' => $productor,
+                        'productor_nombre' => $productorNombre,
+                        'observaciones' => $obs
+                    ]);
+                } catch (Exception $e) {
+                    error_log("Error al registrar lote en kardex integral: " . $e->getMessage());
+                }
+            }
+
             http_response_code(201);
-            echo json_encode(["message" => "Lote creado", "id" => $this->conn->lastInsertId()]);
+            echo json_encode(["message" => "Lote creado", "id" => $loteId]);
         } else {
             http_response_code(500);
             echo json_encode(["message" => "Error al crear lote", "error" => $stmt->errorInfo()]);
@@ -128,6 +156,12 @@ class LotesController {
 
     public function update($id) {
         $data = json_decode(file_get_contents("php://input"));
+
+        $stmtPrev = $this->conn->prepare("SELECT peso_inicial, numero_lote, producto, productor_id, fecha_ingreso, observaciones 
+                                          FROM {$this->table} WHERE id = :id");
+        $stmtPrev->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmtPrev->execute();
+        $prev = $stmtPrev->fetch(PDO::FETCH_ASSOC);
         
         $query = "UPDATE " . $this->table . " SET 
                   numero_lote = :numero,
@@ -174,6 +208,40 @@ class LotesController {
         $stmt->bindParam(':obs', $obs);
         
         if($stmt->execute()) {
+            if ($prev) {
+                $pesoPrevio = (float)$prev['peso_inicial'];
+                $pesoNuevo = (float)$peso;
+                $diferencia = $pesoNuevo - $pesoPrevio;
+
+                if ($diferencia != 0.0) {
+                    try {
+                        $productorNombre = null;
+                        if ($productor) {
+                            $stmtProd = $this->conn->prepare("SELECT nombre_completo FROM personas WHERE id = :id");
+                            $stmtProd->execute([':id' => $productor]);
+                            $prodRow = $stmtProd->fetch(PDO::FETCH_ASSOC);
+                            $productorNombre = $prodRow['nombre_completo'] ?? null;
+                        }
+
+                        $kardexHelper = new KardexIntegralHelper($this->conn);
+                        $kardexHelper->registrarMovimientoFisico([
+                            'fecha_movimiento' => $fecha,
+                            'tipo_movimiento' => $diferencia > 0 ? 'ingreso' : 'salida',
+                            'documento_tipo' => 'lote',
+                            'documento_id' => (int)$id,
+                            'documento_numero' => $numero,
+                            'lote_id' => (int)$id,
+                            'peso_kg' => abs($diferencia),
+                            'persona_id' => $productor,
+                            'persona_nombre' => $productorNombre,
+                            'persona_tipo' => 'productor',
+                            'concepto' => "Ajuste peso lote {$numero}"
+                        ]);
+                    } catch (Exception $e) {
+                        error_log("Error al ajustar lote en kardex integral: " . $e->getMessage());
+                    }
+                }
+            }
             echo json_encode(["message" => "Lote actualizado"]);
         } else {
             http_response_code(500);
