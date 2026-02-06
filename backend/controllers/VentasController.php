@@ -148,6 +148,11 @@ class VentasController {
 
     public function update($id) {
         $data = json_decode(file_get_contents("php://input"));
+
+        $stmtPrev = $this->conn->prepare("SELECT * FROM " . $this->table . " WHERE id = :id");
+        $stmtPrev->bindParam(':id', $id);
+        $stmtPrev->execute();
+        $prev = $stmtPrev->fetch(PDO::FETCH_ASSOC);
         
         $query = "UPDATE " . $this->table . " SET 
                   pedido_id = :pedido,
@@ -182,6 +187,117 @@ class VentasController {
         $stmt->bindParam(':obs', $obs);
         
         if($stmt->execute()) {
+            if ($prev) {
+                $prevKg = (float)($prev['kg'] ?? 0);
+                $prevTotal = (float)($prev['total'] ?? ($prevKg * (float)($prev['precio'] ?? 0)));
+                $prevCat = $prev['categoria'] ?? '';
+                $prevPedido = $prev['pedido_id'] ?? null;
+                $prevFecha = $prev['fecha_venta'] ?? date('Y-m-d');
+
+                $cambio = ($prevKg != (float)$kg)
+                    || ($prevTotal != (float)$total)
+                    || ($prevCat !== $cat)
+                    || ($prevPedido != $pedido)
+                    || ($prevFecha !== $fecha);
+
+                if ($cambio) {
+                    try {
+                        $kardexHelper = new KardexIntegralHelper($this->conn);
+
+                        $infoPrev = null;
+                        if ($prevPedido) {
+                            $stmtInfoPrev = $this->conn->prepare("SELECT p.cliente_id, per.nombre_completo as cliente_nombre,
+                                                                          p.lote_id, l.nombre as lote_nombre
+                                                                   FROM pedidos p
+                                                                   LEFT JOIN personas per ON p.cliente_id = per.id
+                                                                   LEFT JOIN lotes l ON p.lote_id = l.id
+                                                                   WHERE p.id = :pedido_id");
+                            $stmtInfoPrev->execute([':pedido_id' => $prevPedido]);
+                            $infoPrev = $stmtInfoPrev->fetch(PDO::FETCH_ASSOC);
+                        }
+
+                        if ($prevKg > 0) {
+                            $kardexHelper->registrarMovimientoFisico([
+                                'fecha_movimiento' => $prevFecha,
+                                'tipo_movimiento' => 'ingreso',
+                                'documento_tipo' => 'venta',
+                                'documento_id' => (int)$id,
+                                'documento_numero' => 'VENTA-' . $id,
+                                'lote_id' => $infoPrev['lote_id'] ?? null,
+                                'categoria_nombre' => $prevCat,
+                                'peso_kg' => $prevKg,
+                                'persona_id' => $infoPrev['cliente_id'] ?? null,
+                                'persona_nombre' => $infoPrev['cliente_nombre'] ?? null,
+                                'persona_tipo' => 'cliente',
+                                'concepto' => "Reverso venta VENTA-{$id}"
+                            ]);
+                        }
+
+                        if ($prevTotal > 0) {
+                            $kardexHelper->registrarMovimientoFinanciero([
+                                'fecha_movimiento' => $prevFecha,
+                                'tipo_movimiento' => 'egreso',
+                                'documento_tipo' => 'venta',
+                                'documento_id' => (int)$id,
+                                'documento_numero' => 'VENTA-' . $id,
+                                'cuenta_tipo' => 'banco',
+                                'monto' => $prevTotal,
+                                'persona_id' => $infoPrev['cliente_id'] ?? null,
+                                'persona_nombre' => $infoPrev['cliente_nombre'] ?? null,
+                                'persona_tipo' => 'cliente',
+                                'concepto' => "Reverso cobro venta VENTA-{$id}"
+                            ]);
+                        }
+
+                        $infoNew = null;
+                        if ($pedido) {
+                            $stmtInfoNew = $this->conn->prepare("SELECT p.cliente_id, per.nombre_completo as cliente_nombre,
+                                                                          p.lote_id, l.nombre as lote_nombre
+                                                                   FROM pedidos p
+                                                                   LEFT JOIN personas per ON p.cliente_id = per.id
+                                                                   LEFT JOIN lotes l ON p.lote_id = l.id
+                                                                   WHERE p.id = :pedido_id");
+                            $stmtInfoNew->execute([':pedido_id' => $pedido]);
+                            $infoNew = $stmtInfoNew->fetch(PDO::FETCH_ASSOC);
+                        }
+
+                        if ($kg > 0) {
+                            $kardexHelper->registrarMovimientoFisico([
+                                'fecha_movimiento' => $fecha,
+                                'tipo_movimiento' => 'salida',
+                                'documento_tipo' => 'venta',
+                                'documento_id' => (int)$id,
+                                'documento_numero' => 'VENTA-' . $id,
+                                'lote_id' => $infoNew['lote_id'] ?? null,
+                                'categoria_nombre' => $cat,
+                                'peso_kg' => (float)$kg,
+                                'persona_id' => $infoNew['cliente_id'] ?? null,
+                                'persona_nombre' => $infoNew['cliente_nombre'] ?? null,
+                                'persona_tipo' => 'cliente',
+                                'concepto' => "Ajuste venta VENTA-{$id}"
+                            ]);
+                        }
+
+                        if ($total > 0) {
+                            $kardexHelper->registrarMovimientoFinanciero([
+                                'fecha_movimiento' => $fecha,
+                                'tipo_movimiento' => 'ingreso',
+                                'documento_tipo' => 'venta',
+                                'documento_id' => (int)$id,
+                                'documento_numero' => 'VENTA-' . $id,
+                                'cuenta_tipo' => 'banco',
+                                'monto' => (float)$total,
+                                'persona_id' => $infoNew['cliente_id'] ?? null,
+                                'persona_nombre' => $infoNew['cliente_nombre'] ?? null,
+                                'persona_tipo' => 'cliente',
+                                'concepto' => "Ajuste cobro venta VENTA-{$id}"
+                            ]);
+                        }
+                    } catch (Exception $kex) {
+                        error_log("Error al ajustar venta en kardex integral: " . $kex->getMessage());
+                    }
+                }
+            }
             echo json_encode(["message" => "Venta actualizada"]);
         } else {
             http_response_code(500);
@@ -190,11 +306,71 @@ class VentasController {
     }
 
     public function delete($id) {
+        $stmtPrev = $this->conn->prepare("SELECT * FROM " . $this->table . " WHERE id = :id");
+        $stmtPrev->bindParam(':id', $id);
+        $stmtPrev->execute();
+        $prev = $stmtPrev->fetch(PDO::FETCH_ASSOC);
+
         $query = "DELETE FROM " . $this->table . " WHERE id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
         
         if($stmt->execute()) {
+            if ($prev) {
+                try {
+                    $kardexHelper = new KardexIntegralHelper($this->conn);
+                    $infoPrev = null;
+                    if (!empty($prev['pedido_id'])) {
+                        $stmtInfoPrev = $this->conn->prepare("SELECT p.cliente_id, per.nombre_completo as cliente_nombre,
+                                                                      p.lote_id, l.nombre as lote_nombre
+                                                               FROM pedidos p
+                                                               LEFT JOIN personas per ON p.cliente_id = per.id
+                                                               LEFT JOIN lotes l ON p.lote_id = l.id
+                                                               WHERE p.id = :pedido_id");
+                        $stmtInfoPrev->execute([':pedido_id' => $prev['pedido_id']]);
+                        $infoPrev = $stmtInfoPrev->fetch(PDO::FETCH_ASSOC);
+                    }
+
+                    $prevKg = (float)($prev['kg'] ?? 0);
+                    $prevTotal = (float)($prev['total'] ?? ($prevKg * (float)($prev['precio'] ?? 0)));
+                    $prevFecha = $prev['fecha_venta'] ?? date('Y-m-d');
+
+                    if ($prevKg > 0) {
+                        $kardexHelper->registrarMovimientoFisico([
+                            'fecha_movimiento' => $prevFecha,
+                            'tipo_movimiento' => 'ingreso',
+                            'documento_tipo' => 'venta',
+                            'documento_id' => (int)$id,
+                            'documento_numero' => 'VENTA-' . $id,
+                            'lote_id' => $infoPrev['lote_id'] ?? null,
+                            'categoria_nombre' => $prev['categoria'] ?? '',
+                            'peso_kg' => $prevKg,
+                            'persona_id' => $infoPrev['cliente_id'] ?? null,
+                            'persona_nombre' => $infoPrev['cliente_nombre'] ?? null,
+                            'persona_tipo' => 'cliente',
+                            'concepto' => "Reverso venta VENTA-{$id}"
+                        ]);
+                    }
+
+                    if ($prevTotal > 0) {
+                        $kardexHelper->registrarMovimientoFinanciero([
+                            'fecha_movimiento' => $prevFecha,
+                            'tipo_movimiento' => 'egreso',
+                            'documento_tipo' => 'venta',
+                            'documento_id' => (int)$id,
+                            'documento_numero' => 'VENTA-' . $id,
+                            'cuenta_tipo' => 'banco',
+                            'monto' => $prevTotal,
+                            'persona_id' => $infoPrev['cliente_id'] ?? null,
+                            'persona_nombre' => $infoPrev['cliente_nombre'] ?? null,
+                            'persona_tipo' => 'cliente',
+                            'concepto' => "Reverso cobro venta VENTA-{$id}"
+                        ]);
+                    }
+                } catch (Exception $kex) {
+                    error_log("Error al eliminar venta en kardex integral: " . $kex->getMessage());
+                }
+            }
             echo json_encode(["message" => "Venta eliminada"]);
         } else {
             http_response_code(500);

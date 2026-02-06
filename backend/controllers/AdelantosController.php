@@ -147,7 +147,8 @@ class AdelantosController extends BaseController {
             }
 
             logMessage('DEBUG', 'AdelantosController: DELETE', ['id' => $id]);
-            
+
+            $prev = $this->adelantoModel->getById($id);
             $result = $this->adelantoModel->delete($id);
             
             if (!$result) {
@@ -157,6 +158,29 @@ class AdelantosController extends BaseController {
                     'error' => 'Not Found',
                     'message' => "Adelanto no encontrado con ID: {$id}"
                 ], 404);
+            }
+
+            if ($prev) {
+                try {
+                    $kardexHelper = new KardexIntegralHelper($this->db);
+                    $monto = (float)($prev['monto_original'] ?? 0);
+                    if ($monto > 0) {
+                        $kardexHelper->registrarMovimientoFinanciero([
+                            'fecha_movimiento' => $prev['fecha_adelanto'] ?? date('Y-m-d'),
+                            'tipo_movimiento' => 'ingreso',
+                            'documento_tipo' => 'adelanto',
+                            'documento_id' => (int)$id,
+                            'cuenta_tipo' => 'caja',
+                            'monto' => $monto,
+                            'persona_id' => $prev['productor_id'] ?? null,
+                            'persona_nombre' => $prev['productor_nombre'] ?? null,
+                            'persona_tipo' => 'productor',
+                            'concepto' => "Reverso adelanto #{$id}"
+                        ]);
+                    }
+                } catch (Exception $kex) {
+                    error_log("Error al eliminar adelanto en kardex integral: " . $kex->getMessage());
+                }
             }
 
             logMessage('INFO', 'Adelanto eliminado exitosamente', ['id' => $id]);
