@@ -12,6 +12,8 @@ class VentasController {
             case 'GET':
                 if ($id) {
                     $this->getOne($id);
+                } else if ($action === 'pedido-lotes') {
+                    $this->getLotesVendidosPorPedido();
                 } else if ($action === 'por-pedido') {
                     $this->getByPedido();
                 } else {
@@ -57,8 +59,11 @@ class VentasController {
     }
 
     public function getByPedido() {
-        $data = json_decode(file_get_contents("php://input"));
-        $pedidoId = $data->pedido_id ?? null;
+        $pedidoId = $_GET['pedido_id'] ?? null;
+        if (!$pedidoId) {
+            $data = json_decode(file_get_contents("php://input"));
+            $pedidoId = $data->pedido_id ?? null;
+        }
         
         if (!$pedidoId) {
             http_response_code(400);
@@ -76,24 +81,279 @@ class VentasController {
         echo json_encode($result);
     }
 
+    public function getLotesVendidosPorPedido() {
+        $pedidoId = $_GET['pedido_id'] ?? null;
+        if (!$pedidoId) {
+            $data = json_decode(file_get_contents("php://input"));
+            $pedidoId = $data->pedido_id ?? null;
+        }
+
+        if (!$pedidoId) {
+            http_response_code(400);
+            echo json_encode(["message" => "pedido_id requerido"]);
+            return;
+        }
+
+        $query = "SELECT 
+                    vl.lote_id,
+                    l.numero_lote,
+                    l.producto,
+                    vl.categoria_id,
+                    vl.categoria,
+                    SUM(vl.kg_vendido) AS kg_vendido
+                  FROM venta_lotes vl
+                  INNER JOIN ventas v ON v.id = vl.venta_id
+                  INNER JOIN lotes l ON l.id = vl.lote_id
+                  WHERE v.pedido_id = :pedido_id
+                  GROUP BY vl.lote_id, vl.categoria_id, vl.categoria, l.numero_lote, l.producto
+                  ORDER BY l.numero_lote ASC";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(':pedido_id', $pedidoId);
+        $stmt->execute();
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode($result);
+    }
+
     public function create() {
-        $data = json_decode(file_get_contents("php://input"));
-        
+        $data = json_decode(file_get_contents("php://input"), true);
+
+        if (!is_array($data)) {
+            http_response_code(400);
+            echo json_encode(["message" => "Datos inválidos"]);
+            return;
+        }
+
+        $lotes = $data['lotes'] ?? [];
+
+        if (!empty($lotes) && is_array($lotes)) {
+            $pedidoId = isset($data['pedido_id']) ? (int)$data['pedido_id'] : 0;
+            if (!$pedidoId) {
+                http_response_code(400);
+                echo json_encode(["message" => "pedido_id requerido"]);
+                return;
+            }
+
+            $stmtPedido = $this->conn->prepare("SELECT p.producto, p.categoria, p.cliente_id, per.nombre_completo AS cliente_nombre
+                                                 FROM pedidos p
+                                                 LEFT JOIN personas per ON p.cliente_id = per.id
+                                                 WHERE p.id = :pedido_id");
+            $stmtPedido->execute([':pedido_id' => $pedidoId]);
+            $pedidoInfo = $stmtPedido->fetch(PDO::FETCH_ASSOC);
+
+            if (!$pedidoInfo) {
+                http_response_code(404);
+                echo json_encode(["message" => "Pedido no encontrado"]);
+                return;
+            }
+
+            $fecha = $data['fecha_venta'] ?? date('Y-m-d');
+            $obs = $data['observaciones'] ?? '';
+            $prod = $pedidoInfo['producto'] ?? ($data['producto'] ?? '');
+
+            $detalles = [];
+            $totalKg = 0;
+            $total = 0;
+            $categorias = [];
+
+            foreach ($lotes as $lote) {
+                $loteId = isset($lote['lote_id']) ? (int)$lote['lote_id'] : 0;
+                $categoriaId = isset($lote['categoria_id']) ? (int)$lote['categoria_id'] : null;
+                $categoriaNombre = trim($lote['categoria'] ?? $lote['categoria_nombre'] ?? '');
+                $kg = isset($lote['kg_vendido']) ? (float)$lote['kg_vendido'] : (isset($lote['kg']) ? (float)$lote['kg'] : 0);
+                $precioUnitario = isset($lote['precio_unitario']) ? (float)$lote['precio_unitario'] : (isset($data['precio']) ? (float)$data['precio'] : 0);
+
+                if (!$loteId || $kg <= 0 || $precioUnitario <= 0) {
+                    continue;
+                }
+
+                $sqlAsignado = "SELECT COALESCE(SUM(COALESCE(kg_asignado, peso_asignado, 0)), 0) AS asignado
+                                FROM pedido_lotes
+                                WHERE pedido_id = :pedido_id
+                                  AND lote_id = :lote_id
+                                  AND (
+                                        (categoria_id IS NOT NULL AND categoria_id = :categoria_id)
+                                        OR (categoria_id IS NULL AND LOWER(categoria) = LOWER(:categoria_nombre))
+                                      )";
+                $stmtAsignado = $this->conn->prepare($sqlAsignado);
+                $stmtAsignado->execute([
+                    ':pedido_id' => $pedidoId,
+                    ':lote_id' => $loteId,
+                    ':categoria_id' => $categoriaId,
+                    ':categoria_nombre' => $categoriaNombre,
+                ]);
+                $asignado = (float)($stmtAsignado->fetchColumn() ?: 0);
+
+                $sqlVendido = "SELECT COALESCE(SUM(vl.kg_vendido), 0) AS vendido
+                               FROM venta_lotes vl
+                               INNER JOIN ventas v ON v.id = vl.venta_id
+                               WHERE v.pedido_id = :pedido_id
+                                 AND vl.lote_id = :lote_id
+                                 AND (
+                                       (vl.categoria_id IS NOT NULL AND vl.categoria_id = :categoria_id)
+                                       OR (vl.categoria_id IS NULL AND LOWER(vl.categoria) = LOWER(:categoria_nombre))
+                                     )";
+                $stmtVendido = $this->conn->prepare($sqlVendido);
+                $stmtVendido->execute([
+                    ':pedido_id' => $pedidoId,
+                    ':lote_id' => $loteId,
+                    ':categoria_id' => $categoriaId,
+                    ':categoria_nombre' => $categoriaNombre,
+                ]);
+                $vendido = (float)($stmtVendido->fetchColumn() ?: 0);
+
+                $disponible = $asignado - $vendido;
+
+                if ($kg > $disponible + 0.001) {
+                    http_response_code(400);
+                    echo json_encode([
+                        "message" => "No hay saldo suficiente para el lote asignado",
+                        "lote_id" => $loteId,
+                        "categoria" => $categoriaNombre,
+                        "asignado" => $asignado,
+                        "vendido" => $vendido,
+                        "disponible" => $disponible,
+                        "kg_solicitado" => $kg
+                    ]);
+                    return;
+                }
+
+                $lineTotal = $kg * $precioUnitario;
+                $totalKg += $kg;
+                $total += $lineTotal;
+                if ($categoriaNombre) {
+                    $categorias[] = $categoriaNombre;
+                }
+
+                $detalles[] = [
+                    'lote_id' => $loteId,
+                    'categoria_id' => $categoriaId,
+                    'categoria' => $categoriaNombre,
+                    'kg_vendido' => $kg,
+                    'precio_unitario' => $precioUnitario,
+                    'total' => $lineTotal,
+                ];
+            }
+
+            if (empty($detalles)) {
+                http_response_code(400);
+                echo json_encode(["message" => "No hay lotes válidos para registrar la venta"]);
+                return;
+            }
+
+            $categoriaResumen = count(array_unique($categorias)) > 1 ? 'MIXTO' : ($categorias[0] ?? $pedidoInfo['categoria'] ?? '');
+            $precioResumen = $totalKg > 0 ? $total / $totalKg : 0;
+
+            try {
+                $this->conn->beginTransaction();
+
+                $query = "INSERT INTO " . $this->table . " 
+                          (pedido_id, producto, categoria, kg, precio, total, fecha_venta, observaciones) 
+                          VALUES (:pedido, :prod, :cat, :kg, :precio, :total, :fecha, :obs)";
+                $stmt = $this->conn->prepare($query);
+                $stmt->execute([
+                    ':pedido' => $pedidoId,
+                    ':prod' => $prod,
+                    ':cat' => $categoriaResumen,
+                    ':kg' => $totalKg,
+                    ':precio' => $precioResumen,
+                    ':total' => $total,
+                    ':fecha' => $fecha,
+                    ':obs' => $obs,
+                ]);
+
+                $ventaId = (int)$this->conn->lastInsertId();
+
+                $stmtDetalle = $this->conn->prepare(
+                    "INSERT INTO venta_lotes 
+                        (venta_id, lote_id, categoria_id, categoria, kg_vendido, precio_unitario, total)
+                     VALUES
+                        (:venta_id, :lote_id, :categoria_id, :categoria, :kg_vendido, :precio_unitario, :total)"
+                );
+
+                foreach ($detalles as $detalle) {
+                    $stmtDetalle->execute([
+                        ':venta_id' => $ventaId,
+                        ':lote_id' => $detalle['lote_id'],
+                        ':categoria_id' => $detalle['categoria_id'],
+                        ':categoria' => $detalle['categoria'],
+                        ':kg_vendido' => $detalle['kg_vendido'],
+                        ':precio_unitario' => $detalle['precio_unitario'],
+                        ':total' => $detalle['total'],
+                    ]);
+                }
+
+                // ✨ Registrar en kardex integral
+                try {
+                    $kardexHelper = new KardexIntegralHelper($this->conn);
+                    $numeroFactura = 'VENTA-' . $ventaId;
+
+                    foreach ($detalles as $detalle) {
+                        $kardexHelper->registrarMovimientoFisico([
+                            'fecha_movimiento' => $fecha,
+                            'tipo_movimiento' => 'salida',
+                            'documento_tipo' => 'venta',
+                            'documento_id' => $ventaId,
+                            'documento_numero' => $numeroFactura,
+                            'lote_id' => $detalle['lote_id'],
+                            'categoria_id' => $detalle['categoria_id'],
+                            'categoria_nombre' => $detalle['categoria'],
+                            'peso_kg' => $detalle['kg_vendido'],
+                            'persona_id' => $pedidoInfo['cliente_id'] ?? null,
+                            'persona_nombre' => $pedidoInfo['cliente_nombre'] ?? 'Cliente',
+                            'persona_tipo' => 'cliente',
+                            'concepto' => "Venta {$numeroFactura} - {$detalle['categoria']}"
+                        ]);
+                    }
+
+                    if ($total > 0) {
+                        $kardexHelper->registrarMovimientoFinanciero([
+                            'fecha_movimiento' => $fecha,
+                            'tipo_movimiento' => 'ingreso',
+                            'documento_tipo' => 'venta',
+                            'documento_id' => $ventaId,
+                            'documento_numero' => $numeroFactura,
+                            'cuenta_tipo' => 'banco',
+                            'monto' => $total,
+                            'persona_id' => $pedidoInfo['cliente_id'] ?? null,
+                            'persona_nombre' => $pedidoInfo['cliente_nombre'] ?? 'Cliente',
+                            'persona_tipo' => 'cliente',
+                            'concepto' => "Cobro venta {$numeroFactura}"
+                        ]);
+                    }
+                } catch (Exception $kex) {
+                    error_log("Error al registrar venta en kardex integral: " . $kex->getMessage());
+                }
+
+                $this->conn->commit();
+
+                http_response_code(201);
+                echo json_encode(["message" => "Venta creada", "id" => $ventaId]);
+            } catch (Exception $e) {
+                $this->conn->rollBack();
+                http_response_code(500);
+                echo json_encode(["message" => "Error al crear venta", "error" => $e->getMessage()]);
+            }
+
+            return;
+        }
+
+        $dataObj = (object)$data;
+
         $query = "INSERT INTO " . $this->table . " 
                   (pedido_id, producto, categoria, kg, precio, total, fecha_venta, observaciones) 
                   VALUES (:pedido, :prod, :cat, :kg, :precio, :total, :fecha, :obs)";
-        
+
         $stmt = $this->conn->prepare($query);
-        
-        $pedido = $data->pedido_id ?? null;
-        $prod = $data->producto ?? '';
-        $cat = $data->categoria ?? '';
-        $kg = $data->kg ?? 0;
-        $precio = $data->precio ?? 0;
+
+        $pedido = $dataObj->pedido_id ?? null;
+        $prod = $dataObj->producto ?? '';
+        $cat = $dataObj->categoria ?? '';
+        $kg = $dataObj->kg ?? 0;
+        $precio = $dataObj->precio ?? 0;
         $total = $kg * $precio;
-        $fecha = $data->fecha_venta ?? date('Y-m-d');
-        $obs = $data->observaciones ?? '';
-        
+        $fecha = $dataObj->fecha_venta ?? date('Y-m-d');
+        $obs = $dataObj->observaciones ?? '';
+
         $stmt->bindParam(':pedido', $pedido);
         $stmt->bindParam(':prod', $prod);
         $stmt->bindParam(':cat', $cat);
@@ -102,14 +362,14 @@ class VentasController {
         $stmt->bindParam(':total', $total);
         $stmt->bindParam(':fecha', $fecha);
         $stmt->bindParam(':obs', $obs);
-        
+
         if($stmt->execute()) {
             $ventaId = (int)$this->conn->lastInsertId();
-            
+
             // ✨ Registrar en kardex integral
             try {
                 $kardexHelper = new KardexIntegralHelper($this->conn);
-                
+
                 // Obtener info del cliente y lote (si aplica)
                 $queryInfo = "SELECT p.cliente_id, per.nombre_completo as cliente_nombre,
                                      p.lote_id, l.nombre as lote_nombre
@@ -120,7 +380,7 @@ class VentasController {
                 $stmtInfo = $this->conn->prepare($queryInfo);
                 $stmtInfo->execute([':pedido_id' => $pedido]);
                 $info = $stmtInfo->fetch(PDO::FETCH_ASSOC);
-                
+
                 $kardexHelper->registrarVenta([
                     'venta_id' => $ventaId,
                     'numero_factura' => 'VENTA-' . $ventaId,
@@ -137,7 +397,7 @@ class VentasController {
             } catch (Exception $kex) {
                 error_log("Error al registrar venta en kardex integral: " . $kex->getMessage());
             }
-            
+
             http_response_code(201);
             echo json_encode(["message" => "Venta creada", "id" => $ventaId]);
         } else {
@@ -310,6 +570,10 @@ class VentasController {
         $stmtPrev->bindParam(':id', $id);
         $stmtPrev->execute();
         $prev = $stmtPrev->fetch(PDO::FETCH_ASSOC);
+
+        $stmtLotes = $this->conn->prepare("DELETE FROM venta_lotes WHERE venta_id = :id");
+        $stmtLotes->bindParam(':id', $id);
+        $stmtLotes->execute();
 
         $query = "DELETE FROM " . $this->table . " WHERE id = :id";
         $stmt = $this->conn->prepare($query);
