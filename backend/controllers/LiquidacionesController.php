@@ -658,7 +658,8 @@ class LiquidacionesController {
         try {
             $this->conn->beginTransaction();
 
-            $query = "SELECT lote_id FROM {$this->tableLiquidaciones} WHERE id = :id";
+            $query = "SELECT lote_id, numero_liquidacion, fecha_liquidacion, total_bruto_fruta, total_a_pagar 
+                      FROM {$this->tableLiquidaciones} WHERE id = :id";
             $stmt = $this->conn->prepare($query);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->execute();
@@ -668,6 +669,56 @@ class LiquidacionesController {
                 http_response_code(404);
                 echo json_encode(["success" => false, "message" => "Liquidación no encontrada"]);
                 return;
+            }
+
+            // Ajustar kardex integral (reverso físico y financiero)
+            try {
+                $kardexHelper = new KardexIntegralHelper($this->conn);
+                $stmtInfo = $this->conn->prepare("SELECT l.productor_id, p.nombre_completo as productor_nombre
+                                                  FROM lotes l
+                                                  LEFT JOIN personas p ON l.productor_id = p.id
+                                                  WHERE l.id = :lote_id");
+                $stmtInfo->execute([':lote_id' => $liquidacion['lote_id']]);
+                $info = $stmtInfo->fetch(PDO::FETCH_ASSOC);
+
+                $numeroLiquidacion = $liquidacion['numero_liquidacion'] ?? "LIQ-{$id}";
+                $fechaLiq = $liquidacion['fecha_liquidacion'] ?? date('Y-m-d');
+                $pesoTotal = (float)($liquidacion['total_bruto_fruta'] ?? 0);
+                $montoTotal = (float)($liquidacion['total_a_pagar'] ?? 0);
+
+                if ($pesoTotal > 0) {
+                    $kardexHelper->registrarMovimientoFisico([
+                        'fecha_movimiento' => $fechaLiq,
+                        'tipo_movimiento' => 'ingreso',
+                        'documento_tipo' => 'liquidacion',
+                        'documento_id' => (int)$id,
+                        'documento_numero' => $numeroLiquidacion,
+                        'lote_id' => $liquidacion['lote_id'],
+                        'peso_kg' => $pesoTotal,
+                        'persona_id' => $info['productor_id'] ?? null,
+                        'persona_nombre' => $info['productor_nombre'] ?? null,
+                        'persona_tipo' => 'productor',
+                        'concepto' => "Reverso liquidación {$numeroLiquidacion}"
+                    ]);
+                }
+
+                if ($montoTotal > 0) {
+                    $kardexHelper->registrarMovimientoFinanciero([
+                        'fecha_movimiento' => $fechaLiq,
+                        'tipo_movimiento' => 'ingreso',
+                        'documento_tipo' => 'liquidacion',
+                        'documento_id' => (int)$id,
+                        'documento_numero' => $numeroLiquidacion,
+                        'cuenta_tipo' => 'banco',
+                        'monto' => $montoTotal,
+                        'persona_id' => $info['productor_id'] ?? null,
+                        'persona_nombre' => $info['productor_nombre'] ?? null,
+                        'persona_tipo' => 'productor',
+                        'concepto' => "Reverso pago liquidación {$numeroLiquidacion}"
+                    ]);
+                }
+            } catch (Exception $kex) {
+                error_log("Error al revertir liquidación en kardex integral: " . $kex->getMessage());
             }
 
             // Eliminar movimientos de kardex asociados
