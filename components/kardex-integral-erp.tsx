@@ -58,12 +58,16 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 import kardexIntegralService from "@/lib/services/kardex-integral-service"
+import { personasService } from "@/lib/services/personas-service"
+import { useApi } from "@/lib/hooks/use-api"
 import type {
   DashboardKardex,
   MovimientoKardexIntegral,
   SaldoFisico,
   SaldoFinanciero,
+  EstadoCuentaProductor,
 } from "@/lib/types/kardex-integral"
+import type { Persona } from "@/lib/types"
 
 export function KardexIntegralERP() {
   const [loading, setLoading] = useState(true)
@@ -74,6 +78,27 @@ export function KardexIntegralERP() {
   const [filtroTipo, setFiltroTipo] = useState<string>("todos")
   const [filtroDocumento, setFiltroDocumento] = useState<string>("todos")
   const [searchTerm, setSearchTerm] = useState("")
+  const [productorSeleccionado, setProductorSeleccionado] = useState<string>("")
+  const [estadoCuenta, setEstadoCuenta] = useState<EstadoCuentaProductor | null>(null)
+  const [cargandoEstadoCuenta, setCargandoEstadoCuenta] = useState(false)
+
+  const { data: personasData } = useApi(personasService, { initialLoad: true })
+  const productores = useMemo(
+    () =>
+      Array.isArray(personasData)
+        ? (personasData as Persona[]).filter((persona) =>
+            (persona.roles || []).includes("productor") || persona.tipo_persona === "productor",
+          )
+        : [],
+    [personasData],
+  )
+
+  const formatFechaCorta = (value?: string | null) => {
+    if (!value) return "—"
+    const parsed = new Date(value)
+    if (Number.isNaN(parsed.getTime())) return "—"
+    return format(parsed, "dd/MM/yyyy")
+  }
 
   const formatFechaCorta = (value?: string | null) => {
     if (!value) return "—"
@@ -122,6 +147,88 @@ export function KardexIntegralERP() {
       return cumpleTipo && cumpleDocumento && cumpleBusqueda
     })
   }, [movimientos, filtroTipo, filtroDocumento, searchTerm])
+
+  const resumenCalidades = useMemo(() => {
+    const resumen = new Map<string, { totalKg: number; lotes: Set<number> }>()
+    saldosFisicos.forEach((saldo) => {
+      const key = saldo.categoria_nombre || "Sin categoría"
+      if (!resumen.has(key)) {
+        resumen.set(key, { totalKg: 0, lotes: new Set() })
+      }
+      const item = resumen.get(key)
+      if (item) {
+        item.totalKg += saldo.saldo_actual || 0
+        item.lotes.add(saldo.lote_id)
+      }
+    })
+    return Array.from(resumen.entries()).map(([categoria, info]) => ({
+      categoria,
+      totalKg: info.totalKg,
+      lotes: info.lotes.size,
+    }))
+  }, [saldosFisicos])
+
+  const resumenFinanciero = useMemo(() => {
+    const financieros = movimientos.filter((mov) => mov.tipo_kardex === "financiero")
+    const totalIngresos = financieros.reduce(
+      (acc, mov) => acc + (mov.tipo_movimiento === "ingreso" ? Number(mov.monto || 0) : 0),
+      0,
+    )
+    const totalEgresos = financieros.reduce(
+      (acc, mov) => acc + (mov.tipo_movimiento === "egreso" ? Number(mov.monto || 0) : 0),
+      0,
+    )
+    const totalVentas = financieros.reduce(
+      (acc, mov) =>
+        acc + (mov.documento_tipo === "venta" && mov.tipo_movimiento === "ingreso" ? Number(mov.monto || 0) : 0),
+      0,
+    )
+    const totalAdelantos = financieros.reduce(
+      (acc, mov) =>
+        acc + (mov.documento_tipo === "adelanto" && mov.tipo_movimiento === "egreso" ? Number(mov.monto || 0) : 0),
+      0,
+    )
+    const totalPagosProductor = financieros.reduce(
+      (acc, mov) =>
+        acc +
+        (["liquidacion", "pago"].includes(mov.documento_tipo) && mov.tipo_movimiento === "egreso"
+          ? Number(mov.monto || 0)
+          : 0),
+      0,
+    )
+
+    const saldoBanco = saldosFinancieros.find((saldo) => saldo.cuenta_tipo === "banco")?.saldo_actual || 0
+    const saldoCaja = saldosFinancieros.find((saldo) => saldo.cuenta_tipo === "caja")?.saldo_actual || 0
+    return {
+      totalIngresos,
+      totalEgresos,
+      totalVentas,
+      totalAdelantos,
+      totalPagosProductor,
+      saldoDisponible: saldoBanco + saldoCaja,
+    }
+  }, [movimientos, saldosFinancieros])
+
+  useEffect(() => {
+    const cargarEstadoCuenta = async () => {
+      if (!productorSeleccionado) {
+        setEstadoCuenta(null)
+        return
+      }
+      setCargandoEstadoCuenta(true)
+      try {
+        const data = await kardexIntegralService.obtenerEstadoCuentaProductor(Number(productorSeleccionado))
+        setEstadoCuenta(data)
+      } catch (error) {
+        console.error("Error al cargar estado de cuenta:", error)
+        setEstadoCuenta(null)
+      } finally {
+        setCargandoEstadoCuenta(false)
+      }
+    }
+
+    cargarEstadoCuenta()
+  }, [productorSeleccionado])
 
   if (loading) {
     return <LoadingSkeleton />
@@ -172,108 +279,116 @@ export function KardexIntegralERP() {
         </div>
       )}
 
-      {/* TARJETAS DE RESUMEN */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* Stock Total */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Stock Total</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {dashboard?.resumen_fisico.total_stock_kg.toLocaleString("es-PE", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}{" "}
-              kg
+      {/* TARJETA GERENCIAL */}
+      <Card className="border-2 border-primary/10 shadow-sm">
+        <CardHeader>
+          <CardTitle className="text-xl">Resumen Gerencial</CardTitle>
+          <CardDescription>
+            Visión inmediata de calidades disponibles y control financiero (ventas, adelantos y pagos).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-muted-foreground" />
+              <h3 className="text-sm font-semibold uppercase text-muted-foreground">Stock por calidad</h3>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {dashboard?.resumen_fisico.total_lotes_activos} lotes activos
-            </p>
-          </CardContent>
-        </Card>
+            <div className="rounded-lg border bg-background">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Calidad</TableHead>
+                    <TableHead className="text-right">Kg disponibles</TableHead>
+                    <TableHead className="text-right">Lotes activos</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {resumenCalidades.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center text-sm text-muted-foreground">
+                        Sin stock registrado.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    resumenCalidades.map((item) => (
+                      <TableRow key={item.categoria}>
+                        <TableCell className="font-medium">{item.categoria}</TableCell>
+                        <TableCell className="text-right font-mono">
+                          {item.totalKg.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
+                        </TableCell>
+                        <TableCell className="text-right">{item.lotes}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
 
-        {/* Valor Inventario */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor Inventario</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              S/{" "}
-              {dashboard?.resumen_fisico.valor_inventario.toLocaleString("es-PE", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Wallet className="h-5 w-5 text-muted-foreground" />
+              <h3 className="text-sm font-semibold uppercase text-muted-foreground">Control financiero</h3>
             </div>
-            <p className="text-xs text-muted-foreground">
-              {dashboard?.resumen_fisico.total_categorias} categorías
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Saldo Banco */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Saldo Banco</CardTitle>
-            <Wallet className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              S/{" "}
-              {dashboard?.resumen_financiero.saldo_banco.toLocaleString("es-PE", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Card className="bg-muted/30">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Dinero disponible</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-green-700">
+                    S/ {resumenFinanciero.saldoDisponible.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Caja + banco en cuentas registradas.
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="bg-muted/30">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Ingresos por ventas</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold">
+                    S/ {resumenFinanciero.totalVentas.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Cobros asociados a lotes vendidos.</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-muted/30">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Adelantos entregados</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-amber-700">
+                    S/ {resumenFinanciero.totalAdelantos.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Pagos adelantados a productores.</p>
+                </CardContent>
+              </Card>
+              <Card className="bg-muted/30">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Pagos a productores</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-bold text-red-700">
+                    S/ {resumenFinanciero.totalPagosProductor.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Liquidaciones y pagos por lote.</p>
+                </CardContent>
+              </Card>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Caja: S/{" "}
-              {dashboard?.resumen_financiero.saldo_caja.toLocaleString("es-PE", {
-                minimumFractionDigits: 2,
-              })}
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Flujo Neto Mes */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Flujo Neto Mes</CardTitle>
-            {dashboard && dashboard.resumen_financiero.flujo_neto_mes >= 0 ? (
-              <TrendingUp className="h-4 w-4 text-green-600" />
-            ) : (
-              <TrendingDown className="h-4 w-4 text-red-600" />
-            )}
-          </CardHeader>
-          <CardContent>
-            <div
-              className={`text-2xl font-bold ${
-                dashboard && dashboard.resumen_financiero.flujo_neto_mes >= 0
-                  ? "text-green-600"
-                  : "text-red-600"
-              }`}
-            >
-              S/{" "}
-              {dashboard?.resumen_financiero.flujo_neto_mes.toLocaleString("es-PE", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Ventas: S/{" "}
-              {dashboard?.resumen_financiero.total_ventas_mes.toLocaleString("es-PE", {
-                minimumFractionDigits: 0,
-              })}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* TABS PRINCIPALES */}
-      <Tabs defaultValue="detallado" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+      <Tabs defaultValue="control" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="control">
+            <Eye className="mr-2 h-4 w-4" />
+            Control Total
+          </TabsTrigger>
           <TabsTrigger value="detallado">
             <FileText className="mr-2 h-4 w-4" />
             Detallado
@@ -295,6 +410,101 @@ export function KardexIntegralERP() {
             Reportes
           </TabsTrigger>
         </TabsList>
+
+        {/* TAB: CONTROL GERENCIAL */}
+        <TabsContent value="control" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Control total de carga y dinero</CardTitle>
+              <CardDescription>
+                Relacione ventas, adelantos y deudas por productor para una vista gerencial completa.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Productor</Label>
+                  <Select value={productorSeleccionado} onValueChange={setProductorSeleccionado}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Seleccione un productor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {productores.map((productor) => (
+                        <SelectItem key={productor.id} value={String(productor.id)}>
+                          {productor.nombre_completo}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Resumen financiero global</Label>
+                  <div className="rounded-lg border p-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Ingresos totales</span>
+                      <span className="font-semibold text-green-700">
+                        S/ {resumenFinanciero.totalIngresos.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm mt-1">
+                      <span>Egresos totales</span>
+                      <span className="font-semibold text-red-700">
+                        S/ {resumenFinanciero.totalEgresos.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm mt-1">
+                      <span>Saldo neto</span>
+                      <span className="font-semibold">
+                        S/ {(resumenFinanciero.totalIngresos - resumenFinanciero.totalEgresos).toLocaleString("es-PE", {
+                          minimumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Card className="bg-muted/30">
+                <CardHeader>
+                  <CardTitle className="text-base">Estado de cuenta del productor</CardTitle>
+                  <CardDescription>
+                    Adelantos, pagos y saldo pendiente según el Kardex integral.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {!productorSeleccionado ? (
+                    <p className="text-sm text-muted-foreground">Seleccione un productor para ver su estado.</p>
+                  ) : cargandoEstadoCuenta ? (
+                    <p className="text-sm text-muted-foreground">Cargando estado de cuenta...</p>
+                  ) : !estadoCuenta ? (
+                    <p className="text-sm text-muted-foreground">No hay información disponible.</p>
+                  ) : (
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <div>
+                        <p className="text-xs text-muted-foreground">Adelantos</p>
+                        <p className="text-lg font-semibold text-amber-700">
+                          S/ {estadoCuenta.resumen.total_adelantos.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Pagos</p>
+                        <p className="text-lg font-semibold text-red-700">
+                          S/ {estadoCuenta.resumen.total_pagos.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Saldo por regularizar</p>
+                        <p className="text-lg font-semibold">
+                          S/ {estadoCuenta.resumen.saldo.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* TAB: VISTA DETALLADA COMBINADA */}
         <TabsContent value="detallado" className="space-y-4">
