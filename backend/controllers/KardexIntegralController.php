@@ -202,38 +202,16 @@ class KardexIntegralController extends BaseController
     {
         try {
             $lote_id = $_GET['lote_id'] ?? null;
-
-            $where = $lote_id ? "AND k.lote_id = :lote_id" : "";
-
-            $query = "
-                SELECT
-                    k.lote_id,
-                    l.numero_lote,
-                    l.producto,
-                    l.productor_id,
-                    p.nombre_completo AS productor_nombre,
-                    k.categoria_id,
-                    k.categoria_nombre,
-                    SUM(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.peso_kg ELSE 0 END) AS total_ingresos,
-                    SUM(CASE WHEN k.tipo_movimiento IN ('salida', 'egreso') THEN k.peso_kg ELSE 0 END) AS total_egresos,
-                    SUM(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.peso_kg ELSE -k.peso_kg END) AS saldo_actual,
-                    MIN(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.fecha_movimiento END) AS fecha_primer_ingreso,
-                    DATEDIFF(CURDATE(), DATE(MIN(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.fecha_movimiento END))) AS antiguedad_dias
-                FROM {$this->table} k
-                LEFT JOIN lotes l ON k.lote_id = l.id
-                LEFT JOIN personas p ON l.productor_id = p.id
-                WHERE k.tipo_kardex = 'fisico'
-                {$where}
-                GROUP BY k.lote_id, k.categoria_id, k.categoria_nombre, l.numero_lote, l.producto, l.productor_id, p.nombre_completo
-                HAVING saldo_actual > 0
-                ORDER BY l.numero_lote, k.categoria_nombre
-            ";
+            
+            $where = $lote_id ? "WHERE lote_id = :lote_id" : "";
+            
+            $query = "SELECT * FROM v_kardex_fisico_saldos {$where} ORDER BY lote_id, categoria_nombre";
             $stmt = $this->db->prepare($query);
-
+            
             if ($lote_id) {
                 $stmt->bindParam(':lote_id', $lote_id, PDO::PARAM_INT);
             }
-
+            
             $stmt->execute();
             $saldos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
@@ -705,18 +683,16 @@ class KardexIntegralController extends BaseController
                     l.producto,
                     l.productor_id,
                     p.nombre_completo as productor_nombre,
-                    k.categoria_nombre,
-                    SUM(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.peso_kg ELSE -k.peso_kg END) as stock_kg,
+                    kfs.categoria_nombre,
+                    kfs.saldo_actual as stock_kg,
                     cp.precio_kg,
-                    (SUM(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.peso_kg ELSE -k.peso_kg END) * cp.precio_kg) as valor_inventario
-                FROM {$this->table} k
-                JOIN lotes l ON k.lote_id = l.id
+                    (kfs.saldo_actual * cp.precio_kg) as valor_inventario
+                FROM v_kardex_fisico_saldos kfs
+                JOIN lotes l ON kfs.lote_id = l.id
                 JOIN personas p ON l.productor_id = p.id
-                JOIN categorias_peso cp ON k.categoria_id = cp.id
-                WHERE k.tipo_kardex = 'fisico'
-                GROUP BY l.numero_lote, l.producto, l.productor_id, p.nombre_completo, k.categoria_nombre, cp.precio_kg
-                HAVING stock_kg > 0
-                ORDER BY l.numero_lote, k.categoria_nombre
+                JOIN categorias_peso cp ON kfs.categoria_id = cp.id
+                WHERE kfs.saldo_actual > 0
+                ORDER BY l.numero_lote, kfs.categoria_nombre
             ";
             
             $stmt = $this->db->prepare($query);

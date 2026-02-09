@@ -119,39 +119,8 @@ class PagoCampoController {
         $stmt->bindParam(':estado', $estado);
         
         if($stmt->execute()) {
-            $pagoId = (int)$this->conn->lastInsertId();
-
-            if ($monto > 0) {
-                try {
-                    $productorNombre = null;
-                    if ($prod) {
-                        $stmtProd = $this->conn->prepare("SELECT nombre_completo FROM personas WHERE id = :id");
-                        $stmtProd->execute([':id' => $prod]);
-                        $prodRow = $stmtProd->fetch(PDO::FETCH_ASSOC);
-                        $productorNombre = $prodRow['nombre_completo'] ?? null;
-                    }
-
-                    $kardexHelper = new KardexIntegralHelper($this->conn);
-                    $kardexHelper->registrarMovimientoFinanciero([
-                        'fecha_movimiento' => $fecha ?? date('Y-m-d'),
-                        'tipo_movimiento' => 'egreso',
-                        'documento_tipo' => 'pago',
-                        'documento_id' => $pagoId,
-                        'documento_numero' => $lote ? "LOTE-{$lote}" : null,
-                        'cuenta_tipo' => 'banco',
-                        'monto' => (float)$monto,
-                        'persona_id' => $prod,
-                        'persona_nombre' => $productorNombre,
-                        'persona_tipo' => 'productor',
-                        'concepto' => $lote ? "Pago de campo Lote {$lote}" : "Pago de campo"
-                    ]);
-                } catch (Exception $e) {
-                    error_log("Error al registrar pago en kardex integral: " . $e->getMessage());
-                }
-            }
-
             http_response_code(201);
-            echo json_encode(["message" => "Pago creado", "id" => $pagoId]);
+            echo json_encode(["message" => "Pago creado", "id" => $this->conn->lastInsertId()]);
         } else {
             http_response_code(500);
             echo json_encode(["message" => "Error al crear pago"]);
@@ -160,11 +129,6 @@ class PagoCampoController {
 
     public function update($id) {
         $data = json_decode(file_get_contents("php://input"));
-
-        $stmtPrev = $this->conn->prepare("SELECT * FROM {$this->table} WHERE id = :id");
-        $stmtPrev->bindParam(':id', $id, PDO::PARAM_INT);
-        $stmtPrev->execute();
-        $prev = $stmtPrev->fetch(PDO::FETCH_ASSOC);
         
         $query = "UPDATE " . $this->table . " SET 
                   lote_id = :lote,
@@ -208,62 +172,6 @@ class PagoCampoController {
         $stmt->bindParam(':estado', $estado);
         
         if($stmt->execute()) {
-            if ($prev) {
-                $prevMonto = (float)($prev['monto_pago'] ?? 0);
-                $prevFecha = $prev['fecha_pago'] ?? date('Y-m-d');
-                $prevProd = $prev['productor_id'] ?? null;
-                $prevLote = $prev['lote_id'] ?? null;
-
-                $cambio = $prevMonto !== (float)$monto || $prevFecha !== $fecha || $prevProd != $prod || $prevLote != $lote;
-
-                if ($cambio) {
-                    try {
-                        $productorNombre = null;
-                        if ($prod) {
-                            $stmtProd = $this->conn->prepare("SELECT nombre_completo FROM personas WHERE id = :id");
-                            $stmtProd->execute([':id' => $prod]);
-                            $prodRow = $stmtProd->fetch(PDO::FETCH_ASSOC);
-                            $productorNombre = $prodRow['nombre_completo'] ?? null;
-                        }
-
-                        $kardexHelper = new KardexIntegralHelper($this->conn);
-
-                        if ($prevMonto > 0) {
-                            $kardexHelper->registrarMovimientoFinanciero([
-                                'fecha_movimiento' => $prevFecha,
-                                'tipo_movimiento' => 'ingreso',
-                                'documento_tipo' => 'pago',
-                                'documento_id' => (int)$id,
-                                'documento_numero' => $prevLote ? "LOTE-{$prevLote}" : null,
-                                'cuenta_tipo' => 'banco',
-                                'monto' => $prevMonto,
-                                'persona_id' => $prevProd,
-                                'persona_nombre' => $productorNombre,
-                                'persona_tipo' => 'productor',
-                                'concepto' => $prevLote ? "Reverso pago de campo Lote {$prevLote}" : "Reverso pago de campo"
-                            ]);
-                        }
-
-                        if ($monto > 0) {
-                            $kardexHelper->registrarMovimientoFinanciero([
-                                'fecha_movimiento' => $fecha ?? date('Y-m-d'),
-                                'tipo_movimiento' => 'egreso',
-                                'documento_tipo' => 'pago',
-                                'documento_id' => (int)$id,
-                                'documento_numero' => $lote ? "LOTE-{$lote}" : null,
-                                'cuenta_tipo' => 'banco',
-                                'monto' => (float)$monto,
-                                'persona_id' => $prod,
-                                'persona_nombre' => $productorNombre,
-                                'persona_tipo' => 'productor',
-                                'concepto' => $lote ? "Ajuste pago de campo Lote {$lote}" : "Ajuste pago de campo"
-                            ]);
-                        }
-                    } catch (Exception $e) {
-                        error_log("Error al ajustar pago en kardex integral: " . $e->getMessage());
-                    }
-                }
-            }
             echo json_encode(["message" => "Pago actualizado"]);
         } else {
             http_response_code(500);
@@ -272,47 +180,11 @@ class PagoCampoController {
     }
 
     public function delete($id) {
-        $stmtPrev = $this->conn->prepare("SELECT * FROM {$this->table} WHERE id = :id");
-        $stmtPrev->bindParam(':id', $id, PDO::PARAM_INT);
-        $stmtPrev->execute();
-        $prev = $stmtPrev->fetch(PDO::FETCH_ASSOC);
-
         $query = "DELETE FROM " . $this->table . " WHERE id = :id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':id', $id);
         
         if($stmt->execute()) {
-            if ($prev) {
-                try {
-                    $productorNombre = null;
-                    if (!empty($prev['productor_id'])) {
-                        $stmtProd = $this->conn->prepare("SELECT nombre_completo FROM personas WHERE id = :id");
-                        $stmtProd->execute([':id' => $prev['productor_id']]);
-                        $prodRow = $stmtProd->fetch(PDO::FETCH_ASSOC);
-                        $productorNombre = $prodRow['nombre_completo'] ?? null;
-                    }
-
-                    $monto = (float)($prev['monto_pago'] ?? 0);
-                    if ($monto > 0) {
-                        $kardexHelper = new KardexIntegralHelper($this->conn);
-                        $kardexHelper->registrarMovimientoFinanciero([
-                            'fecha_movimiento' => $prev['fecha_pago'] ?? date('Y-m-d'),
-                            'tipo_movimiento' => 'ingreso',
-                            'documento_tipo' => 'pago',
-                            'documento_id' => (int)$id,
-                            'documento_numero' => !empty($prev['lote_id']) ? "LOTE-{$prev['lote_id']}" : null,
-                            'cuenta_tipo' => 'banco',
-                            'monto' => $monto,
-                            'persona_id' => $prev['productor_id'] ?? null,
-                            'persona_nombre' => $productorNombre,
-                            'persona_tipo' => 'productor',
-                            'concepto' => !empty($prev['lote_id']) ? "Reverso pago de campo Lote {$prev['lote_id']}" : "Reverso pago de campo"
-                        ]);
-                    }
-                } catch (Exception $e) {
-                    error_log("Error al eliminar pago en kardex integral: " . $e->getMessage());
-                }
-            }
             echo json_encode(["message" => "Pago eliminado"]);
         } else {
             http_response_code(500);
