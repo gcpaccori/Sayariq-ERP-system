@@ -50,6 +50,10 @@ export interface SaldoFisico {
   lote_codigo: string
   producto: string
   producto_nombre: string
+  fecha_ingreso_lote?: string | null
+  fecha_ingreso_categoria?: string | null
+  antiguedad_dias?: number | null
+  productor_nombre?: string | null
   categoria_id: number
   categoria_nombre: string
   total_ingresos: number
@@ -132,6 +136,7 @@ export interface ReporteInventario {
     valor_total: number
   }
   inventario: {
+    lote_id: number
     numero_lote: string
     producto: string
     productor_id: number
@@ -140,6 +145,9 @@ export interface ReporteInventario {
     stock_kg: number
     precio_kg: number
     valor_inventario: number
+    fecha_ingreso_lote?: string | null
+    fecha_ingreso_categoria?: string | null
+    antiguedad_dias?: number | null
   }[]
 }
 
