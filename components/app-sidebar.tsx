@@ -121,6 +121,11 @@ const navigationItems: NavItem[] = [
         href: "/liquidaciones",
         icon: Receipt,
       },
+      {
+        title: "Liquidación Proveedores",
+        href: "/liquidacion-proveedores",
+        icon: Receipt,
+      },
     ],
   },
   {
@@ -154,6 +159,12 @@ const navigationItems: NavItem[] = [
     title: "Ventas",
     icon: TrendingUp,
     children: [
+      {
+        title: "Boletas de venta",
+        href: "/boletas-ventas",
+        icon: FileText,
+        badge: "NEW",
+      },
       {
         title: "Registro Venta",
         href: "/registro-venta",
