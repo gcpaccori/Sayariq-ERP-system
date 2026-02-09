@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 
-const BACKEND_URL = "https://citeapurimac.org/backend"
+const BACKEND_URL = "https://citeapurimac.org/backend/api"
 
 export async function GET(request: NextRequest, { params }: { params: { path: string[] } }) {
   try {

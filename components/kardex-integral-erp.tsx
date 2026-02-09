@@ -75,6 +75,13 @@ export function KardexIntegralERP() {
   const [filtroDocumento, setFiltroDocumento] = useState<string>("todos")
   const [searchTerm, setSearchTerm] = useState("")
 
+  const formatFechaCorta = (value?: string | null) => {
+    if (!value) return "—"
+    const parsed = new Date(value)
+    if (Number.isNaN(parsed.getTime())) return "—"
+    return format(parsed, "dd/MM/yyyy")
+  }
+
   // Cargar datos iniciales
   useEffect(() => {
     cargarDatos()
@@ -604,7 +611,10 @@ export function KardexIntegralERP() {
                     <TableRow>
                       <TableHead>Lote</TableHead>
                       <TableHead>Producto</TableHead>
+                      <TableHead>Productor</TableHead>
                       <TableHead>Categoría</TableHead>
+                      <TableHead>Ingreso</TableHead>
+                      <TableHead className="text-right">Antigüedad (días)</TableHead>
                       <TableHead className="text-right">Stock Actual (kg)</TableHead>
                       <TableHead className="text-right">Total Ingresos</TableHead>
                       <TableHead className="text-right">Total Egresos</TableHead>
@@ -616,8 +626,13 @@ export function KardexIntegralERP() {
                       <TableRow key={`${saldo.lote_id}-${saldo.categoria_id}`}>
                         <TableCell className="font-medium">{saldo.lote_codigo}</TableCell>
                         <TableCell>{saldo.producto_nombre}</TableCell>
+                        <TableCell>{saldo.productor_nombre || "—"}</TableCell>
                         <TableCell>
                           <Badge variant="outline">{saldo.categoria_nombre}</Badge>
+                        </TableCell>
+                        <TableCell>{formatFechaCorta(saldo.fecha_ingreso_categoria || saldo.fecha_ingreso_lote)}</TableCell>
+                        <TableCell className="text-right font-mono">
+                          {saldo.antiguedad_dias ?? "—"}
                         </TableCell>
                         <TableCell className="text-right font-mono font-bold">
                           {saldo.saldo_actual.toLocaleString("es-PE", {
