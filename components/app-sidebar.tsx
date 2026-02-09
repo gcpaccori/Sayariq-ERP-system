@@ -70,25 +70,19 @@ const navigationItems: NavItem[] = [
     ],
   },
   {
-    title: "Recepción de carga",
+    title: "Inventario",
     icon: Package,
     children: [
       {
-        title: "Ingreso de materia prima",
-        href: "/ingreso-materia-prima",
+        title: "Almacén",
+        href: "/almacen",
         icon: Package,
-        badge: "NEW",
       },
       {
-        title: "Ingreso de lotes (mejorado)",
-        href: "/ingreso-lotes-mejorado",
-        icon: Package,
+        title: "Kardex Integral",
+        href: "/kardex-integral",
+        icon: Database,
         badge: "NEW",
-      },
-      {
-        title: "Lotes",
-        href: "/lotes",
-        icon: Package,
       },
     ],
   },
@@ -123,46 +117,9 @@ const navigationItems: NavItem[] = [
         icon: BarChart2,
       },
       {
-        title: "Kardex Lotes",
-        href: "/kardex-lotes",
-        icon: Database,
-      },
-      {
         title: "Liquidación de Lotes",
         href: "/liquidaciones",
         icon: Receipt,
-      },
-      {
-        title: "Evaluación de liquidación",
-        href: "/evaluacion-liquidacion",
-        icon: LineChart,
-      },
-      {
-        title: "Evaluación avanzada",
-        href: "/evaluacion-liquidacion-avanzada",
-        icon: LineChart,
-      },
-    ],
-  },
-  {
-    title: "Inventario",
-    icon: Package,
-    children: [
-      {
-        title: "Almacén",
-        href: "/almacen",
-        icon: Package,
-      },
-      {
-        title: "Kardex Integral",
-        href: "/kardex-integral",
-        icon: Database,
-        badge: "NEW",
-      },
-      {
-        title: "Categorías",
-        href: "/categorias",
-        icon: Database,
       },
     ],
   },
@@ -170,6 +127,12 @@ const navigationItems: NavItem[] = [
     title: "Contabilidad",
     icon: Calculator,
     children: [
+      {
+        title: "Kardex Integral",
+        href: "/kardex-integral",
+        icon: Activity,
+        badge: "NEW",
+      },
       {
         title: "Ajuste Pesos-precio contable",
         href: "/ajuste-contable",
@@ -185,28 +148,12 @@ const navigationItems: NavItem[] = [
         href: "/libro-banco",
         icon: Wallet,
       },
-      {
-        title: "Estado de cuenta",
-        href: "/estado-cuenta",
-        icon: FileText,
-      },
-      {
-        title: "Gestión de deudas",
-        href: "/gestion-deudas",
-        icon: Wallet,
-      },
     ],
   },
   {
     title: "Ventas",
     icon: TrendingUp,
     children: [
-      {
-        title: "Ventas por pedidos",
-        href: "/ventas-pedidos",
-        icon: ShoppingCart,
-        badge: "NEW",
-      },
       {
         title: "Registro Venta",
         href: "/registro-venta",
@@ -216,17 +163,6 @@ const navigationItems: NavItem[] = [
         title: "Ventas clientes",
         href: "/ventas-clientes",
         icon: ShoppingCart,
-      },
-    ],
-  },
-  {
-    title: "Proveedores",
-    icon: ShoppingBag,
-    children: [
-      {
-        title: "Registro de proveedores",
-        href: "/proveedores",
-        icon: ShoppingBag,
       },
     ],
   },
@@ -259,47 +195,6 @@ const navigationItems: NavItem[] = [
         title: "Gestión de Empleados",
         href: "/empleados",
         icon: Users,
-      },
-      {
-        title: "Subprocesos",
-        href: "/subprocesos-pro",
-        icon: Activity,
-      },
-    ],
-  },
-  {
-    title: "Módulos en prueba",
-    icon: Activity,
-    children: [
-      {
-        title: "Gestión pedidos (beta)",
-        href: "/gestion-pedidos",
-        icon: Activity,
-      },
-      {
-        title: "Pedidos demo",
-        href: "/pedidos",
-        icon: Activity,
-      },
-      {
-        title: "Asignación procesamiento",
-        href: "/asignacion-procesamiento",
-        icon: Activity,
-      },
-      {
-        title: "Lotes-pedidos",
-        href: "/lotes-pedidos",
-        icon: Activity,
-      },
-      {
-        title: "Lote-liquidación",
-        href: "/lote-liquidacion",
-        icon: Activity,
-      },
-      {
-        title: "Enfermedades",
-        href: "/enfermedades",
-        icon: Activity,
       },
     ],
   },
