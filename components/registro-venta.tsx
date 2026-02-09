@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,64 +11,111 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Loader2 } from 'lucide-react'
 import { useToast } from "@/components/ui/use-toast"
 import { useApi } from "@/lib/hooks/use-api"
-import { kardexService } from "@/lib/services/kardex-service"
+import { pedidosService, type LoteAsignadoDto } from "@/lib/services/pedidos-service"
 import { ventasService } from "@/lib/services/ventas-service"
-import type { MovimientoKardex } from "@/lib/types"
+import type { Pedido } from "@/lib/types"
 
-interface KardexAgregado {
-  categoria: string
-  pesoTotal: number
-  pesoDisponible: number
+type VentaLoteRegistro = {
+  lote_id: number
+  categoria_id?: number | null
+  categoria?: string
+  kg_vendido: number
 }
 
 export function RegistroVenta() {
   const { toast } = useToast()
-  const [formData, setFormData] = useState({
-    producto: "",
-    categoria: "exportable",
-    kg: "",
-    precio: "",
-    cliente: "",
-    observaciones: "",
-  })
   const [registrando, setRegistrando] = useState(false)
+  const [pedidoSeleccionadoId, setPedidoSeleccionadoId] = useState<number | null>(null)
+  const [lotesAsignados, setLotesAsignados] = useState<LoteAsignadoDto[]>([])
+  const [lotesVendidos, setLotesVendidos] = useState<Record<string, number>>({})
+  const [detalleVenta, setDetalleVenta] = useState<Record<string, number>>({})
+  const [precioUnitario, setPrecioUnitario] = useState<string>("")
+  const [observaciones, setObservaciones] = useState<string>("")
 
-  const { data: kardexData, loading: loadingKardex, refresh: refreshKardex } = useApi(kardexService, { initialLoad: true })
+  const { data: pedidosData, loading: loadingPedidos } = useApi(pedidosService, { initialLoad: true })
 
-  // Aggregate movements by category
-  const kardexAgregado: KardexAgregado[] = []
-  ;(kardexData as MovimientoKardex[]).forEach((movimiento) => {
-    let cat = kardexAgregado.find((k) => k.categoria === movimiento.concepto)
-    if (!cat) {
-      cat = {
-        categoria: movimiento.concepto || "Sin categoría",
-        pesoTotal: 0,
-        pesoDisponible: 0,
+  const pedidos = useMemo(() => (Array.isArray(pedidosData) ? (pedidosData as Pedido[]) : []), [pedidosData])
+  const pedidoSeleccionado = useMemo(
+    () => pedidos.find((pedido) => pedido.id === pedidoSeleccionadoId) || null,
+    [pedidos, pedidoSeleccionadoId],
+  )
+
+  const buildKey = (loteId: number, categoriaId?: number | null, categoria?: string) =>
+    `${loteId}-${categoriaId ?? "na"}-${(categoria || "").toLowerCase()}`
+
+  useEffect(() => {
+    const fetchDetalle = async () => {
+      if (!pedidoSeleccionadoId) {
+        setLotesAsignados([])
+        setLotesVendidos({})
+        setDetalleVenta({})
+        return
       }
-      kardexAgregado.push(cat)
+
+      try {
+        const [asignados, vendidos] = await Promise.all([
+          pedidosService.getLotesPedido(pedidoSeleccionadoId),
+          ventasService.getLotesVendidosByPedido(pedidoSeleccionadoId),
+        ])
+
+        const vendidosMap: Record<string, number> = {}
+        vendidos.forEach((row) => {
+          const key = buildKey(row.lote_id, row.categoria_id, row.categoria)
+          vendidosMap[key] = (vendidosMap[key] || 0) + (Number(row.kg_vendido) || 0)
+        })
+
+        setLotesAsignados(asignados)
+        setLotesVendidos(vendidosMap)
+        setDetalleVenta({})
+      } catch (error) {
+        console.error("Error al cargar lotes del pedido:", error)
+        toast({
+          title: "Error",
+          description: "No se pudieron cargar los lotes asignados",
+          variant: "destructive",
+        })
+      }
     }
-    if (movimiento.tipo === "entrada") {
-      cat.pesoTotal += movimiento.cantidad
-      cat.pesoDisponible += movimiento.cantidad
-    } else if (movimiento.tipo === "salida") {
-      cat.pesoDisponible -= movimiento.cantidad
+
+    fetchDetalle()
+  }, [pedidoSeleccionadoId, toast])
+
+  useEffect(() => {
+    if (pedidoSeleccionado) {
+      setPrecioUnitario(pedidoSeleccionado.precio ? String(pedidoSeleccionado.precio) : "")
     }
+  }, [pedidoSeleccionado])
+
+  const lotesConSaldos = useMemo(
+    () =>
+      lotesAsignados.map((lote) => {
+        const key = buildKey(lote.lote_id, lote.categoria_id, lote.categoria)
+        const vendido = lotesVendidos[key] || 0
+        const asignado = Number(lote.kg_asignado) || 0
+        const disponible = Math.max(asignado - vendido, 0)
+        return { ...lote, vendido, disponible, key }
+      }),
+    [lotesAsignados, lotesVendidos],
+  )
+
+  const totalKg = useMemo(
+    () =>
+      Object.values(detalleVenta).reduce((acc, kg) => acc + (Number(kg) || 0), 0),
+    [detalleVenta],
+  )
+  const precioUnitarioNumero = Number.parseFloat(precioUnitario) || 0
+  const total = totalKg * precioUnitarioNumero
+
+  const invalidLotes = lotesConSaldos.filter((lote) => {
+    const kg = Number(detalleVenta[lote.key] || 0)
+    return kg > lote.disponible + 0.001
   })
-
-  const totalKg = Number.parseFloat(formData.kg) || 0
-  const precioUnitario = Number.parseFloat(formData.precio) || 0
-  const total = totalKg * precioUnitario
-
-  const kardexSeleccionado = kardexAgregado.find((k) => k.categoria === formData.categoria)
-  const pesoDisponible = kardexSeleccionado?.pesoDisponible || 0
 
   const isFormValid =
-    formData.producto &&
-    formData.categoria &&
+    pedidoSeleccionado &&
     totalKg > 0 &&
-    precioUnitario > 0 &&
-    formData.cliente &&
-    totalKg <= pesoDisponible
+    precioUnitarioNumero > 0 &&
+    invalidLotes.length === 0
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -84,34 +131,34 @@ export function RegistroVenta() {
 
     setRegistrando(true)
     try {
-      const codigoVenta = `VTA-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`
+      if (!pedidoSeleccionado) {
+        return
+      }
 
-      await ventasService.create({
-        codigo: codigoVenta,
-        cliente: formData.cliente,
+      const lotesParaVenta: VentaLoteRegistro[] = lotesConSaldos
+        .map((lote) => ({
+          lote_id: lote.lote_id,
+          categoria_id: lote.categoria_id ?? null,
+          categoria: lote.categoria,
+          kg_vendido: Number(detalleVenta[lote.key] || 0),
+        }))
+        .filter((item) => item.kg_vendido > 0)
+
+      await ventasService.createPedidoVenta({
+        pedido_id: pedidoSeleccionado.id,
         fecha_venta: new Date().toISOString().split("T")[0],
-        cantidad: totalKg,
-        precio_unitario: precioUnitario,
-        total,
-        estado: "pendiente",
-        observaciones: formData.observaciones,
+        observaciones,
+        precio: precioUnitarioNumero,
+        lotes: lotesParaVenta,
       })
 
       toast({
         title: "Éxito",
-        description: `Venta registrada: ${codigoVenta}`,
+        description: `Venta registrada para el pedido ${pedidoSeleccionado.numero_pedido}`,
       })
 
-      setFormData({
-        producto: "",
-        categoria: "exportable",
-        kg: "",
-        precio: "",
-        cliente: "",
-        observaciones: "",
-      })
-
-      refreshKardex()
+      setDetalleVenta({})
+      setObservaciones("")
     } catch (error) {
       console.error("Error al registrar venta:", error)
       toast({
@@ -129,7 +176,7 @@ export function RegistroVenta() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold">Registro Venta</h2>
-          <p className="text-muted-foreground">Registrar ventas de productos a clientes</p>
+          <p className="text-muted-foreground">Registrar ventas por lotes asignados a pedidos</p>
         </div>
       </div>
 
@@ -142,62 +189,20 @@ export function RegistroVenta() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label>CLIENTE *</Label>
-                <Input
-                  placeholder="Nombre del cliente"
-                  value={formData.cliente}
-                  onChange={(e) => setFormData({ ...formData, cliente: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div>
-                <Label>PRODUCTO VENDIDO *</Label>
-                <Input
-                  placeholder="Nombre del producto"
-                  value={formData.producto}
-                  onChange={(e) => setFormData({ ...formData, producto: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>KG *</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={formData.kg}
-                    onChange={(e) => setFormData({ ...formData, kg: e.target.value })}
-                    max={pesoDisponible}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">Disponible: {pesoDisponible.toFixed(2)} kg</p>
-                </div>
-                <div>
-                  <Label>PRECIO (S/./kg) *</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={formData.precio}
-                    onChange={(e) => setFormData({ ...formData, precio: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label>CATEGORÍA *</Label>
-                <Select value={formData.categoria} onValueChange={(val) => setFormData({ ...formData, categoria: val })}>
+                <Label>PEDIDO *</Label>
+                <Select
+                  value={pedidoSeleccionadoId ? String(pedidoSeleccionadoId) : ""}
+                  onValueChange={(value) => setPedidoSeleccionadoId(Number(value))}
+                >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder={loadingPedidos ? "Cargando..." : "Seleccione un pedido"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="exportable">Exportable</SelectItem>
-                    <SelectItem value="industrial">Industrial</SelectItem>
-                    <SelectItem value="descarte">Descarte</SelectItem>
+                    {pedidos.map((pedido) => (
+                      <SelectItem key={pedido.id} value={String(pedido.id)}>
+                        {pedido.numero_pedido || `Pedido #${pedido.id}`} - {pedido.cliente_nombre || "Cliente"}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -206,13 +211,30 @@ export function RegistroVenta() {
                 <Label>OBSERVACIONES</Label>
                 <Textarea
                   placeholder="Observaciones..."
-                  value={formData.observaciones}
-                  onChange={(e) => setFormData({ ...formData, observaciones: e.target.value })}
+                  value={observaciones}
+                  onChange={(e) => setObservaciones(e.target.value)}
                   rows={3}
                 />
               </div>
 
               <div className="pt-4 border-t">
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <Label>PRECIO UNITARIO (S/ kg) *</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={precioUnitario}
+                      onChange={(e) => setPrecioUnitario(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label>TOTAL KG</Label>
+                    <Input type="number" value={totalKg.toFixed(2)} readOnly />
+                  </div>
+                </div>
                 <div className="flex justify-between items-center mb-4">
                   <span className="font-medium">TOTAL</span>
                   <span className="text-2xl font-bold text-green-600">S/. {total.toFixed(2)}</span>
@@ -231,32 +253,52 @@ export function RegistroVenta() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>KARDEX</CardTitle>
+              <CardTitle>LOTES ASIGNADOS</CardTitle>
             </CardHeader>
             <CardContent>
-              {loadingKardex ? (
+              {loadingPedidos ? (
                 <div className="text-center py-8">
                   <Loader2 className="h-4 w-4 animate-spin mx-auto mb-2" />
-                  Cargando kardex...
+                  Cargando lotes...
                 </div>
-              ) : kardexAgregado.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">No hay movimientos en kardex</div>
+              ) : !pedidoSeleccionado ? (
+                <div className="text-center py-8 text-muted-foreground">Seleccione un pedido para ver los lotes</div>
+              ) : lotesConSaldos.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">No hay lotes asignados a este pedido</div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>CATEGORÍA</TableHead>
-                      <TableHead className="text-right">PESO TOTAL</TableHead>
-                      <TableHead className="text-right">PESO DISPONIBLE</TableHead>
+                      <TableHead>Lote</TableHead>
+                      <TableHead>Categoría</TableHead>
+                      <TableHead className="text-right">Asignado (kg)</TableHead>
+                      <TableHead className="text-right">Vendido (kg)</TableHead>
+                      <TableHead className="text-right">Disponible (kg)</TableHead>
+                      <TableHead className="text-right">Kg a vender</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {kardexAgregado.map((item, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{item.categoria}</TableCell>
-                        <TableCell className="text-right">{item.pesoTotal.toFixed(2)}</TableCell>
-                        <TableCell className="text-right font-bold text-green-600">
-                          {item.pesoDisponible.toFixed(2)}
+                    {lotesConSaldos.map((lote) => (
+                      <TableRow key={lote.key}>
+                        <TableCell className="font-medium">{lote.numero_lote}</TableCell>
+                        <TableCell>{lote.categoria}</TableCell>
+                        <TableCell className="text-right">{Number(lote.kg_asignado || 0).toFixed(2)}</TableCell>
+                        <TableCell className="text-right">{lote.vendido.toFixed(2)}</TableCell>
+                        <TableCell className="text-right font-bold text-green-600">{lote.disponible.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min={0}
+                            max={lote.disponible}
+                            value={detalleVenta[lote.key] ?? ""}
+                            onChange={(e) =>
+                              setDetalleVenta((prev) => ({
+                                ...prev,
+                                [lote.key]: e.target.value ? Number(e.target.value) : 0,
+                              }))
+                            }
+                          />
                         </TableCell>
                       </TableRow>
                     ))}
