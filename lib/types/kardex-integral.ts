@@ -46,17 +46,16 @@ export interface MovimientoKardexIntegral {
 
 export interface SaldoFisico {
   lote_id: number
-  numero_lote: string | null
-  producto: string | null
-  productor_id?: number | null
-  productor_nombre?: string | null
+  numero_lote: string
+  lote_codigo: string
+  producto: string
+  producto_nombre: string
   categoria_id: number
   categoria_nombre: string
   total_ingresos: number
+  total_salidas: number
   total_egresos: number
   saldo_actual: number
-  fecha_primer_ingreso?: string | null
-  antiguedad_dias?: number | null
 }
 
 export interface SaldoFinanciero {
