@@ -610,6 +610,15 @@ class PesosLoteController {
             }
             $loteId = (int)$prev['lote_id'];
 
+            // Info para kardex integral
+            $stmtInfo = $this->conn->prepare("SELECT l.nombre as lote_nombre, l.productor_id,
+                                                     p.nombre_completo as productor_nombre
+                                              FROM lotes l
+                                              LEFT JOIN personas p ON l.productor_id = p.id
+                                              WHERE l.id = :lote_id");
+            $stmtInfo->execute([':lote_id' => $loteId]);
+            $info = $stmtInfo->fetch(PDO::FETCH_ASSOC);
+
             // Detalles actuales (para reversar en kardex)
             $qDetOld = "SELECT d.*, c.codigo, c.nombre
                         FROM {$this->detalleTable} d
@@ -749,6 +758,45 @@ class PesosLoteController {
             // 6) Recalcular peso_neto del lote
             $this->recalcularPesoNetoLote($loteId);
 
+            // 7) Ajustar kardex integral (reverso + nuevo)
+            try {
+                $kardexHelper = new KardexIntegralHelper($this->conn);
+
+                foreach ($oldDetNorm as $od) {
+                    if ($od['peso'] <= 0) continue;
+                    $kardexHelper->registrarPesaje([
+                        'peso_id' => (int)$id,
+                        'fecha_registro' => $data['fecha_pesado'],
+                        'lote_id' => $loteId,
+                        'lote_nombre' => $info['lote_nombre'] ?? 'Lote',
+                        'categoria_id' => $od['categoria_id'],
+                        'categoria_nombre' => $od['nombre'],
+                        'peso_kg' => $od['peso'],
+                        'productor_id' => $info['productor_id'] ?? null,
+                        'productor_nombre' => $info['productor_nombre'] ?? null,
+                        'tipo_movimiento' => 'salida'
+                    ]);
+                }
+
+                foreach ($detallesNorm as $d) {
+                    if ($d['peso'] <= 0) continue;
+                    $kardexHelper->registrarPesaje([
+                        'peso_id' => (int)$id,
+                        'fecha_registro' => $data['fecha_pesado'],
+                        'lote_id' => $loteId,
+                        'lote_nombre' => $info['lote_nombre'] ?? 'Lote',
+                        'categoria_id' => $d['categoria_id'],
+                        'categoria_nombre' => $d['nombre'],
+                        'peso_kg' => $d['peso'],
+                        'productor_id' => $info['productor_id'] ?? null,
+                        'productor_nombre' => $info['productor_nombre'] ?? null,
+                        'tipo_movimiento' => 'ingreso'
+                    ]);
+                }
+            } catch (Exception $kex) {
+                error_log("Error al ajustar pesaje en kardex integral: " . $kex->getMessage());
+            }
+
             $this->conn->commit();
 
             echo json_encode(['success' => true, 'message' => 'Registro actualizado exitosamente']);
@@ -783,6 +831,15 @@ class PesosLoteController {
             $loteId = (int)$prev['lote_id'];
             $fecha = $prev['fecha_pesado'];
 
+            // Info para kardex integral
+            $stmtInfo = $this->conn->prepare("SELECT l.nombre as lote_nombre, l.productor_id,
+                                                     p.nombre_completo as productor_nombre
+                                              FROM lotes l
+                                              LEFT JOIN personas p ON l.productor_id = p.id
+                                              WHERE l.id = :lote_id");
+            $stmtInfo->execute([':lote_id' => $loteId]);
+            $info = $stmtInfo->fetch(PDO::FETCH_ASSOC);
+
             // Detalles actuales (para SALIDA en kardex)
             $qDetOld = "SELECT d.*, c.codigo, c.nombre
                         FROM {$this->detalleTable} d
@@ -808,6 +865,29 @@ class PesosLoteController {
                     $fecha,
                     "Eliminación pesaje #{$id}"
                 );
+            }
+
+            // Ajustar kardex integral (salida por cada categoría)
+            try {
+                $kardexHelper = new KardexIntegralHelper($this->conn);
+                foreach ($oldRows as $r) {
+                    $peso = (float)$r['peso'];
+                    if ($peso <= 0) continue;
+                    $kardexHelper->registrarPesaje([
+                        'peso_id' => (int)$id,
+                        'fecha_registro' => $fecha,
+                        'lote_id' => $loteId,
+                        'lote_nombre' => $info['lote_nombre'] ?? 'Lote',
+                        'categoria_id' => (int)$r['categoria_id'],
+                        'categoria_nombre' => $r['nombre'],
+                        'peso_kg' => $peso,
+                        'productor_id' => $info['productor_id'] ?? null,
+                        'productor_nombre' => $info['productor_nombre'] ?? null,
+                        'tipo_movimiento' => 'salida'
+                    ]);
+                }
+            } catch (Exception $kex) {
+                error_log("Error al eliminar pesaje en kardex integral: " . $kex->getMessage());
             }
 
             // Borrar detalles

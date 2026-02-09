@@ -160,11 +160,13 @@ class KardexIntegralHelper {
             if (!isset($data['peso_kg']) || $data['peso_kg'] <= 0) {
                 return false;
             }
+
+            $tipoMovimiento = $data['tipo_movimiento'] ?? 'ingreso';
             
             $this->insertarMovimiento([
                 'fecha_movimiento' => $data['fecha_registro'] ?? date('Y-m-d H:i:s'),
                 'tipo_kardex' => 'fisico',
-                'tipo_movimiento' => 'ingreso',
+                'tipo_movimiento' => $tipoMovimiento,
                 'documento_tipo' => 'pesaje',
                 'documento_id' => $data['peso_id'],
                 'lote_id' => $data['lote_id'] ?? null,
@@ -180,6 +182,115 @@ class KardexIntegralHelper {
             return true;
         } catch (Exception $e) {
             error_log("Error en registrarPesaje: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Registrar ingreso inicial de lote en kardex integral
+     * (solo movimiento físico - ingreso)
+     */
+    public function registrarIngresoLote(array $data) {
+        try {
+            if (!isset($data['peso_inicial']) || $data['peso_inicial'] <= 0) {
+                return false;
+            }
+
+            $numeroLote = $data['numero_lote'] ?? null;
+            $producto = $data['producto'] ?? null;
+            $tipoMovimiento = $data['tipo_movimiento'] ?? 'ingreso';
+
+            $this->insertarMovimiento([
+                'fecha_movimiento' => $data['fecha_ingreso'] ?? date('Y-m-d H:i:s'),
+                'tipo_kardex' => 'fisico',
+                'tipo_movimiento' => $tipoMovimiento,
+                'documento_tipo' => 'lote',
+                'documento_id' => $data['lote_id'] ?? null,
+                'documento_numero' => $numeroLote,
+                'lote_id' => $data['lote_id'] ?? null,
+                'peso_kg' => $data['peso_inicial'],
+                'persona_id' => $data['productor_id'] ?? null,
+                'persona_nombre' => $data['productor_nombre'] ?? null,
+                'persona_tipo' => 'productor',
+                'concepto' => $numeroLote
+                    ? "Ingreso lote {$numeroLote}" . ($producto ? " - {$producto}" : "")
+                    : "Ingreso de lote",
+                'observaciones' => $data['observaciones'] ?? null
+            ]);
+
+            return true;
+        } catch (Exception $e) {
+            error_log("Error en registrarIngresoLote: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Registrar movimiento físico genérico (ajustes/reversiones)
+     */
+    public function registrarMovimientoFisico(array $data) {
+        try {
+            if (!isset($data['peso_kg']) || $data['peso_kg'] <= 0) {
+                return false;
+            }
+
+            $tipoMovimiento = $data['tipo_movimiento'] ?? 'ingreso';
+
+            $this->insertarMovimiento([
+                'fecha_movimiento' => $data['fecha_movimiento'] ?? date('Y-m-d H:i:s'),
+                'tipo_kardex' => 'fisico',
+                'tipo_movimiento' => $tipoMovimiento,
+                'documento_tipo' => $data['documento_tipo'] ?? 'ajuste',
+                'documento_id' => $data['documento_id'] ?? null,
+                'documento_numero' => $data['documento_numero'] ?? null,
+                'lote_id' => $data['lote_id'] ?? null,
+                'categoria_id' => $data['categoria_id'] ?? null,
+                'categoria_nombre' => $data['categoria_nombre'] ?? null,
+                'peso_kg' => $data['peso_kg'],
+                'persona_id' => $data['persona_id'] ?? null,
+                'persona_nombre' => $data['persona_nombre'] ?? null,
+                'persona_tipo' => $data['persona_tipo'] ?? null,
+                'concepto' => $data['concepto'] ?? 'Ajuste físico',
+                'observaciones' => $data['observaciones'] ?? null
+            ]);
+
+            return true;
+        } catch (Exception $e) {
+            error_log("Error en registrarMovimientoFisico: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Registrar movimiento financiero genérico (ajustes/reversiones)
+     */
+    public function registrarMovimientoFinanciero(array $data) {
+        try {
+            if (!isset($data['monto']) || $data['monto'] <= 0) {
+                return false;
+            }
+
+            $tipoMovimiento = $data['tipo_movimiento'] ?? 'ingreso';
+
+            $this->insertarMovimiento([
+                'fecha_movimiento' => $data['fecha_movimiento'] ?? date('Y-m-d H:i:s'),
+                'tipo_kardex' => 'financiero',
+                'tipo_movimiento' => $tipoMovimiento,
+                'documento_tipo' => $data['documento_tipo'] ?? 'ajuste',
+                'documento_id' => $data['documento_id'] ?? null,
+                'documento_numero' => $data['documento_numero'] ?? null,
+                'cuenta_tipo' => $data['cuenta_tipo'] ?? 'banco',
+                'monto' => $data['monto'],
+                'persona_id' => $data['persona_id'] ?? null,
+                'persona_nombre' => $data['persona_nombre'] ?? null,
+                'persona_tipo' => $data['persona_tipo'] ?? null,
+                'concepto' => $data['concepto'] ?? 'Ajuste financiero',
+                'observaciones' => $data['observaciones'] ?? null
+            ]);
+
+            return true;
+        } catch (Exception $e) {
+            error_log("Error en registrarMovimientoFinanciero: " . $e->getMessage());
             return false;
         }
     }
