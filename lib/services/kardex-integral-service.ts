@@ -26,6 +26,16 @@ import type {
 const BASE_PATH = "/kardex-integral"
 
 class KardexIntegralService {
+  private unwrapResponse<T>(response: ResponseKardex<T> | T): T | null {
+    const direct = (response as ResponseKardex<T>)?.data
+    if (direct !== undefined) {
+      if (direct && typeof direct === "object" && "data" in (direct as any)) {
+        return (direct as any).data as T
+      }
+      return direct as T
+    }
+    return response as T
+  }
   /**
    * =====================================================
    * 1. CONSULTAS GENERALES
@@ -56,11 +66,13 @@ class KardexIntegralService {
         pagination: any
       }>>(url)
 
+      const payload = this.unwrapResponse(response)
+
       // Validar que la respuesta tenga la estructura correcta
-      if (response.data && typeof response.data === 'object') {
+      if (payload && typeof payload === 'object') {
         return {
-          movimientos: Array.isArray(response.data.movimientos) ? response.data.movimientos : [],
-          pagination: response.data.pagination || { total: 0, limit: 100, offset: 0, pages: 0 }
+          movimientos: Array.isArray(payload.movimientos) ? payload.movimientos : [],
+          pagination: payload.pagination || { total: 0, limit: 100, offset: 0, pages: 0 }
         }
       }
 
@@ -79,7 +91,7 @@ class KardexIntegralService {
       const response = await ApiService.get<ResponseKardex<MovimientoKardexIntegral>>(
         `${BASE_PATH}/${id}`
       )
-      return response.data || null
+      return this.unwrapResponse(response) || null
     } catch (error) {
       console.error("Error al obtener movimiento:", error)
       return null
@@ -100,9 +112,11 @@ class KardexIntegralService {
       const url = loteId ? `${BASE_PATH}/saldos/fisico?lote_id=${loteId}` : `${BASE_PATH}/saldos/fisico`
       const response = await ApiService.get<ResponseKardex<SaldoFisico[]>>(url)
       
+      const payload = this.unwrapResponse(response)
+
       // Asegurar que siempre devolvemos un array
-      if (Array.isArray(response.data)) {
-        return response.data
+      if (Array.isArray(payload)) {
+        return payload
       }
       
       // Si data no es un array, devolver array vacío
@@ -123,9 +137,11 @@ class KardexIntegralService {
         `${BASE_PATH}/saldos/financiero`
       )
       
+      const payload = this.unwrapResponse(response)
+
       // Asegurar que siempre devolvemos un array
-      if (Array.isArray(response.data)) {
-        return response.data
+      if (Array.isArray(payload)) {
+        return payload
       }
       
       // Si data no es un array, devolver array vacío
@@ -144,7 +160,8 @@ class KardexIntegralService {
     const response = await ApiService.get<ResponseKardex<MovimientoPorProductor[]>>(
       `${BASE_PATH}/por-productor/${productorId}`
     )
-    return response.data || []
+    const payload = this.unwrapResponse(response)
+    return Array.isArray(payload) ? payload : []
   }
 
   /**
@@ -160,7 +177,8 @@ class KardexIntegralService {
 
     const url = `${BASE_PATH}/por-documento${params.toString() ? `?${params.toString()}` : ""}`
     const response = await ApiService.get<ResponseKardex<ResumenPorDocumento[]>>(url)
-    return response.data || []
+    const payload = this.unwrapResponse(response)
+    return Array.isArray(payload) ? payload : []
   }
 
   /**
@@ -238,7 +256,7 @@ class KardexIntegralService {
       const response = await ApiService.get<ResponseKardex<EstadoCuentaProductor>>(
         `${BASE_PATH}/reporte/estado-cuenta/${productorId}`
       )
-      return response.data || null
+      return this.unwrapResponse(response) || null
     } catch (error) {
       console.error("Error al obtener estado de cuenta:", error)
       return null
@@ -256,7 +274,7 @@ class KardexIntegralService {
 
       const url = `${BASE_PATH}/reporte/flujo-caja${params.toString() ? `?${params.toString()}` : ""}`
       const response = await ApiService.get<ResponseKardex<FlujoCaja>>(url)
-      return response.data || null
+      return this.unwrapResponse(response) || null
     } catch (error) {
       console.error("Error al obtener flujo de caja:", error)
       return null
@@ -272,13 +290,15 @@ class KardexIntegralService {
         `${BASE_PATH}/reporte/inventario`
       )
       
+      const payload = this.unwrapResponse(response)
+
       // Verificar que la respuesta tenga la estructura correcta
-      if (response.data && typeof response.data === 'object') {
+      if (payload && typeof payload === 'object') {
         // Asegurar que inventario sea un array
-        if (!Array.isArray(response.data.inventario)) {
+        if (!Array.isArray(payload.inventario)) {
           console.warn('[KardexIntegralService] obtenerReporteInventario: inventario no es un array', response)
           return {
-            resumen: response.data.resumen || {
+            resumen: payload.resumen || {
               total_items: 0,
               peso_total_kg: 0,
               valor_total: 0
@@ -286,7 +306,7 @@ class KardexIntegralService {
             inventario: []
           }
         }
-        return response.data
+        return payload
       }
       
       return null
