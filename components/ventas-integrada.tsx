@@ -17,6 +17,7 @@ import { kardexAutomaticoService } from "@/lib/services/kardex-automatico-servic
 import { libroBancoService } from "@/lib/services/libro-banco-service"
 import { numeroService } from "@/lib/services/numero-service"
 import type { Pedido } from "@/lib/types"
+import type { LoteAsignadoDto } from "@/lib/services/pedidos-service"
 
 interface VentaData {
   pedido_id: number
@@ -28,6 +29,8 @@ export function VentasIntegrada() {
   const { data: pedidos, refresh } = useApi(pedidosService, { initialLoad: true })
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null)
+  const [lotesAsignados, setLotesAsignados] = useState<LoteAsignadoDto[]>([])
+  const [selectedLote, setSelectedLote] = useState<LoteAsignadoDto | null>(null)
   const [loading, setLoading] = useState(false)
   const [numeroFactura, setNumeroFactura] = useState("")
   const [ventaData, setVentaData] = useState<VentaData>({
@@ -38,6 +41,9 @@ export function VentasIntegrada() {
 
   const handleSelectPedido = async (pedido: Pedido) => {
     setSelectedPedido(pedido)
+    const lotes = await pedidosService.getLotesPedido(pedido.id)
+    setLotesAsignados(lotes)
+    setSelectedLote(lotes.length ? lotes[0] : null)
     setVentaData({
       pedido_id: pedido.id,
       kg_vendido: pedido.kg_neto || 0,
@@ -55,16 +61,20 @@ export function VentasIntegrada() {
 
   const handleGuardarVenta = async () => {
     if (!selectedPedido) return
+    if (!selectedLote) {
+      alert("Debe seleccionar un lote asignado para registrar la venta.")
+      return
+    }
 
     setLoading(true)
     try {
       const fecha = new Date().toISOString().split("T")[0]
 
       // 1. Registrar salida automática en kardex
-      const lote_id = selectedPedido.lote_id || 1 // Obtener del pedido
+      const lote_id = selectedLote.lote_id
       await kardexAutomaticoService.registrarSalidaAutomatica(
         lote_id,
-        "exportable", // Asumir categoría exportable
+        selectedLote.categoria || "exportable",
         ventaData.kg_vendido,
         numeroFactura,
         fecha
@@ -89,6 +99,8 @@ export function VentasIntegrada() {
 
       setIsDialogOpen(false)
       setSelectedPedido(null)
+      setLotesAsignados([])
+      setSelectedLote(null)
       setNumeroFactura("")
       setVentaData({ pedido_id: 0, kg_vendido: 0, precio_unitario: 0 })
 
@@ -185,6 +197,59 @@ export function VentasIntegrada() {
 
           {selectedPedido && (
             <div className="space-y-6">
+              <Card className="border-emerald-200 bg-emerald-50">
+                <CardContent className="pt-6">
+                  <div className="flex flex-col gap-2">
+                    <p className="text-sm text-muted-foreground">Lotes asignados al pedido</p>
+                    {lotesAsignados.length === 0 ? (
+                      <Alert>
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>No hay lotes asignados a este pedido.</AlertDescription>
+                      </Alert>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Lote</TableHead>
+                              <TableHead>Producto</TableHead>
+                              <TableHead>Categoría</TableHead>
+                              <TableHead className="text-right">Kg asignado</TableHead>
+                              <TableHead>Acción</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {lotesAsignados.map((lote) => (
+                              <TableRow key={lote.id}>
+                                <TableCell className="font-medium">{lote.numero_lote}</TableCell>
+                                <TableCell>{lote.producto}</TableCell>
+                                <TableCell>{lote.categoria}</TableCell>
+                                <TableCell className="text-right">{lote.kg_asignado}</TableCell>
+                                <TableCell>
+                                  <Button
+                                    size="sm"
+                                    variant={selectedLote?.id === lote.id ? "default" : "outline"}
+                                    onClick={() => {
+                                      setSelectedLote(lote)
+                                      setVentaData((prev) => ({
+                                        ...prev,
+                                        kg_vendido: lote.kg_asignado,
+                                      }))
+                                    }}
+                                  >
+                                    Usar lote
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card className="bg-blue-50 border-blue-200">
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-3 gap-4">
