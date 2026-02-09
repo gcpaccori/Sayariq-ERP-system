@@ -203,9 +203,41 @@ class KardexIntegralController extends BaseController
         try {
             $lote_id = $_GET['lote_id'] ?? null;
             
-            $where = $lote_id ? "WHERE lote_id = :lote_id" : "";
+            $where = $lote_id ? "AND k.lote_id = :lote_id" : "";
             
-            $query = "SELECT * FROM v_kardex_fisico_saldos {$where} ORDER BY lote_id, categoria_nombre";
+            $query = "
+                SELECT 
+                    k.lote_id,
+                    l.numero_lote,
+                    l.numero_lote AS lote_codigo,
+                    l.producto,
+                    l.producto AS producto_nombre,
+                    l.fecha_ingreso AS fecha_ingreso_lote,
+                    p.nombre_completo AS productor_nombre,
+                    k.categoria_id,
+                    k.categoria_nombre,
+                    SUM(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.peso_kg ELSE 0 END) AS total_ingresos,
+                    SUM(CASE WHEN k.tipo_movimiento = 'salida' THEN k.peso_kg ELSE 0 END) AS total_salidas,
+                    SUM(CASE WHEN k.tipo_movimiento = 'salida' THEN k.peso_kg ELSE 0 END) AS total_egresos,
+                    SUM(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.peso_kg ELSE -k.peso_kg END) AS saldo_actual,
+                    MIN(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.fecha_movimiento END) AS fecha_ingreso_categoria,
+                    DATEDIFF(CURDATE(), MIN(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.fecha_movimiento END)) AS antiguedad_dias
+                FROM kardex_integral k
+                LEFT JOIN lotes l ON k.lote_id = l.id
+                LEFT JOIN personas p ON l.productor_id = p.id
+                WHERE k.tipo_kardex = 'fisico'
+                {$where}
+                GROUP BY 
+                    k.lote_id,
+                    l.numero_lote,
+                    l.producto,
+                    l.fecha_ingreso,
+                    p.nombre_completo,
+                    k.categoria_id,
+                    k.categoria_nombre
+                HAVING saldo_actual > 0
+                ORDER BY l.numero_lote, k.categoria_nombre
+            ";
             $stmt = $this->db->prepare($query);
             
             if ($lote_id) {
@@ -679,6 +711,7 @@ class KardexIntegralController extends BaseController
         try {
             $query = "
                 SELECT 
+                    l.id as lote_id,
                     l.numero_lote,
                     l.producto,
                     l.productor_id,
@@ -686,11 +719,23 @@ class KardexIntegralController extends BaseController
                     kfs.categoria_nombre,
                     kfs.saldo_actual as stock_kg,
                     cp.precio_kg,
-                    (kfs.saldo_actual * cp.precio_kg) as valor_inventario
+                    (kfs.saldo_actual * cp.precio_kg) as valor_inventario,
+                    l.fecha_ingreso as fecha_ingreso_lote,
+                    kmin.fecha_ingreso_categoria,
+                    DATEDIFF(CURDATE(), kmin.fecha_ingreso_categoria) as antiguedad_dias
                 FROM v_kardex_fisico_saldos kfs
                 JOIN lotes l ON kfs.lote_id = l.id
                 JOIN personas p ON l.productor_id = p.id
                 JOIN categorias_peso cp ON kfs.categoria_id = cp.id
+                LEFT JOIN (
+                    SELECT 
+                        lote_id,
+                        categoria_id,
+                        MIN(CASE WHEN tipo_movimiento = 'ingreso' THEN fecha_movimiento END) AS fecha_ingreso_categoria
+                    FROM kardex_integral
+                    WHERE tipo_kardex = 'fisico'
+                    GROUP BY lote_id, categoria_id
+                ) kmin ON kmin.lote_id = kfs.lote_id AND kmin.categoria_id = kfs.categoria_id
                 WHERE kfs.saldo_actual > 0
                 ORDER BY l.numero_lote, kfs.categoria_nombre
             ";
