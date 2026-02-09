@@ -75,6 +75,14 @@ export function KardexIntegralERP() {
   const [filtroDocumento, setFiltroDocumento] = useState<string>("todos")
   const [searchTerm, setSearchTerm] = useState("")
 
+  const normalizeNumber = (value: number | string | null | undefined) => {
+    if (value === null || value === undefined || value === "") return null
+    const numeric = Number(value)
+    if (Number.isNaN(numeric)) return null
+    if (Object.is(numeric, -0)) return 0
+    return Math.abs(numeric) < 0.0001 ? 0 : numeric
+  }
+
   // Cargar datos iniciales
   useEffect(() => {
     cargarDatos()
@@ -390,34 +398,46 @@ export function KardexIntegralERP() {
                           )}
                         </TableCell>
                         <TableCell className="py-2 text-right font-mono text-xs">
-                          {mov.peso_kg ? (
-                            <span className={mov.tipo_movimiento === "ingreso" ? "text-green-700" : "text-red-700"}>
-                              {mov.tipo_movimiento === "ingreso" ? "+" : "-"}
-                              {parseFloat(mov.peso_kg.toString()).toFixed(2)}
-                            </span>
+                          {mov.tipo_kardex === "fisico" && normalizeNumber(mov.peso_kg) !== null ? (
+                            Math.abs(normalizeNumber(mov.peso_kg) || 0) > 0 ? (
+                              <span className={mov.tipo_movimiento === "ingreso" ? "text-green-700" : "text-red-700"}>
+                                {mov.tipo_movimiento === "ingreso" ? "+" : "-"}
+                                {Math.abs(normalizeNumber(mov.peso_kg) || 0).toFixed(2)}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )
                           ) : (
                             <span className="text-muted-foreground">—</span>
                           )}
                         </TableCell>
                         <TableCell className="py-2 text-right font-mono text-xs">
-                          {mov.monto ? (
-                            <span className={mov.tipo_movimiento === "egreso" ? "text-red-700" : "text-green-700"}>
-                              {mov.tipo_movimiento === "egreso" ? "-" : "+"}
-                              {parseFloat(mov.monto.toString()).toFixed(2)}
-                            </span>
+                          {mov.tipo_kardex === "financiero" && normalizeNumber(mov.monto) !== null ? (
+                            Math.abs(normalizeNumber(mov.monto) || 0) > 0 ? (
+                              <span className={mov.tipo_movimiento === "egreso" ? "text-red-700" : "text-green-700"}>
+                                {mov.tipo_movimiento === "egreso" ? "-" : "+"}
+                                {Math.abs(normalizeNumber(mov.monto) || 0).toFixed(2)}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )
                           ) : (
                             <span className="text-muted-foreground">—</span>
                           )}
                         </TableCell>
                         <TableCell className="py-2 text-right font-mono text-xs font-semibold">
-                          {mov.saldo_fisico_kg
-                            ? parseFloat(mov.saldo_fisico_kg.toString()).toFixed(2)
-                            : <span className="text-muted-foreground">—</span>}
+                          {mov.tipo_kardex === "fisico" && normalizeNumber(mov.saldo_fisico_kg) !== null ? (
+                            (normalizeNumber(mov.saldo_fisico_kg) || 0).toFixed(2)
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
                         </TableCell>
                         <TableCell className="py-2 text-right font-mono text-xs font-semibold">
-                          {mov.saldo_financiero
-                            ? parseFloat(mov.saldo_financiero.toString()).toFixed(2)
-                            : <span className="text-muted-foreground">—</span>}
+                          {mov.tipo_kardex === "financiero" && normalizeNumber(mov.saldo_financiero) !== null ? (
+                            (normalizeNumber(mov.saldo_financiero) || 0).toFixed(2)
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
                         </TableCell>
                         <TableCell className="py-2">
                           {mov.tipo_movimiento === "ingreso" ? (
@@ -604,7 +624,9 @@ export function KardexIntegralERP() {
                     <TableRow>
                       <TableHead>Lote</TableHead>
                       <TableHead>Producto</TableHead>
+                      <TableHead>Productor</TableHead>
                       <TableHead>Categoría</TableHead>
+                      <TableHead>Antigüedad</TableHead>
                       <TableHead className="text-right">Stock Actual (kg)</TableHead>
                       <TableHead className="text-right">Total Ingresos</TableHead>
                       <TableHead className="text-right">Total Egresos</TableHead>
@@ -614,10 +636,16 @@ export function KardexIntegralERP() {
                   <TableBody>
                     {saldosFisicos.map((saldo) => (
                       <TableRow key={`${saldo.lote_id}-${saldo.categoria_id}`}>
-                        <TableCell className="font-medium">{saldo.lote_codigo}</TableCell>
-                        <TableCell>{saldo.producto_nombre}</TableCell>
+                        <TableCell className="font-medium">{saldo.numero_lote || `Lote #${saldo.lote_id}`}</TableCell>
+                        <TableCell>{saldo.producto || "Producto"}</TableCell>
+                        <TableCell>{saldo.productor_nombre || "—"}</TableCell>
                         <TableCell>
                           <Badge variant="outline">{saldo.categoria_nombre}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {saldo.antiguedad_dias !== null && saldo.antiguedad_dias !== undefined
+                            ? `${saldo.antiguedad_dias} días`
+                            : "—"}
                         </TableCell>
                         <TableCell className="text-right font-mono font-bold">
                           {saldo.saldo_actual.toLocaleString("es-PE", {
