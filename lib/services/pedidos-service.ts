@@ -72,6 +72,7 @@ export type LoteAsignadoDto = {
   numero_lote: string
   producto: string
   categoria: string
+  categoria_id?: number | null
   kg_asignado: number
   fecha_asignacion?: string | null
 
@@ -197,7 +198,7 @@ class PedidosService {
       lote_id: toNumberSafe(row.lote_id ?? row.id),
       numero_lote: String(row.numero_lote ?? ""),
       producto: String(row.producto ?? ""),
-      categoria_id: toNumberSafe(row.categoria_id),
+      categoria_id: row.categoria_id !== null && row.categoria_id !== undefined ? toNumberSafe(row.categoria_id) : null,
       categoria_nombre: String(row.categoria_nombre ?? row.categoria ?? ""),
       categoria_codigo: String(row.categoria_codigo ?? ""),
       saldo_disponible: toNumberSafe(row.saldo_disponible),
@@ -232,6 +233,7 @@ class PedidosService {
       numero_lote: String(row.numero_lote ?? ""),
       producto: String(row.producto ?? ""),
       categoria: String(row.categoria ?? row.categoria_nombre ?? row.categoria_codigo ?? ""),
+      categoria_id: row.categoria_id !== null && row.categoria_id !== undefined ? toNumberSafe(row.categoria_id) : null,
       kg_asignado: toNumberSafe(row.kg_asignado ?? row.peso_asignado),
       fecha_asignacion: row.fecha_asignacion ?? null,
 

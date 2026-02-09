@@ -184,6 +184,24 @@ CREATE TABLE IF NOT EXISTS ventas (
     INDEX idx_fecha (fecha_venta)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Tabla de detalle de lotes vendidos por venta
+CREATE TABLE IF NOT EXISTS venta_lotes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    venta_id INT NOT NULL,
+    lote_id INT NOT NULL,
+    categoria_id INT NULL,
+    categoria VARCHAR(50),
+    kg_vendido DECIMAL(10,2) NOT NULL,
+    precio_unitario DECIMAL(10,2) NOT NULL,
+    total DECIMAL(10,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (venta_id) REFERENCES ventas(id) ON DELETE CASCADE,
+    FOREIGN KEY (lote_id) REFERENCES lotes(id),
+    INDEX idx_venta (venta_id),
+    INDEX idx_lote (lote_id),
+    INDEX idx_categoria (categoria_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Tabla de Libro Banco
 CREATE TABLE IF NOT EXISTS libro_banco (
     id INT AUTO_INCREMENT PRIMARY KEY,
