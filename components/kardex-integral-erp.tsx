@@ -9,7 +9,7 @@
  */
 
 import { useState, useEffect, useMemo } from "react"
-import { format } from "date-fns"
+import { format, isSameMonth } from "date-fns"
 import { es } from "date-fns/locale"
 import {
   TrendingUp,
@@ -100,13 +100,6 @@ export function KardexIntegralERP() {
     return format(parsed, "dd/MM/yyyy")
   }
 
-  const formatFechaCorta = (value?: string | null) => {
-    if (!value) return "—"
-    const parsed = new Date(value)
-    if (Number.isNaN(parsed.getTime())) return "—"
-    return format(parsed, "dd/MM/yyyy")
-  }
-
   // Cargar datos iniciales
   useEffect(() => {
     cargarDatos()
@@ -169,26 +162,31 @@ export function KardexIntegralERP() {
   }, [saldosFisicos])
 
   const resumenFinanciero = useMemo(() => {
+    const ahora = new Date()
     const financieros = movimientos.filter((mov) => mov.tipo_kardex === "financiero")
-    const totalIngresos = financieros.reduce(
+    const financierosMes = financieros.filter((mov) => {
+      const fecha = new Date(mov.fecha_movimiento)
+      return !Number.isNaN(fecha.getTime()) && isSameMonth(fecha, ahora)
+    })
+    const totalIngresos = financierosMes.reduce(
       (acc, mov) => acc + (mov.tipo_movimiento === "ingreso" ? Number(mov.monto || 0) : 0),
       0,
     )
-    const totalEgresos = financieros.reduce(
+    const totalEgresos = financierosMes.reduce(
       (acc, mov) => acc + (mov.tipo_movimiento === "egreso" ? Number(mov.monto || 0) : 0),
       0,
     )
-    const totalVentas = financieros.reduce(
+    const totalVentas = financierosMes.reduce(
       (acc, mov) =>
         acc + (mov.documento_tipo === "venta" && mov.tipo_movimiento === "ingreso" ? Number(mov.monto || 0) : 0),
       0,
     )
-    const totalAdelantos = financieros.reduce(
+    const totalAdelantos = financierosMes.reduce(
       (acc, mov) =>
         acc + (mov.documento_tipo === "adelanto" && mov.tipo_movimiento === "egreso" ? Number(mov.monto || 0) : 0),
       0,
     )
-    const totalPagosProductor = financieros.reduce(
+    const totalPagosProductor = financierosMes.reduce(
       (acc, mov) =>
         acc +
         (["liquidacion", "pago"].includes(mov.documento_tipo) && mov.tipo_movimiento === "egreso"
@@ -333,7 +331,7 @@ export function KardexIntegralERP() {
             <div className="grid gap-4 sm:grid-cols-2">
               <Card className="bg-muted/30">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Dinero disponible</CardTitle>
+                  <CardTitle className="text-sm">Dinero disponible (mes)</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold text-green-700">
@@ -346,7 +344,7 @@ export function KardexIntegralERP() {
               </Card>
               <Card className="bg-muted/30">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Ingresos por ventas</CardTitle>
+                  <CardTitle className="text-sm">Ventas del mes</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold">
@@ -357,7 +355,7 @@ export function KardexIntegralERP() {
               </Card>
               <Card className="bg-muted/30">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Adelantos entregados</CardTitle>
+                  <CardTitle className="text-sm">Adelantos del mes</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold text-amber-700">
@@ -368,7 +366,7 @@ export function KardexIntegralERP() {
               </Card>
               <Card className="bg-muted/30">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Pagos a productores</CardTitle>
+                  <CardTitle className="text-sm">Pagos del mes</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold text-red-700">
@@ -438,7 +436,7 @@ export function KardexIntegralERP() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Resumen financiero global</Label>
+                  <Label>Resumen financiero del mes</Label>
                   <div className="rounded-lg border p-4">
                     <div className="flex items-center justify-between text-sm">
                       <span>Ingresos totales</span>
