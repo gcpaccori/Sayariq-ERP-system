@@ -162,11 +162,14 @@ export function KardexIntegralERP() {
   }, [saldosFisicos])
 
   const resumenFinanciero = useMemo(() => {
-    const ahora = new Date()
     const financieros = movimientos.filter((mov) => mov.tipo_kardex === "financiero")
+    const fechas = financieros
+      .map((mov) => new Date(mov.fecha_movimiento))
+      .filter((fecha) => !Number.isNaN(fecha.getTime()))
+    const fechaReferencia = fechas.length > 0 ? new Date(Math.max(...fechas.map((f) => f.getTime()))) : new Date()
     const financierosMes = financieros.filter((mov) => {
       const fecha = new Date(mov.fecha_movimiento)
-      return !Number.isNaN(fecha.getTime()) && isSameMonth(fecha, ahora)
+      return !Number.isNaN(fecha.getTime()) && isSameMonth(fecha, fechaReferencia)
     })
     const totalIngresos = financierosMes.reduce(
       (acc, mov) => acc + (mov.tipo_movimiento === "ingreso" ? Number(mov.monto || 0) : 0),
@@ -198,6 +201,7 @@ export function KardexIntegralERP() {
     const saldoBanco = saldosFinancieros.find((saldo) => saldo.cuenta_tipo === "banco")?.saldo_actual || 0
     const saldoCaja = saldosFinancieros.find((saldo) => saldo.cuenta_tipo === "caja")?.saldo_actual || 0
     return {
+      mesReferencia: fechaReferencia,
       totalIngresos,
       totalEgresos,
       totalVentas,
@@ -331,7 +335,7 @@ export function KardexIntegralERP() {
             <div className="grid gap-4 sm:grid-cols-2">
               <Card className="bg-muted/30">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Dinero disponible (mes)</CardTitle>
+                  <CardTitle className="text-sm">Dinero disponible</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold text-green-700">
@@ -344,7 +348,7 @@ export function KardexIntegralERP() {
               </Card>
               <Card className="bg-muted/30">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Ventas del mes</CardTitle>
+                  <CardTitle className="text-sm">Ventas del mes ({format(resumenFinanciero.mesReferencia, "MM/yyyy")})</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold">
@@ -355,7 +359,7 @@ export function KardexIntegralERP() {
               </Card>
               <Card className="bg-muted/30">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Adelantos del mes</CardTitle>
+                  <CardTitle className="text-sm">Adelantos del mes ({format(resumenFinanciero.mesReferencia, "MM/yyyy")})</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold text-amber-700">
@@ -366,7 +370,7 @@ export function KardexIntegralERP() {
               </Card>
               <Card className="bg-muted/30">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Pagos del mes</CardTitle>
+                  <CardTitle className="text-sm">Pagos del mes ({format(resumenFinanciero.mesReferencia, "MM/yyyy")})</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold text-red-700">
@@ -436,7 +440,9 @@ export function KardexIntegralERP() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Resumen financiero del mes</Label>
+                  <Label>
+                    Resumen financiero del mes ({format(resumenFinanciero.mesReferencia, "MMMM yyyy", { locale: es })})
+                  </Label>
                   <div className="rounded-lg border p-4">
                     <div className="flex items-center justify-between text-sm">
                       <span>Ingresos totales</span>
@@ -481,19 +487,19 @@ export function KardexIntegralERP() {
                       <div>
                         <p className="text-xs text-muted-foreground">Adelantos</p>
                         <p className="text-lg font-semibold text-amber-700">
-                          S/ {estadoCuenta.resumen.total_adelantos.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
+                          S/ {(estadoCuenta.resumen?.total_adelantos ?? 0).toLocaleString("es-PE", { minimumFractionDigits: 2 })}
                         </p>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Pagos</p>
                         <p className="text-lg font-semibold text-red-700">
-                          S/ {estadoCuenta.resumen.total_pagos.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
+                          S/ {(estadoCuenta.resumen?.total_pagos ?? 0).toLocaleString("es-PE", { minimumFractionDigits: 2 })}
                         </p>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Saldo por regularizar</p>
                         <p className="text-lg font-semibold">
-                          S/ {estadoCuenta.resumen.saldo.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
+                          S/ {(estadoCuenta.resumen?.saldo ?? 0).toLocaleString("es-PE", { minimumFractionDigits: 2 })}
                         </p>
                       </div>
                     </div>

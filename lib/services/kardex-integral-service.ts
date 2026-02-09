@@ -294,6 +294,9 @@ class KardexIntegralService {
 
       // Verificar que la respuesta tenga la estructura correcta
       if (payload && typeof payload === 'object') {
+        if ('movimientos' in payload && !('inventario' in payload)) {
+          return null
+        }
         // Asegurar que inventario sea un array
         if (!Array.isArray(payload.inventario)) {
           console.warn('[KardexIntegralService] obtenerReporteInventario: inventario no es un array', response)
