@@ -3,14 +3,13 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: localhost:3306
--- Tiempo de generación: 20-01-2026 a las 22:57:03
+-- Tiempo de generación: 12-02-2026 a las 21:47:29
 -- Versión del servidor: 10.11.14-MariaDB-cll-lve
 -- Versión de PHP: 8.4.14
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
-SET FOREIGN_KEY_CHECKS = 0;
 
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -26,7 +25,6 @@ DELIMITER $$
 --
 -- Procedimientos
 --
-DROP PROCEDURE IF EXISTS `sp_liquidar_lote`$$
 CREATE DEFINER=`fran2869`@`localhost` PROCEDURE `sp_liquidar_lote` (IN `p_lote_id` INT)   BEGIN
   DECLARE v_total DECIMAL(12,2) DEFAULT 0;
 
@@ -77,7 +75,6 @@ CREATE DEFINER=`fran2869`@`localhost` PROCEDURE `sp_liquidar_lote` (IN `p_lote_i
 
 END$$
 
-DROP PROCEDURE IF EXISTS `sp_registrar_adelanto_kardex`$$
 CREATE DEFINER=`fran2869`@`localhost` PROCEDURE `sp_registrar_adelanto_kardex` (IN `p_adelanto_id` INT, IN `p_productor_id` INT, IN `p_monto` DECIMAL(12,2))   BEGIN
   DECLARE v_productor_nombre VARCHAR(255);
   
@@ -113,7 +110,6 @@ CREATE DEFINER=`fran2869`@`localhost` PROCEDURE `sp_registrar_adelanto_kardex` (
   
 END$$
 
-DROP PROCEDURE IF EXISTS `sp_registrar_liquidacion_kardex`$$
 CREATE DEFINER=`fran2869`@`localhost` PROCEDURE `sp_registrar_liquidacion_kardex` (IN `p_liquidacion_id` INT, IN `p_lote_id` INT, IN `p_productor_id` INT, IN `p_numero_liquidacion` VARCHAR(100), IN `p_total_pagar` DECIMAL(12,2))   BEGIN
   DECLARE v_productor_nombre VARCHAR(255);
   DECLARE v_lote_numero VARCHAR(50);
@@ -220,7 +216,6 @@ CREATE DEFINER=`fran2869`@`localhost` PROCEDURE `sp_registrar_liquidacion_kardex
   
 END$$
 
-DROP PROCEDURE IF EXISTS `sp_registrar_venta_kardex`$$
 CREATE DEFINER=`fran2869`@`localhost` PROCEDURE `sp_registrar_venta_kardex` (IN `p_pedido_id` INT, IN `p_lote_id` INT, IN `p_cliente_id` INT, IN `p_categoria_id` INT, IN `p_peso_vendido` DECIMAL(12,3), IN `p_monto_venta` DECIMAL(12,2))   BEGIN
   DECLARE v_cliente_nombre VARCHAR(255);
   DECLARE v_categoria_nombre VARCHAR(100);
@@ -303,7 +298,6 @@ END$$
 --
 -- Funciones
 --
-DROP FUNCTION IF EXISTS `fn_saldo_financiero`$$
 CREATE DEFINER=`fran2869`@`localhost` FUNCTION `fn_saldo_financiero` (`p_cuenta_tipo` VARCHAR(50)) RETURNS DECIMAL(12,2) DETERMINISTIC READS SQL DATA BEGIN
   DECLARE v_saldo DECIMAL(12,2);
   
@@ -321,7 +315,6 @@ CREATE DEFINER=`fran2869`@`localhost` FUNCTION `fn_saldo_financiero` (`p_cuenta_
   RETURN v_saldo;
 END$$
 
-DROP FUNCTION IF EXISTS `fn_saldo_fisico`$$
 CREATE DEFINER=`fran2869`@`localhost` FUNCTION `fn_saldo_fisico` (`p_lote_id` INT, `p_categoria_id` INT) RETURNS DECIMAL(12,3) DETERMINISTIC READS SQL DATA BEGIN
   DECLARE v_saldo DECIMAL(12,3);
   
@@ -348,7 +341,6 @@ DELIMITER ;
 -- Estructura de tabla para la tabla `adelantos`
 --
 
-DROP TABLE IF EXISTS `adelantos`;
 CREATE TABLE `adelantos` (
   `id` int(11) NOT NULL,
   `productor_id` int(11) NOT NULL,
@@ -378,7 +370,6 @@ INSERT INTO `adelantos` (`id`, `productor_id`, `lote_id`, `monto`, `fecha_adelan
 -- Estructura de tabla para la tabla `ajustes_contables`
 --
 
-DROP TABLE IF EXISTS `ajustes_contables`;
 CREATE TABLE `ajustes_contables` (
   `id` int(11) NOT NULL,
   `lote_id` int(11) NOT NULL,
@@ -420,7 +411,6 @@ INSERT INTO `ajustes_contables` (`id`, `lote_id`, `tipo_ajuste`, `peso_exportabl
 -- Estructura de tabla para la tabla `categorias_peso`
 --
 
-DROP TABLE IF EXISTS `categorias_peso`;
 CREATE TABLE `categorias_peso` (
   `id` int(11) NOT NULL,
   `codigo` varchar(20) NOT NULL,
@@ -456,7 +446,6 @@ INSERT INTO `categorias_peso` (`id`, `codigo`, `nombre`, `descripcion`, `precio_
 -- Estructura de tabla para la tabla `costos_fijos`
 --
 
-DROP TABLE IF EXISTS `costos_fijos`;
 CREATE TABLE `costos_fijos` (
   `id` int(11) NOT NULL,
   `concepto` varchar(255) NOT NULL,
@@ -487,7 +476,6 @@ INSERT INTO `costos_fijos` (`id`, `concepto`, `categoria`, `monto`, `periodicida
 -- Estructura de tabla para la tabla `empleados`
 --
 
-DROP TABLE IF EXISTS `empleados`;
 CREATE TABLE `empleados` (
   `id` int(11) NOT NULL,
   `persona_id` int(11) NOT NULL,
@@ -516,7 +504,6 @@ INSERT INTO `empleados` (`id`, `persona_id`, `cargo`, `area`, `sueldo`, `fecha_i
 -- Estructura de tabla para la tabla `kardex_integral`
 --
 
-DROP TABLE IF EXISTS `kardex_integral`;
 CREATE TABLE `kardex_integral` (
   `id` int(11) NOT NULL,
   `fecha_movimiento` datetime NOT NULL DEFAULT current_timestamp(),
@@ -543,13 +530,89 @@ CREATE TABLE `kardex_integral` (
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Kardex integral con movimientos físicos y financieros unificados';
 
+--
+-- Volcado de datos para la tabla `kardex_integral`
+--
+
+INSERT INTO `kardex_integral` (`id`, `fecha_movimiento`, `tipo_kardex`, `tipo_movimiento`, `documento_tipo`, `documento_id`, `documento_numero`, `lote_id`, `categoria_id`, `categoria_nombre`, `peso_kg`, `saldo_fisico_kg`, `cuenta_tipo`, `monto`, `saldo_financiero`, `persona_id`, `persona_nombre`, `persona_tipo`, `concepto`, `observaciones`, `usuario_registro`, `created_at`, `updated_at`) VALUES
+(1, '2025-11-27 15:09:25', 'fisico', 'egreso', 'liquidacion', 6, NULL, 1, NULL, 'MIXTO', 0.000, 21191.240, NULL, NULL, 0.00, 1, 'María Juana Quispe', 'productor', 'Liquidación LIQ-6 - Lote LOTE-2024-001', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(2, '2025-11-28 16:54:01', 'fisico', 'egreso', 'liquidacion', 14, 'LIQ-0008-2025', 4, NULL, 'MIXTO', 94.990, 49510.830, NULL, NULL, 0.00, 1, 'María Juana Quispe', 'productor', 'Liquidación LIQ-0008-2025 - Lote LOTE-2024-004', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(3, '2025-11-28 16:50:51', 'fisico', 'egreso', 'liquidacion', 12, 'LIQ-0006-2025', 2, NULL, 'MIXTO', 1681.310, 50746.530, NULL, NULL, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Liquidación LIQ-0006-2025 - Lote LOTE-2024-002', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(4, '2025-11-28 16:50:34', 'fisico', 'egreso', 'liquidacion', 11, 'LIQ-0005-2025', 5, NULL, 'MIXTO', 1045.000, 52427.840, NULL, NULL, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Liquidación LIQ-0005-2025 - Lote LOTE-2024-005', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(5, '2025-11-28 16:48:56', 'fisico', 'egreso', 'liquidacion', 10, 'LIQ-0004-2025', 8, NULL, 'MIXTO', 11.400, 53472.840, NULL, NULL, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Liquidación LIQ-0004-2025 - Lote LOT-2025-001', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(6, '2025-11-27 15:59:32', 'fisico', 'egreso', 'liquidacion', 7, NULL, 9, NULL, 'MIXTO', 12.000, 21179.240, NULL, NULL, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Liquidación LIQ-7 - Lote LOT-2025-002', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(7, '2025-11-28 16:55:52', 'fisico', 'egreso', 'liquidacion', 15, 'LIQ-0009-2025', 10, NULL, 'MIXTO', 19000.000, 30510.830, NULL, NULL, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Liquidación LIQ-0009-2025 - Lote LOT-2025-003', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(8, '2025-11-28 16:09:01', 'fisico', 'egreso', 'liquidacion', 9, 'LIQ-0003-2025', 11, NULL, 'MIXTO', 7695.000, 53484.240, NULL, NULL, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Liquidación LIQ-0003-2025 - Lote LOT-2025-004', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(9, '2025-11-28 16:51:01', 'fisico', 'egreso', 'liquidacion', 13, 'LIQ-0007-2025', 3, NULL, 'MIXTO', 1140.710, 49605.820, NULL, NULL, 0.00, 6, 'Roberto Silva Castro', 'productor', 'Liquidación LIQ-0007-2025 - Lote LOTE-2024-003', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(10, '2025-11-29 23:07:41', 'fisico', 'egreso', 'liquidacion', 16, 'LIQ-0010-2025', 12, NULL, 'MIXTO', 1567.500, 28943.330, NULL, NULL, 0.00, 10, 'Gabriel Isaias Ccansaya', 'productor', 'Liquidación LIQ-0010-2025 - Lote LOT-2025-005', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(11, '2025-11-29 23:17:03', 'fisico', 'egreso', 'liquidacion', 17, 'LIQ-0011-2025', 13, NULL, 'MIXTO', 2280.000, 26663.330, NULL, NULL, 0.00, 10, 'Gabriel Isaias Ccansaya', 'productor', 'Liquidación LIQ-0011-2025 - Lote LOT-2025-006', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(12, '2025-12-01 15:04:12', 'fisico', 'egreso', 'liquidacion', 18, 'LIQ-0012-2025', 14, NULL, 'MIXTO', 19.000, 30716.330, NULL, NULL, 0.00, 10, 'Gabriel Isaias Ccansaya', 'productor', 'Liquidación LIQ-0012-2025 - Lote LOT-2025-007', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(16, '2025-11-27 15:09:25', 'financiero', 'egreso', 'liquidacion', 6, NULL, 1, NULL, NULL, 0.000, 0.000, 'banco', 5745.96, 9020.79, 1, 'María Juana Quispe', 'productor', 'Pago liquidación LIQ-6', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(17, '2025-11-28 16:54:01', 'financiero', 'egreso', 'liquidacion', 14, 'LIQ-0008-2025', 4, NULL, NULL, 0.000, 0.000, 'banco', 807.42, -40312.94, 1, 'María Juana Quispe', 'productor', 'Pago liquidación LIQ-0008-2025', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(18, '2025-11-28 16:50:51', 'financiero', 'egreso', 'liquidacion', 12, 'LIQ-0006-2025', 2, NULL, NULL, 0.000, 0.000, 'banco', 12066.35, -31809.46, 3, 'Juan Carlos Castro', 'productor', 'Pago liquidación LIQ-0006-2025', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(19, '2025-11-28 16:50:34', 'financiero', 'egreso', 'liquidacion', 11, 'LIQ-0005-2025', 5, NULL, NULL, 0.000, 0.000, 'banco', 4132.50, -19743.11, 3, 'Juan Carlos Castro', 'productor', 'Pago liquidación LIQ-0005-2025', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(20, '2025-11-28 16:48:56', 'financiero', 'egreso', 'liquidacion', 10, 'LIQ-0004-2025', 8, NULL, NULL, 0.000, 0.000, 'banco', 96.90, -15610.61, 3, 'Juan Carlos Castro', 'productor', 'Pago liquidación LIQ-0004-2025', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(21, '2025-11-27 15:59:32', 'financiero', 'egreso', 'liquidacion', 7, NULL, 9, NULL, NULL, 0.000, 0.000, 'banco', 102.00, 8918.79, 3, 'Juan Carlos Castro', 'productor', 'Pago liquidación LIQ-7', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(22, '2025-11-28 16:55:52', 'financiero', 'egreso', 'liquidacion', 15, 'LIQ-0009-2025', 10, NULL, NULL, 0.000, 0.000, 'banco', 80750.00, -121062.94, 3, 'Juan Carlos Castro', 'productor', 'Pago liquidación LIQ-0009-2025', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(23, '2025-11-28 16:09:01', 'financiero', 'egreso', 'liquidacion', 9, 'LIQ-0003-2025', 11, NULL, NULL, 0.000, 0.000, 'banco', 24432.50, -15513.71, 3, 'Juan Carlos Castro', 'productor', 'Pago liquidación LIQ-0003-2025', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(24, '2025-11-28 16:51:01', 'financiero', 'egreso', 'liquidacion', 13, 'LIQ-0007-2025', 3, NULL, NULL, 0.000, 0.000, 'banco', 7696.06, -39505.52, 6, 'Roberto Silva Castro', 'productor', 'Pago liquidación LIQ-0007-2025', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(25, '2025-11-29 23:07:41', 'financiero', 'egreso', 'liquidacion', 16, 'LIQ-0010-2025', 12, NULL, NULL, 0.000, 0.000, 'banco', 8716.25, -129779.19, 10, 'Gabriel Isaias Ccansaya', 'productor', 'Pago liquidación LIQ-0010-2025', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(26, '2025-11-29 23:17:03', 'financiero', 'egreso', 'liquidacion', 17, 'LIQ-0011-2025', 13, NULL, NULL, 0.000, 0.000, 'banco', 20710.00, -150489.19, 10, 'Gabriel Isaias Ccansaya', 'productor', 'Pago liquidación LIQ-0011-2025', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(27, '2025-12-01 15:04:12', 'financiero', 'egreso', 'liquidacion', 18, 'LIQ-0012-2025', 14, NULL, NULL, 0.000, 0.000, 'banco', 145.35, -150634.54, 10, 'Gabriel Isaias Ccansaya', 'productor', 'Pago liquidación LIQ-0012-2025', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(31, '2024-01-21 00:00:00', 'fisico', 'salida', 'venta', 1, 'VENTA-1', NULL, NULL, 'Premium', 487.500, -487.500, NULL, NULL, 0.00, 2, 'Carlos Rodríguez S.A.C.', 'cliente', 'Venta Espárragos Verdes - Premium', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(32, '2024-01-24 00:00:00', 'fisico', 'salida', 'venta', 2, 'VENTA-2', NULL, NULL, 'Extra', 400.000, -887.500, NULL, NULL, 0.00, 5, 'Distribuidora San Martín', 'cliente', 'Venta Espárragos Blancos - Extra', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(33, '2024-01-26 00:00:00', 'fisico', 'salida', 'venta', 3, 'VENTA-3', NULL, NULL, 'Extra', 335.000, -1222.500, NULL, NULL, 0.00, 5, 'Distribuidora San Martín', 'cliente', 'Venta Espárragos Blancos - Extra', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(34, '2024-01-21 00:00:00', 'financiero', 'ingreso', 'venta', 1, 'VENTA-1', NULL, NULL, NULL, 0.000, 0.000, 'banco', 6093.75, 6093.75, 2, 'Carlos Rodríguez S.A.C.', 'cliente', 'Cobro venta Espárragos Verdes', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(35, '2024-01-24 00:00:00', 'financiero', 'ingreso', 'venta', 2, 'VENTA-2', NULL, NULL, NULL, 0.000, 0.000, 'banco', 4720.00, 10813.75, 5, 'Distribuidora San Martín', 'cliente', 'Cobro venta Espárragos Blancos', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(36, '2024-01-26 00:00:00', 'financiero', 'ingreso', 'venta', 3, 'VENTA-3', NULL, NULL, NULL, 0.000, 0.000, 'banco', 3953.00, 14766.75, 5, 'Distribuidora San Martín', 'cliente', 'Cobro venta Espárragos Blancos', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(37, '2024-01-10 00:00:00', 'financiero', 'egreso', 'adelanto', 1, NULL, NULL, NULL, NULL, 0.000, 0.000, 'caja', 3000.00, -3000.00, 1, 'María Juana Quispe', 'productor', 'Adelanto a María Juana Quispe', 'Adelanto para gastos de cosecha', 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(38, '2024-01-20 00:00:00', 'financiero', 'egreso', 'adelanto', 4, NULL, NULL, NULL, NULL, 0.000, 0.000, 'caja', 3500.00, -12500.00, 1, 'María Juana Quispe', 'productor', 'Adelanto a María Juana Quispe', 'Adelanto para insumos', 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(39, '2024-01-12 00:00:00', 'financiero', 'egreso', 'adelanto', 2, NULL, NULL, NULL, NULL, 0.000, 0.000, 'caja', 4000.00, -7000.00, 3, 'Juan Carlos Castro', 'productor', 'Adelanto a Juan Carlos Castro', 'Adelanto programado', 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(40, '2024-01-22 00:00:00', 'financiero', 'egreso', 'adelanto', 5, NULL, NULL, NULL, NULL, 0.000, 0.000, 'caja', 2500.00, -15000.00, 3, 'Juan Carlos Castro', 'productor', 'Adelanto a Juan Carlos Castro', 'Adelanto personal', 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(41, '2024-01-14 00:00:00', 'financiero', 'egreso', 'adelanto', 3, NULL, NULL, NULL, NULL, 0.000, 0.000, 'caja', 2000.00, -9000.00, 6, 'Roberto Silva Castro', 'productor', 'Adelanto a Roberto Silva Castro', 'Adelanto por futura cosecha', 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(44, '2025-11-27 00:00:00', 'fisico', 'ingreso', 'pesaje', 40, NULL, 6, 1, 'Exportable', 1.000, -1221.500, NULL, 0.00, 0.00, 2, 'Carlos Rodríguez S.A.C.', 'productor', 'Pesaje categoría Exportable - Lote ', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(45, '2025-11-27 00:00:00', 'fisico', 'ingreso', 'pesaje', 7, NULL, 5, 1, 'Exportable', 100.000, -1121.500, NULL, 0.00, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Pesaje categoría Exportable - Lote LOTE-2024-005', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(46, '2025-11-27 00:00:00', 'fisico', 'ingreso', 'pesaje', 8, NULL, 5, 2, 'Industrial', 100.000, -1021.500, NULL, 0.00, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Pesaje categoría Industrial - Lote LOTE-2024-005', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(47, '2025-11-27 00:00:00', 'fisico', 'ingreso', 'pesaje', 9, NULL, 5, 3, 'Nacional', 100.000, -921.500, NULL, 0.00, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Pesaje categoría Nacional - Lote LOTE-2024-005', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(48, '2025-11-27 00:00:00', 'fisico', 'ingreso', 'pesaje', 10, NULL, 5, 4, 'Jugo', 100.000, -821.500, NULL, 0.00, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Pesaje categoría Jugo - Lote LOTE-2024-005', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(49, '2025-11-27 00:00:00', 'fisico', 'ingreso', 'pesaje', 11, NULL, 5, 5, 'Descarte', 100.000, -721.500, NULL, 0.00, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Pesaje categoría Descarte - Lote LOTE-2024-005', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(50, '2025-11-27 00:00:00', 'fisico', 'ingreso', 'pesaje', 12, NULL, 5, 6, 'Primera', 100.000, -621.500, NULL, 0.00, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Pesaje categoría Primera - Lote LOTE-2024-005', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(51, '2025-11-27 00:00:00', 'fisico', 'ingreso', 'pesaje', 13, NULL, 5, 7, 'Segunda', 100.000, -521.500, NULL, 0.00, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Pesaje categoría Segunda - Lote LOTE-2024-005', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(52, '2025-11-27 00:00:00', 'fisico', 'ingreso', 'pesaje', 14, NULL, 5, 8, 'Tercera', 100.000, -421.500, NULL, 0.00, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Pesaje categoría Tercera - Lote LOTE-2024-005', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(53, '2025-11-27 00:00:00', 'fisico', 'ingreso', 'pesaje', 15, NULL, 5, 9, 'Cuarta', 100.000, -321.500, NULL, 0.00, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Pesaje categoría Cuarta - Lote LOTE-2024-005', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(54, '2025-11-27 00:00:00', 'fisico', 'ingreso', 'pesaje', 16, NULL, 5, 10, 'Quinta', 100.000, -221.500, NULL, 0.00, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Pesaje categoría Quinta - Lote LOTE-2024-005', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(55, '2025-11-27 00:00:00', 'fisico', 'ingreso', 'pesaje', 17, NULL, 5, 11, 'Dedos', 100.000, -121.500, NULL, 0.00, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Pesaje categoría Dedos - Lote LOTE-2024-005', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(56, '2025-11-27 00:00:00', 'fisico', 'ingreso', 'pesaje', 4, NULL, 8, 1, 'Exportable', 12.000, -109.500, NULL, 0.00, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Pesaje categoría Exportable - Lote LOT-2025-001', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(57, '2025-11-27 00:00:00', 'fisico', 'ingreso', 'pesaje', 5, NULL, 3, 1, 'Exportable', 1200.750, 1091.250, NULL, 0.00, 0.00, 6, 'Roberto Silva Castro', 'productor', 'Pesaje categoría Exportable - Lote LOTE-2024-003', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(58, '2025-11-27 00:00:00', 'fisico', 'ingreso', 'pesaje', 18, NULL, 4, 1, 'Exportable', 99.990, 1191.240, NULL, 0.00, 0.00, 1, 'María Juana Quispe', 'productor', 'Pesaje categoría Exportable - Lote LOTE-2024-004', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(59, '2025-11-27 00:00:00', 'fisico', 'ingreso', 'pesaje', 38, NULL, 10, 2, 'Industrial', 10000.000, 11191.240, NULL, 0.00, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Pesaje categoría Industrial - Lote LOT-2025-003', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(60, '2025-11-27 00:00:00', 'fisico', 'ingreso', 'pesaje', 39, NULL, 10, 3, 'Nacional', 10000.000, 21191.240, NULL, 0.00, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Pesaje categoría Nacional - Lote LOT-2025-003', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(61, '2025-11-28 00:00:00', 'fisico', 'ingreso', 'pesaje', 30, NULL, 11, 2, 'Industrial', 8100.000, 29279.240, NULL, 0.00, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Pesaje categoría Industrial - Lote LOT-2025-004', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(62, '2025-11-28 00:00:00', 'fisico', 'ingreso', 'pesaje', 31, NULL, 11, 3, 'Nacional', 1000.000, 30279.240, NULL, 0.00, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Pesaje categoría Nacional - Lote LOT-2025-004', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(63, '2025-11-28 00:00:00', 'fisico', 'ingreso', 'pesaje', 32, NULL, 11, 4, 'Jugo', 900.000, 31179.240, NULL, 0.00, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Pesaje categoría Jugo - Lote LOT-2025-004', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(64, '2025-11-28 00:00:00', 'fisico', 'ingreso', 'pesaje', 33, NULL, 11, 6, 'Primera', 10000.000, 41179.240, NULL, 0.00, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Pesaje categoría Primera - Lote LOT-2025-004', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(65, '2025-11-28 00:00:00', 'fisico', 'ingreso', 'pesaje', 34, NULL, 11, 8, 'Tercera', 10000.000, 51179.240, NULL, 0.00, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Pesaje categoría Tercera - Lote LOT-2025-004', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(66, '2025-11-28 00:00:00', 'fisico', 'ingreso', 'pesaje', 35, NULL, 11, 9, 'Cuarta', 10000.000, 61179.240, NULL, 0.00, 0.00, 3, 'Juan Carlos Castro', 'productor', 'Pesaje categoría Cuarta - Lote LOT-2025-004', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(67, '2025-11-30 00:00:00', 'fisico', 'ingreso', 'pesaje', 42, NULL, 12, 1, 'Exportable', 400.000, 27063.330, NULL, 0.00, 0.00, 10, 'Gabriel Isaias Ccansaya', 'productor', 'Pesaje categoría Exportable - Lote LOT-2025-005', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(68, '2025-11-30 00:00:00', 'fisico', 'ingreso', 'pesaje', 43, NULL, 12, 2, 'Industrial', 400.000, 27463.330, NULL, 0.00, 0.00, 10, 'Gabriel Isaias Ccansaya', 'productor', 'Pesaje categoría Industrial - Lote LOT-2025-005', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(69, '2025-11-30 00:00:00', 'fisico', 'ingreso', 'pesaje', 44, NULL, 12, 3, 'Nacional', 600.000, 28063.330, NULL, 0.00, 0.00, 10, 'Gabriel Isaias Ccansaya', 'productor', 'Pesaje categoría Nacional - Lote LOT-2025-005', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(70, '2025-11-30 00:00:00', 'fisico', 'ingreso', 'pesaje', 45, NULL, 12, 7, 'Segunda', 250.000, 28313.330, NULL, 0.00, 0.00, 10, 'Gabriel Isaias Ccansaya', 'productor', 'Pesaje categoría Segunda - Lote LOT-2025-005', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(71, '2025-11-30 00:00:00', 'fisico', 'ingreso', 'pesaje', 46, NULL, 13, 1, 'Exportable', 500.000, 28813.330, NULL, 0.00, 0.00, 10, 'Gabriel Isaias Ccansaya', 'productor', 'Pesaje categoría Exportable - Lote LOT-2025-006', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(72, '2025-11-30 00:00:00', 'fisico', 'ingreso', 'pesaje', 47, NULL, 13, 2, 'Industrial', 500.000, 29313.330, NULL, 0.00, 0.00, 10, 'Gabriel Isaias Ccansaya', 'productor', 'Pesaje categoría Industrial - Lote LOT-2025-006', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(73, '2025-11-30 00:00:00', 'fisico', 'ingreso', 'pesaje', 48, NULL, 13, 5, 'Descarte', 100.000, 29413.330, NULL, 0.00, 0.00, 10, 'Gabriel Isaias Ccansaya', 'productor', 'Pesaje categoría Descarte - Lote LOT-2025-006', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(74, '2025-11-30 00:00:00', 'fisico', 'ingreso', 'pesaje', 49, NULL, 13, 6, 'Primera', 300.000, 29713.330, NULL, 0.00, 0.00, 10, 'Gabriel Isaias Ccansaya', 'productor', 'Pesaje categoría Primera - Lote LOT-2025-006', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(75, '2025-11-30 00:00:00', 'fisico', 'ingreso', 'pesaje', 50, NULL, 13, 7, 'Segunda', 1000.000, 30713.330, NULL, 0.00, 0.00, 10, 'Gabriel Isaias Ccansaya', 'productor', 'Pesaje categoría Segunda - Lote LOT-2025-006', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(76, '2025-12-01 00:00:00', 'fisico', 'ingreso', 'pesaje', 51, NULL, 14, 1, 'Exportable', 20.000, 30733.330, NULL, 0.00, 0.00, 10, 'Gabriel Isaias Ccansaya', 'productor', 'Pesaje categoría Exportable - Lote LOT-2025-007', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(77, '2025-12-01 00:00:00', 'fisico', 'ingreso', 'pesaje', 52, NULL, 15, 1, 'Exportable', 1.000, 30734.330, NULL, 0.00, 0.00, 10, 'Gabriel Isaias Ccansaya', 'productor', 'Pesaje categoría Exportable - Lote LOT-2025-008', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(78, '2025-12-01 00:00:00', 'fisico', 'ingreso', 'pesaje', 53, NULL, 15, 2, 'Industrial', 1.000, 30735.330, NULL, 0.00, 0.00, 10, 'Gabriel Isaias Ccansaya', 'productor', 'Pesaje categoría Industrial - Lote LOT-2025-008', NULL, 'migracion', '2026-01-21 14:25:36', '2026-01-21 14:25:36'),
+(79, '2026-02-09 00:00:00', 'fisico', 'ingreso', 'lote', 0, 'LOT-2026-002', 0, NULL, NULL, 10000.000, 40716.330, NULL, NULL, NULL, 14, 'Juan Luis Rivera', 'productor', 'Ingreso lote LOT-2026-002 - jengibre', '', 'sistema', '2026-02-09 12:52:26', '2026-02-09 12:52:26');
+
 -- --------------------------------------------------------
 
 --
 -- Estructura de tabla para la tabla `kardex_lotes`
 --
 
-DROP TABLE IF EXISTS `kardex_lotes`;
 CREATE TABLE `kardex_lotes` (
   `id` int(11) NOT NULL,
   `lote_id` int(11) NOT NULL,
@@ -677,7 +740,6 @@ INSERT INTO `kardex_lotes` (`id`, `lote_id`, `tipo_movimiento`, `categoria`, `pe
 -- Estructura de tabla para la tabla `libro_banco`
 --
 
-DROP TABLE IF EXISTS `libro_banco`;
 CREATE TABLE `libro_banco` (
   `id` int(11) NOT NULL,
   `fecha` date NOT NULL,
@@ -712,7 +774,6 @@ INSERT INTO `libro_banco` (`id`, `fecha`, `operacion`, `de_quien`, `a_quien`, `m
 -- Estructura de tabla para la tabla `liquidaciones`
 --
 
-DROP TABLE IF EXISTS `liquidaciones`;
 CREATE TABLE `liquidaciones` (
   `id` int(11) NOT NULL,
   `numero_liquidacion` varchar(50) DEFAULT NULL,
@@ -781,7 +842,6 @@ DELIMITER ;
 -- Estructura de tabla para la tabla `liquidaciones_detalle`
 --
 
-DROP TABLE IF EXISTS `liquidaciones_detalle`;
 CREATE TABLE `liquidaciones_detalle` (
   `id` int(11) NOT NULL,
   `liquidacion_id` int(11) NOT NULL,
@@ -840,7 +900,6 @@ INSERT INTO `liquidaciones_detalle` (`id`, `liquidacion_id`, `categoria_id`, `pe
 -- Estructura de tabla para la tabla `lotes`
 --
 
-DROP TABLE IF EXISTS `lotes`;
 CREATE TABLE `lotes` (
   `id` int(11) NOT NULL,
   `numero_lote` varchar(50) NOT NULL,
@@ -884,7 +943,9 @@ INSERT INTO `lotes` (`id`, `numero_lote`, `guia_ingreso`, `productor_id`, `produ
 (14, 'LOT-2025-007', 'GI-1764616570567', 10, 'jengibre', '2025-12-01', NULL, 20.00, 20.00, 20, 'liquidado', 'optimo', '', '2025-12-01 19:16:11', '2025-12-01 20:04:13', 'TERCERO', '2025-12-01 19:16:11', 'EN_RECEPCION', NULL, NULL),
 (15, 'LOT-2025-008', 'GI-1764620590392', 10, 'jengibre', '2025-12-01', NULL, 10.00, 2.00, 10, 'pendiente', 'optimo', '', '2025-12-01 20:23:11', '2025-12-01 20:23:51', 'TERCERO', '2025-12-01 20:23:11', 'EN_RECEPCION', NULL, NULL),
 (16, 'LOT-2025-009', 'GI-1764805942893', 12, 'jengibre', '2025-12-03', NULL, 1900.00, NULL, 80, 'pendiente', 'optimo', 'Producto guardado con moho', '2025-12-03 23:52:23', '2025-12-03 23:52:23', 'TERCERO', '2025-12-03 23:52:23', 'EN_RECEPCION', NULL, NULL),
-(17, 'LOT-2025-010', 'GI-1764848571199', 3, 'jengibre', '2025-12-04', NULL, 1900.00, NULL, 90, 'pendiente', 'optimo', '', '2025-12-04 11:42:51', '2025-12-04 11:42:51', 'TERCERO', '2025-12-04 11:42:51', 'EN_RECEPCION', NULL, NULL);
+(17, 'LOT-2025-010', 'GI-1764848571199', 3, 'jengibre', '2025-12-04', NULL, 1900.00, NULL, 90, 'pendiente', 'optimo', '', '2025-12-04 11:42:51', '2025-12-04 11:42:51', 'TERCERO', '2025-12-04 11:42:51', 'EN_RECEPCION', NULL, NULL),
+(0, 'LOT-2026-001', 'GI-1770239499357', 10, 'jengibre', '2026-02-04', NULL, 200001.00, NULL, 10, 'pendiente', 'optimo', '', '2026-02-04 21:11:39', '2026-02-04 21:11:39', 'TERCERO', '2026-02-04 21:11:39', 'EN_RECEPCION', NULL, NULL),
+(0, 'LOT-2026-002', 'GI-1770641546698', 14, 'jengibre', '2026-02-09', NULL, 10000.00, NULL, 20, 'pendiente', 'optimo', '', '2026-02-09 12:52:26', '2026-02-09 12:52:26', 'TERCERO', '2026-02-09 12:52:26', 'EN_RECEPCION', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -892,7 +953,6 @@ INSERT INTO `lotes` (`id`, `numero_lote`, `guia_ingreso`, `productor_id`, `produ
 -- Estructura de tabla para la tabla `pagos_campo`
 --
 
-DROP TABLE IF EXISTS `pagos_campo`;
 CREATE TABLE `pagos_campo` (
   `id` int(11) NOT NULL,
   `lote_id` int(11) NOT NULL,
@@ -925,7 +985,6 @@ INSERT INTO `pagos_campo` (`id`, `lote_id`, `productor_id`, `total_liquidacion`,
 -- Estructura de tabla para la tabla `pedidos`
 --
 
-DROP TABLE IF EXISTS `pedidos`;
 CREATE TABLE `pedidos` (
   `id` int(11) NOT NULL,
   `numero_pedido` varchar(50) NOT NULL,
@@ -966,7 +1025,6 @@ INSERT INTO `pedidos` (`id`, `numero_pedido`, `cliente_id`, `producto`, `categor
 -- Estructura de tabla para la tabla `pedido_lotes`
 --
 
-DROP TABLE IF EXISTS `pedido_lotes`;
 CREATE TABLE `pedido_lotes` (
   `id` int(11) NOT NULL,
   `pedido_id` int(11) NOT NULL,
@@ -997,7 +1055,6 @@ INSERT INTO `pedido_lotes` (`id`, `pedido_id`, `lote_id`, `categoria`, `kg_asign
 -- Estructura de tabla para la tabla `personas`
 --
 
-DROP TABLE IF EXISTS `personas`;
 CREATE TABLE `personas` (
   `id` int(11) NOT NULL,
   `nombre_completo` varchar(255) NOT NULL,
@@ -1036,12 +1093,12 @@ INSERT INTO `personas` (`id`, `nombre_completo`, `documento_identidad`, `tipo_do
 (6, 'Roberto Silva Castro', '40654321', 'DNI', '987654324', 'roberto.silva@email.com', 'Mz. L Lt. 15, Villa El Salvador', 'productor', '001-159753-486', 'Banco de la Nación', 'activo', '2025-11-13 15:19:27', '2025-12-04 14:00:20', 'Roberto', 'Castro', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (7, 'Luz Marina Díaz', '40543219', 'DNI', '987654325', 'luz.diaz@email.com', 'Calle Los Pinos 654, Cañete', 'empleado', '001-357159-482', 'BCP', 'activo', '2025-11-13 15:19:27', '2025-12-04 14:00:20', 'Luz', 'Díaz', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (8, 'Agroexportadora Del Sur', '20234567891', 'RUC', '012345680', 'administracion@agroexportadora.com', 'Av. Industrial 789, Arequipa', 'proveedor', '001-852741-963', 'Interbank', 'activo', '2025-11-13 15:19:27', '2025-12-04 14:00:20', 'Agroexportadora', 'Sur', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
-(10, 'Gabriel Isaias Ccansaya', '70206904', 'DNI', '971698621', 'gccansayapaccori@gmail.com', '', 'productor', '', '', 'activo', '2025-11-30 03:50:50', '2025-12-04 14:00:20', 'Gabriel', 'Ccansaya', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(10, 'Gabriel ccan', '70206904', 'DNI', '971698621', 'gccansayapaccori@gmail.com', 'jiron nuevo milenio A2, san sebastian, san sebastian', 'productor', '', '', 'activo', '2025-11-30 03:50:50', '2026-01-21 21:15:08', 'Gabriel', 'ccan', '', '', '', 'cusco', '', '', ''),
 (12, 'Lizeth Huayta', '73353257', 'DNI', '912988853', 'lizethhuaytav@gmail.com', 'Lima 1', 'productor', '1910142014234', 'BCP', 'activo', '2025-12-03 23:49:06', '2025-12-04 20:49:01', 'Lizeth', 'Huayta', '', '', '', '', '', '', ''),
 (13, 'Lizeth Cruz Lopez', '12345678', 'DNI', '987654321', 'lopez@gmail.com', 'Lima 1', 'cliente', '', '', 'activo', '2025-12-04 11:33:55', '2025-12-04 14:00:20', 'Lizeth', 'Lopez', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (14, 'Juan Luis Rivera', '87654321', 'DNI', '963852147', 'River@hotmail.com', 'av. Playa Escondida', 'productor', '', '', 'activo', '2025-12-04 11:37:48', '2025-12-04 14:00:20', 'Juan', 'Rivera', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (25, 'Franco Mamani Quispe', 'ss', 'DNI', '1', '2@2.com', '3', 'cliente', '22', '12', 'activo', '2025-12-04 13:54:00', '2025-12-04 20:48:37', 'Franco', 'Mamani Quispe', '', '', '', '', '', '', ''),
-(26, 'Dionisio Cardenas Quelar', '122', 'DNI', '123', '32@com.com', '1233', 'productor', '1', '1', 'activo', '2025-12-04 14:08:35', '2025-12-04 15:49:27', 'Dionisio Cardenas', 'Quelar', '332323', 'ff', '3', '3', '3', '1', '1');
+(26, 'Dionisio Cardenas Quelar', '700000020', 'DNI', '123', '32@com.com', '1233', 'productor', '1', '1', 'activo', '2025-12-04 14:08:35', '2026-02-09 15:54:30', 'Dionisio Cardenas', 'Quelar', '332323', 'ff', '3', '3', '3', '1', '1');
 
 -- --------------------------------------------------------
 
@@ -1049,7 +1106,6 @@ INSERT INTO `personas` (`id`, `nombre_completo`, `documento_identidad`, `tipo_do
 -- Estructura de tabla para la tabla `persona_roles`
 --
 
-DROP TABLE IF EXISTS `persona_roles`;
 CREATE TABLE `persona_roles` (
   `id` int(11) NOT NULL,
   `persona_id` int(11) NOT NULL,
@@ -1067,8 +1123,9 @@ INSERT INTO `persona_roles` (`id`, `persona_id`, `rol_id`) VALUES
 (34, 12, 6),
 (31, 25, 2),
 (32, 25, 6),
-(29, 26, 1),
-(30, 26, 4);
+(0, 10, 1),
+(0, 26, 1),
+(0, 26, 4);
 
 -- --------------------------------------------------------
 
@@ -1076,7 +1133,6 @@ INSERT INTO `persona_roles` (`id`, `persona_id`, `rol_id`) VALUES
 -- Estructura de tabla para la tabla `pesos_lote`
 --
 
-DROP TABLE IF EXISTS `pesos_lote`;
 CREATE TABLE `pesos_lote` (
   `id` int(11) NOT NULL,
   `lote_id` int(11) NOT NULL,
@@ -1125,7 +1181,6 @@ INSERT INTO `pesos_lote` (`id`, `lote_id`, `fecha_pesado`, `peso_bruto`, `peso_e
 -- Estructura de tabla para la tabla `pesos_lote_detalle`
 --
 
-DROP TABLE IF EXISTS `pesos_lote_detalle`;
 CREATE TABLE `pesos_lote_detalle` (
   `id` int(11) NOT NULL,
   `peso_lote_id` int(11) NOT NULL,
@@ -1182,7 +1237,6 @@ INSERT INTO `pesos_lote_detalle` (`id`, `peso_lote_id`, `categoria_id`, `peso`, 
 -- Estructura de tabla para la tabla `planificacion_operativa`
 --
 
-DROP TABLE IF EXISTS `planificacion_operativa`;
 CREATE TABLE `planificacion_operativa` (
   `id` int(11) NOT NULL,
   `lote_id` int(11) NOT NULL,
@@ -1208,7 +1262,6 @@ INSERT INTO `planificacion_operativa` (`id`, `lote_id`, `pedido_id`, `peso_asign
 -- Estructura de tabla para la tabla `roles`
 --
 
-DROP TABLE IF EXISTS `roles`;
 CREATE TABLE `roles` (
   `id` int(11) NOT NULL,
   `codigo` varchar(50) NOT NULL,
@@ -1235,7 +1288,6 @@ INSERT INTO `roles` (`id`, `codigo`, `nombre`, `estado`, `created_at`) VALUES
 -- Estructura de tabla para la tabla `ventas`
 --
 
-DROP TABLE IF EXISTS `ventas`;
 CREATE TABLE `ventas` (
   `id` int(11) NOT NULL,
   `pedido_id` int(11) NOT NULL,
@@ -1278,7 +1330,6 @@ CREATE TABLE `venta_lotes` (
 -- Estructura Stand-in para la vista `vw_datos_liquidacion`
 -- (Véase abajo para la vista actual)
 --
-DROP TABLE IF EXISTS `vw_datos_liquidacion`;
 CREATE TABLE `vw_datos_liquidacion` (
 `lote_id` int(11)
 ,`numero_lote` varchar(50)
@@ -1308,7 +1359,6 @@ CREATE TABLE `vw_datos_liquidacion` (
 -- Estructura Stand-in para la vista `vw_saldos_kardex`
 -- (Véase abajo para la vista actual)
 --
-DROP TABLE IF EXISTS `vw_saldos_kardex`;
 CREATE TABLE `vw_saldos_kardex` (
 `lote_id` int(11)
 ,`categoria` enum('exportable','industrial','descarte','nacional','jugo','primera','segunda','tercera','cuarta','quinta','dedos')
@@ -1321,7 +1371,6 @@ CREATE TABLE `vw_saldos_kardex` (
 -- Estructura Stand-in para la vista `v_kardex_financiero_saldos`
 -- (Véase abajo para la vista actual)
 --
-DROP TABLE IF EXISTS `v_kardex_financiero_saldos`;
 CREATE TABLE `v_kardex_financiero_saldos` (
 `cuenta_tipo` enum('caja','banco','adelantos','ventas','produccion')
 ,`total_ingresos` decimal(34,2)
@@ -1335,7 +1384,6 @@ CREATE TABLE `v_kardex_financiero_saldos` (
 -- Estructura Stand-in para la vista `v_kardex_fisico_saldos`
 -- (Véase abajo para la vista actual)
 --
-DROP TABLE IF EXISTS `v_kardex_fisico_saldos`;
 CREATE TABLE `v_kardex_fisico_saldos` (
 `lote_id` int(11)
 ,`lote_codigo` varchar(50)
@@ -1356,7 +1404,6 @@ CREATE TABLE `v_kardex_fisico_saldos` (
 -- Estructura Stand-in para la vista `v_kardex_por_documento`
 -- (Véase abajo para la vista actual)
 --
-DROP TABLE IF EXISTS `v_kardex_por_documento`;
 CREATE TABLE `v_kardex_por_documento` (
 `documento_tipo` varchar(50)
 ,`documento_numero` varchar(100)
@@ -1373,7 +1420,6 @@ CREATE TABLE `v_kardex_por_documento` (
 -- Estructura Stand-in para la vista `v_kardex_por_productor`
 -- (Véase abajo para la vista actual)
 --
-DROP TABLE IF EXISTS `v_kardex_por_productor`;
 CREATE TABLE `v_kardex_por_productor` (
 `persona_id` int(11)
 ,`persona_nombre` varchar(255)
@@ -1391,7 +1437,6 @@ CREATE TABLE `v_kardex_por_productor` (
 -- Estructura Stand-in para la vista `v_kardex_resumen_documentos`
 -- (Véase abajo para la vista actual)
 --
-DROP TABLE IF EXISTS `v_kardex_resumen_documentos`;
 CREATE TABLE `v_kardex_resumen_documentos` (
 `documento_tipo` varchar(50)
 ,`documento_numero` varchar(100)
@@ -1408,7 +1453,6 @@ CREATE TABLE `v_kardex_resumen_documentos` (
 -- Estructura Stand-in para la vista `v_liquidacion_desde_kardex`
 -- (Véase abajo para la vista actual)
 --
-DROP TABLE IF EXISTS `v_liquidacion_desde_kardex`;
 CREATE TABLE `v_liquidacion_desde_kardex` (
 `lote_id` int(11)
 ,`numero_lote` varchar(50)
@@ -1437,7 +1481,6 @@ CREATE TABLE `v_liquidacion_desde_kardex` (
 -- Estructura Stand-in para la vista `v_pesos_consolidados_lote`
 -- (Véase abajo para la vista actual)
 --
-DROP TABLE IF EXISTS `v_pesos_consolidados_lote`;
 CREATE TABLE `v_pesos_consolidados_lote` (
 `lote_id` int(11)
 ,`peso_bruto_total` decimal(32,2)
@@ -1462,7 +1505,6 @@ CREATE TABLE `v_pesos_consolidados_lote` (
 -- Estructura Stand-in para la vista `v_stock_kardex_lote`
 -- (Véase abajo para la vista actual)
 --
-DROP TABLE IF EXISTS `v_stock_kardex_lote`;
 CREATE TABLE `v_stock_kardex_lote` (
 `lote_id` int(11)
 ,`numero_lote` varchar(50)
@@ -1481,7 +1523,6 @@ CREATE TABLE `v_stock_kardex_lote` (
 -- Estructura Stand-in para la vista `v_stock_real_kardex`
 -- (Véase abajo para la vista actual)
 --
-DROP TABLE IF EXISTS `v_stock_real_kardex`;
 CREATE TABLE `v_stock_real_kardex` (
 `lote_id` int(11)
 ,`numero_lote` varchar(50)
@@ -1499,192 +1540,10 @@ CREATE TABLE `v_stock_real_kardex` (
 --
 
 --
--- Indices de la tabla `adelantos`
---
-ALTER TABLE `adelantos`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `lote_id` (`lote_id`),
-  ADD KEY `idx_productor` (`productor_id`),
-  ADD KEY `idx_estado` (`estado`),
-  ADD KEY `fk_adelantos_liquidacion` (`liquidacion_id`);
-
---
--- Indices de la tabla `ajustes_contables`
---
-ALTER TABLE `ajustes_contables`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_lote` (`lote_id`),
-  ADD KEY `idx_estado` (`estado`);
-
---
--- Indices de la tabla `categorias_peso`
---
-ALTER TABLE `categorias_peso`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `codigo` (`codigo`),
-  ADD UNIQUE KEY `uniq_codigo` (`codigo`);
-
---
--- Indices de la tabla `costos_fijos`
---
-ALTER TABLE `costos_fijos`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_categoria` (`categoria`);
-
---
--- Indices de la tabla `empleados`
---
-ALTER TABLE `empleados`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `persona_id` (`persona_id`),
-  ADD KEY `idx_area` (`area`),
-  ADD KEY `idx_estado` (`estado`);
-
---
 -- Indices de la tabla `kardex_integral`
 --
 ALTER TABLE `kardex_integral`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_fecha` (`fecha_movimiento`),
-  ADD KEY `idx_tipo_kardex` (`tipo_kardex`),
-  ADD KEY `idx_tipo_mov` (`tipo_movimiento`),
-  ADD KEY `idx_documento` (`documento_tipo`,`documento_id`),
-  ADD KEY `idx_lote` (`lote_id`),
-  ADD KEY `idx_categoria` (`categoria_id`),
-  ADD KEY `idx_persona` (`persona_id`),
-  ADD KEY `idx_fecha_tipo` (`fecha_movimiento`,`tipo_kardex`);
-
---
--- Indices de la tabla `kardex_lotes`
---
-ALTER TABLE `kardex_lotes`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_lote` (`lote_id`),
-  ADD KEY `idx_categoria` (`categoria`),
-  ADD KEY `idx_fecha` (`fecha_movimiento`);
-
---
--- Indices de la tabla `libro_banco`
---
-ALTER TABLE `libro_banco`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_fecha` (`fecha`),
-  ADD KEY `idx_rubro` (`rubro`),
-  ADD KEY `idx_estado` (`estado`);
-
---
--- Indices de la tabla `liquidaciones`
---
-ALTER TABLE `liquidaciones`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `unique_lote_liquidacion` (`lote_id`),
-  ADD UNIQUE KEY `ux_liquidaciones_numero_liquidacion` (`numero_liquidacion`);
-
---
--- Indices de la tabla `liquidaciones_detalle`
---
-ALTER TABLE `liquidaciones_detalle`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_liquidacion` (`liquidacion_id`),
-  ADD KEY `idx_categoria` (`categoria_id`);
-
---
--- Indices de la tabla `lotes`
---
-ALTER TABLE `lotes`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `numero_lote` (`numero_lote`),
-  ADD UNIQUE KEY `guia_ingreso` (`guia_ingreso`),
-  ADD KEY `productor_id` (`productor_id`),
-  ADD KEY `idx_numero_lote` (`numero_lote`),
-  ADD KEY `idx_estado` (`estado`),
-  ADD KEY `idx_fecha_ingreso` (`fecha_ingreso`);
-
---
--- Indices de la tabla `pagos_campo`
---
-ALTER TABLE `pagos_campo`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `productor_id` (`productor_id`),
-  ADD KEY `idx_lote` (`lote_id`),
-  ADD KEY `idx_estado` (`estado`);
-
---
--- Indices de la tabla `pedidos`
---
-ALTER TABLE `pedidos`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `numero_pedido` (`numero_pedido`),
-  ADD KEY `cliente_id` (`cliente_id`),
-  ADD KEY `idx_numero` (`numero_pedido`),
-  ADD KEY `idx_estado` (`estado`);
-
---
--- Indices de la tabla `pedido_lotes`
---
-ALTER TABLE `pedido_lotes`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `pedido_id` (`pedido_id`,`lote_id`),
-  ADD UNIQUE KEY `uniq_pedido_lote` (`pedido_id`,`lote_id`),
-  ADD KEY `lote_id` (`lote_id`),
-  ADD KEY `fk_pedido_lotes_categoria` (`categoria_id`);
-
---
--- Indices de la tabla `personas`
---
-ALTER TABLE `personas`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `documento_identidad` (`documento_identidad`),
-  ADD KEY `idx_documento` (`documento_identidad`),
-  ADD KEY `idx_tipo` (`tipo_persona`);
-
---
--- Indices de la tabla `persona_roles`
---
-ALTER TABLE `persona_roles`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `persona_id` (`persona_id`,`rol_id`),
-  ADD KEY `rol_id` (`rol_id`);
-
---
--- Indices de la tabla `pesos_lote`
---
-ALTER TABLE `pesos_lote`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_lote` (`lote_id`),
-  ADD KEY `idx_fecha` (`fecha_pesado`);
-
---
--- Indices de la tabla `pesos_lote_detalle`
---
-ALTER TABLE `pesos_lote_detalle`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `peso_lote_id` (`peso_lote_id`,`categoria_id`),
-  ADD KEY `idx_pesos_lote_detalle_lote` (`peso_lote_id`),
-  ADD KEY `idx_pesos_lote_detalle_categoria` (`categoria_id`);
-
---
--- Indices de la tabla `planificacion_operativa`
---
-ALTER TABLE `planificacion_operativa`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_lote` (`lote_id`),
-  ADD KEY `idx_pedido` (`pedido_id`);
-
---
--- Indices de la tabla `roles`
---
-ALTER TABLE `roles`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `codigo` (`codigo`);
-
---
--- Indices de la tabla `ventas`
---
-ALTER TABLE `ventas`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_pedido` (`pedido_id`),
-  ADD KEY `idx_fecha` (`fecha_venta`);
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indices de la tabla `venta_lotes`
@@ -1699,130 +1558,10 @@ ALTER TABLE `venta_lotes`
 --
 
 --
--- AUTO_INCREMENT de la tabla `adelantos`
---
-ALTER TABLE `adelantos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
-
---
--- AUTO_INCREMENT de la tabla `ajustes_contables`
---
-ALTER TABLE `ajustes_contables`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
-
---
--- AUTO_INCREMENT de la tabla `categorias_peso`
---
-ALTER TABLE `categorias_peso`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
-
---
--- AUTO_INCREMENT de la tabla `costos_fijos`
---
-ALTER TABLE `costos_fijos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
-
---
--- AUTO_INCREMENT de la tabla `empleados`
---
-ALTER TABLE `empleados`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
-
---
 -- AUTO_INCREMENT de la tabla `kardex_integral`
 --
 ALTER TABLE `kardex_integral`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de la tabla `kardex_lotes`
---
-ALTER TABLE `kardex_lotes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=106;
-
---
--- AUTO_INCREMENT de la tabla `libro_banco`
---
-ALTER TABLE `libro_banco`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
-
---
--- AUTO_INCREMENT de la tabla `liquidaciones`
---
-ALTER TABLE `liquidaciones`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
-
---
--- AUTO_INCREMENT de la tabla `liquidaciones_detalle`
---
-ALTER TABLE `liquidaciones_detalle`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=33;
-
---
--- AUTO_INCREMENT de la tabla `lotes`
---
-ALTER TABLE `lotes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
-
---
--- AUTO_INCREMENT de la tabla `pagos_campo`
---
-ALTER TABLE `pagos_campo`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
-
---
--- AUTO_INCREMENT de la tabla `pedidos`
---
-ALTER TABLE `pedidos`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
-
---
--- AUTO_INCREMENT de la tabla `pedido_lotes`
---
-ALTER TABLE `pedido_lotes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
-
---
--- AUTO_INCREMENT de la tabla `personas`
---
-ALTER TABLE `personas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
-
---
--- AUTO_INCREMENT de la tabla `persona_roles`
---
-ALTER TABLE `persona_roles`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=37;
-
---
--- AUTO_INCREMENT de la tabla `pesos_lote`
---
-ALTER TABLE `pesos_lote`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
-
---
--- AUTO_INCREMENT de la tabla `pesos_lote_detalle`
---
-ALTER TABLE `pesos_lote_detalle`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=54;
-
---
--- AUTO_INCREMENT de la tabla `planificacion_operativa`
---
-ALTER TABLE `planificacion_operativa`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
-
---
--- AUTO_INCREMENT de la tabla `roles`
---
-ALTER TABLE `roles`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
-
---
--- AUTO_INCREMENT de la tabla `ventas`
---
-ALTER TABLE `ventas`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=80;
 
 --
 -- AUTO_INCREMENT de la tabla `venta_lotes`
@@ -1934,115 +1673,13 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`fran2869`@`localhost` SQL SECURITY DEFINER V
 --
 
 --
--- Filtros para la tabla `adelantos`
---
-ALTER TABLE `adelantos`
-  ADD CONSTRAINT `adelantos_ibfk_1` FOREIGN KEY (`productor_id`) REFERENCES `personas` (`id`),
-  ADD CONSTRAINT `adelantos_ibfk_2` FOREIGN KEY (`lote_id`) REFERENCES `lotes` (`id`),
-  ADD CONSTRAINT `fk_adelantos_liquidacion` FOREIGN KEY (`liquidacion_id`) REFERENCES `liquidaciones` (`id`);
-
---
--- Filtros para la tabla `ajustes_contables`
---
-ALTER TABLE `ajustes_contables`
-  ADD CONSTRAINT `ajustes_contables_ibfk_1` FOREIGN KEY (`lote_id`) REFERENCES `lotes` (`id`);
-
---
--- Filtros para la tabla `empleados`
---
-ALTER TABLE `empleados`
-  ADD CONSTRAINT `empleados_ibfk_1` FOREIGN KEY (`persona_id`) REFERENCES `personas` (`id`);
-
---
--- Filtros para la tabla `kardex_lotes`
---
-ALTER TABLE `kardex_lotes`
-  ADD CONSTRAINT `kardex_lotes_ibfk_1` FOREIGN KEY (`lote_id`) REFERENCES `lotes` (`id`);
-
---
--- Filtros para la tabla `liquidaciones`
---
-ALTER TABLE `liquidaciones`
-  ADD CONSTRAINT `fk_liquidaciones_lote` FOREIGN KEY (`lote_id`) REFERENCES `lotes` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `liquidaciones_ibfk_1` FOREIGN KEY (`lote_id`) REFERENCES `lotes` (`id`) ON DELETE CASCADE;
-
---
--- Filtros para la tabla `liquidaciones_detalle`
---
-ALTER TABLE `liquidaciones_detalle`
-  ADD CONSTRAINT `liquidaciones_detalle_ibfk_1` FOREIGN KEY (`liquidacion_id`) REFERENCES `liquidaciones` (`id`) ON DELETE CASCADE;
-
---
--- Filtros para la tabla `lotes`
---
-ALTER TABLE `lotes`
-  ADD CONSTRAINT `lotes_ibfk_1` FOREIGN KEY (`productor_id`) REFERENCES `personas` (`id`);
-
---
--- Filtros para la tabla `pagos_campo`
---
-ALTER TABLE `pagos_campo`
-  ADD CONSTRAINT `pagos_campo_ibfk_1` FOREIGN KEY (`lote_id`) REFERENCES `lotes` (`id`),
-  ADD CONSTRAINT `pagos_campo_ibfk_2` FOREIGN KEY (`productor_id`) REFERENCES `personas` (`id`);
-
---
--- Filtros para la tabla `pedidos`
---
-ALTER TABLE `pedidos`
-  ADD CONSTRAINT `pedidos_ibfk_1` FOREIGN KEY (`cliente_id`) REFERENCES `personas` (`id`);
-
---
--- Filtros para la tabla `pedido_lotes`
---
-ALTER TABLE `pedido_lotes`
-  ADD CONSTRAINT `fk_pedido_lotes_categoria` FOREIGN KEY (`categoria_id`) REFERENCES `categorias_peso` (`id`),
-  ADD CONSTRAINT `pedido_lotes_ibfk_1` FOREIGN KEY (`pedido_id`) REFERENCES `pedidos` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `pedido_lotes_ibfk_2` FOREIGN KEY (`lote_id`) REFERENCES `lotes` (`id`) ON DELETE CASCADE;
-
---
--- Filtros para la tabla `persona_roles`
---
-ALTER TABLE `persona_roles`
-  ADD CONSTRAINT `persona_roles_ibfk_1` FOREIGN KEY (`persona_id`) REFERENCES `personas` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `persona_roles_ibfk_2` FOREIGN KEY (`rol_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE;
-
---
--- Filtros para la tabla `pesos_lote`
---
-ALTER TABLE `pesos_lote`
-  ADD CONSTRAINT `pesos_lote_ibfk_1` FOREIGN KEY (`lote_id`) REFERENCES `lotes` (`id`) ON DELETE CASCADE;
-
---
--- Filtros para la tabla `pesos_lote_detalle`
---
-ALTER TABLE `pesos_lote_detalle`
-  ADD CONSTRAINT `pesos_lote_detalle_ibfk_1` FOREIGN KEY (`peso_lote_id`) REFERENCES `pesos_lote` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `pesos_lote_detalle_ibfk_2` FOREIGN KEY (`categoria_id`) REFERENCES `categorias_peso` (`id`);
-
---
--- Filtros para la tabla `planificacion_operativa`
---
-ALTER TABLE `planificacion_operativa`
-  ADD CONSTRAINT `planificacion_operativa_ibfk_1` FOREIGN KEY (`lote_id`) REFERENCES `lotes` (`id`),
-  ADD CONSTRAINT `planificacion_operativa_ibfk_2` FOREIGN KEY (`pedido_id`) REFERENCES `pedidos` (`id`);
-
---
--- Filtros para la tabla `ventas`
---
-ALTER TABLE `ventas`
-  ADD CONSTRAINT `ventas_ibfk_1` FOREIGN KEY (`pedido_id`) REFERENCES `pedidos` (`id`);
-
---
 -- Filtros para la tabla `venta_lotes`
 --
 ALTER TABLE `venta_lotes`
   ADD CONSTRAINT `venta_lotes_lote_id_foreign` FOREIGN KEY (`lote_id`) REFERENCES `lotes` (`id`),
   ADD CONSTRAINT `venta_lotes_venta_id_foreign` FOREIGN KEY (`venta_id`) REFERENCES `ventas` (`id`) ON DELETE CASCADE;
-
-SET FOREIGN_KEY_CHECKS = 1;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
