@@ -837,12 +837,12 @@ export function KardexIntegralERP() {
                   </TableHeader>
                   <TableBody>
                     {saldosFisicos.map((saldo) => (
-                      <TableRow key={`${saldo.lote_id}-${saldo.categoria_id}`}>
+                      <TableRow key={`${saldo.lote_id}-${saldo.categoria_id ?? "sin-categoria"}-${saldo.categoria_nombre ?? "sin-categoria"}`}>
                         <TableCell className="font-medium">{saldo.lote_codigo}</TableCell>
                         <TableCell>{saldo.producto_nombre}</TableCell>
                         <TableCell>{saldo.productor_nombre || "—"}</TableCell>
                         <TableCell>
-                          <Badge variant="outline">{saldo.categoria_nombre}</Badge>
+                          <Badge variant="outline">{saldo.categoria_nombre || "Sin categoría"}</Badge>
                         </TableCell>
                         <TableCell>{formatFechaCorta(saldo.fecha_ingreso_categoria || saldo.fecha_ingreso_lote)}</TableCell>
                         <TableCell className="text-right font-mono">

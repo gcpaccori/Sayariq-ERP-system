@@ -215,7 +215,7 @@ class KardexIntegralController extends BaseController
                     l.fecha_ingreso AS fecha_ingreso_lote,
                     p.nombre_completo AS productor_nombre,
                     k.categoria_id,
-                    k.categoria_nombre,
+                    COALESCE(cp.nombre, k.categoria_nombre, 'Sin categoría') AS categoria_nombre,
                     SUM(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.peso_kg ELSE 0 END) AS total_ingresos,
                     SUM(CASE WHEN k.tipo_movimiento = 'salida' THEN k.peso_kg ELSE 0 END) AS total_salidas,
                     SUM(CASE WHEN k.tipo_movimiento = 'salida' THEN k.peso_kg ELSE 0 END) AS total_egresos,
@@ -225,6 +225,7 @@ class KardexIntegralController extends BaseController
                 FROM kardex_integral k
                 LEFT JOIN lotes l ON k.lote_id = l.id
                 LEFT JOIN personas p ON l.productor_id = p.id
+                LEFT JOIN categorias_peso cp ON k.categoria_id = cp.id
                 WHERE k.tipo_kardex = 'fisico'
                 {$where}
                 GROUP BY 
@@ -234,9 +235,9 @@ class KardexIntegralController extends BaseController
                     l.fecha_ingreso,
                     p.nombre_completo,
                     k.categoria_id,
-                    k.categoria_nombre
+                    COALESCE(cp.nombre, k.categoria_nombre, 'Sin categoría')
                 HAVING saldo_actual > 0
-                ORDER BY l.numero_lote, k.categoria_nombre
+                ORDER BY l.numero_lote, categoria_nombre
             ";
             $stmt = $this->db->prepare($query);
             
