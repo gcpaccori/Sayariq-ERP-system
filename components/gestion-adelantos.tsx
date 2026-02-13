@@ -452,7 +452,7 @@ export function GestionAdelantos() {
             <div className="text-center py-8">
               <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">No hay adelantos registrados</p>
-              <p className="text-sm text-muted-foreground">Crea el primer adelanto usando el botón &quot;Nuevo Adelanto&quot;</p>
+              <p className="text-sm text-muted-foreground">{"Crea el primer adelanto usando el botón \"Nuevo Adelanto\""}</p>
             </div>
           ) : (
             <Table>
