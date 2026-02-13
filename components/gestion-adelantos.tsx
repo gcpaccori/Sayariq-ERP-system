@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,7 +19,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus, DollarSign, TrendingUp, TrendingDown, Clock, AlertCircle } from "lucide-react"
+import { Plus, DollarSign, TrendingUp, TrendingDown, Clock, AlertCircle, Edit, Trash2, Search, Users } from "lucide-react"
 import { useAdelantos } from "@/lib/hooks/use-adelantos"
 import { usePersonas } from "@/lib/hooks/use-personas"
 import { format } from "date-fns"
@@ -32,17 +32,26 @@ export function GestionAdelantos() {
   const { data: adelantos, loading: loadingAdelantos, error: errorAdelantos, create, refresh } = useAdelantos()
   const { data: personas, loading: loadingPersonas, error: errorPersonas } = usePersonas()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [filtroProductor, setFiltroProductor] = useState<string>("todos")
+  const [searchTerm, setSearchTerm] = useState("")
   const [formData, setFormData] = useState<Partial<NuevoAdelanto>>({
-    productor_id: "",
+    productor_id: 0,
     productor_nombre: "",
     monto_original: 0,
     concepto: "",
     fecha_adelanto: new Date().toISOString().split("T")[0],
   })
+  const [editFormData, setEditFormData] = useState<{
+    concepto: string
+    monto_original: number
+  }>({ concepto: "", monto_original: 0 })
 
-  // Asegurar que personas sea un array
   const personasArray = Array.isArray(personas) ? personas : []
-  const productores = personasArray.filter((p) => p.tipo === "productor" && p.activo)
+  const productores = personasArray.filter(
+    (p) => p.tipo === "productor" && (p.activo !== false && p.estado !== "inactivo"),
+  )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -64,7 +73,7 @@ export function GestionAdelantos() {
       })
       setIsDialogOpen(false)
       setFormData({
-        productor_id: "",
+        productor_id: 0,
         productor_nombre: "",
         monto_original: 0,
         concepto: "",
@@ -81,12 +90,57 @@ export function GestionAdelantos() {
   }
 
   const handleProductorChange = (productorId: string) => {
-    const productor = productores.find((p) => p.$id === productorId)
+    const productor = productores.find((p) => String(p.id) === productorId)
     setFormData((prev) => ({
       ...prev,
-      productor_id: productorId,
+      productor_id: Number(productorId),
       productor_nombre: productor ? `${productor.nombres} ${productor.apellidos}` : "",
     }))
+  }
+
+  const handleEditAdelanto = (adelanto: { id: number; concepto: string; monto_original: number; estado: string }) => {
+    if (adelanto.estado === "descontado-total") {
+      toast({ title: "No editable", description: "Este adelanto ya fue descontado completamente", variant: "destructive" })
+      return
+    }
+    setEditingId(adelanto.id)
+    setEditFormData({ concepto: adelanto.concepto, monto_original: adelanto.monto_original })
+    setIsEditDialogOpen(true)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editingId) return
+    try {
+      const response = await fetch(`/api/proxy/adelantos/${editingId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ concepto: editFormData.concepto }),
+      })
+      if (!response.ok) throw new Error("Error al actualizar")
+      toast({ title: "Éxito", description: "Adelanto actualizado correctamente" })
+      setIsEditDialogOpen(false)
+      setEditingId(null)
+      refresh()
+    } catch (error) {
+      console.error("Error updating adelanto:", error)
+      toast({ title: "Error", description: "No se pudo actualizar el adelanto", variant: "destructive" })
+    }
+  }
+
+  const handleDeleteAdelanto = async (id: number, estado: string) => {
+    if (estado !== "pendiente") {
+      toast({ title: "No eliminable", description: "Solo se pueden eliminar adelantos pendientes", variant: "destructive" })
+      return
+    }
+    try {
+      const response = await fetch(`/api/proxy/adelantos/${id}`, { method: "DELETE" })
+      if (!response.ok) throw new Error("Error al eliminar")
+      toast({ title: "Éxito", description: "Adelanto eliminado correctamente" })
+      refresh()
+    } catch (error) {
+      console.error("Error deleting adelanto:", error)
+      toast({ title: "Error", description: "No se pudo eliminar el adelanto", variant: "destructive" })
+    }
   }
 
   const getEstadoBadge = (estado: string) => {
@@ -117,16 +171,47 @@ export function GestionAdelantos() {
     }
   }
 
-  // Calcular estadísticas
   const adelantosArray = Array.isArray(adelantos) ? adelantos : []
+
+  const adelantosFiltrados = useMemo(() => {
+    let filtered = adelantosArray
+    if (filtroProductor !== "todos") {
+      filtered = filtered.filter((a) => String(a.productor_id) === filtroProductor)
+    }
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase()
+      filtered = filtered.filter(
+        (a) =>
+          a.productor_nombre?.toLowerCase().includes(term) ||
+          a.concepto?.toLowerCase().includes(term),
+      )
+    }
+    return filtered
+  }, [adelantosArray, filtroProductor, searchTerm])
+
   const stats = {
-    total: adelantosArray.length,
-    pendientes: adelantosArray.filter((a) => a.estado === "pendiente").length,
-    parciales: adelantosArray.filter((a) => a.estado === "descontado-parcial").length,
-    completados: adelantosArray.filter((a) => a.estado === "descontado-total").length,
-    montoTotal: adelantosArray.reduce((sum, a) => sum + a.monto_original, 0),
-    saldoPendiente: adelantosArray.reduce((sum, a) => sum + a.saldo_pendiente, 0),
+    total: adelantosFiltrados.length,
+    pendientes: adelantosFiltrados.filter((a) => a.estado === "pendiente").length,
+    parciales: adelantosFiltrados.filter((a) => a.estado === "descontado-parcial").length,
+    completados: adelantosFiltrados.filter((a) => a.estado === "descontado-total").length,
+    montoTotal: adelantosFiltrados.reduce((sum, a) => sum + Number(a.monto_original || 0), 0),
+    saldoPendiente: adelantosFiltrados.reduce((sum, a) => sum + Number(a.saldo_pendiente || 0), 0),
   }
+
+  const productorSeleccionado = filtroProductor !== "todos"
+    ? productores.find((p) => String(p.id) === filtroProductor)
+    : null
+
+  const saldoProductor = useMemo(() => {
+    if (!productorSeleccionado) return null
+    const adelantosProductor = adelantosArray.filter((a) => String(a.productor_id) === filtroProductor)
+    return {
+      total_adelantos: adelantosProductor.reduce((s, a) => s + Number(a.monto_original || 0), 0),
+      total_descontado: adelantosProductor.reduce((s, a) => s + Number(a.monto_descontado || 0), 0),
+      saldo_pendiente: adelantosProductor.reduce((s, a) => s + Number(a.saldo_pendiente || 0), 0),
+      adelantos_activos: adelantosProductor.filter((a) => a.estado !== "descontado-total").length,
+    }
+  }, [adelantosArray, filtroProductor, productorSeleccionado])
 
   const isLoading = loadingAdelantos || loadingPersonas
   const hasError = errorAdelantos || errorPersonas
@@ -180,13 +265,13 @@ export function GestionAdelantos() {
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label htmlFor="productor">Productor *</Label>
-                  <Select value={formData.productor_id} onValueChange={handleProductorChange}>
+                  <Select value={formData.productor_id ? String(formData.productor_id) : ""} onValueChange={handleProductorChange}>
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccionar productor" />
                     </SelectTrigger>
                     <SelectContent>
                       {productores.map((productor) => (
-                        <SelectItem key={productor.$id} value={productor.$id}>
+                        <SelectItem key={productor.id} value={String(productor.id)}>
                           {productor.nombres} {productor.apellidos}
                         </SelectItem>
                       ))}
@@ -194,7 +279,7 @@ export function GestionAdelantos() {
                   </Select>
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="monto">Monto *</Label>
+                  <Label htmlFor="monto">Monto (S/) *</Label>
                   <Input
                     id="monto"
                     type="number"
@@ -239,6 +324,74 @@ export function GestionAdelantos() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Filtros */}
+      <Card>
+        <CardContent className="pt-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <Label className="text-xs text-muted-foreground">Buscar</Label>
+              <div className="relative mt-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por productor o concepto..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div className="w-full sm:w-64">
+              <Label className="text-xs text-muted-foreground">Filtrar por Productor</Label>
+              <Select value={filtroProductor} onValueChange={setFiltroProductor}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Todos los productores" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos los productores</SelectItem>
+                  {productores.map((p) => (
+                    <SelectItem key={p.id} value={String(p.id)}>
+                      {p.nombres} {p.apellidos}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Balance del Productor Seleccionado */}
+      {saldoProductor && productorSeleccionado && (
+        <Card className="border-blue-200 bg-blue-50/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Balance de {productorSeleccionado.nombres} {productorSeleccionado.apellidos}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Total Adelantos</p>
+                <p className="text-lg font-bold">S/ {saldoProductor.total_adelantos.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Total Descontado</p>
+                <p className="text-lg font-bold text-green-600">S/ {saldoProductor.total_descontado.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Saldo Pendiente</p>
+                <p className="text-lg font-bold text-orange-600">S/ {saldoProductor.saldo_pendiente.toLocaleString()}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Adelantos Activos</p>
+                <p className="text-lg font-bold">{saldoProductor.adelantos_activos}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -288,14 +441,18 @@ export function GestionAdelantos() {
       <Card>
         <CardHeader>
           <CardTitle>Lista de Adelantos</CardTitle>
-          <CardDescription>Historial completo de adelantos registrados</CardDescription>
+          <CardDescription>
+            {filtroProductor !== "todos"
+              ? `Mostrando adelantos de ${productorSeleccionado?.nombres} ${productorSeleccionado?.apellidos}`
+              : "Historial completo de adelantos registrados"}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          {adelantosArray.length === 0 ? (
+          {adelantosFiltrados.length === 0 ? (
             <div className="text-center py-8">
               <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">No hay adelantos registrados</p>
-              <p className="text-sm text-muted-foreground">Crea el primer adelanto usando el botón "Nuevo Adelanto"</p>
+              <p className="text-sm text-muted-foreground">{"Crea el primer adelanto usando el botón \"Nuevo Adelanto\""}</p>
             </div>
           ) : (
             <Table>
@@ -304,24 +461,46 @@ export function GestionAdelantos() {
                   <TableHead>Fecha</TableHead>
                   <TableHead>Productor</TableHead>
                   <TableHead>Concepto</TableHead>
-                  <TableHead>Monto Original</TableHead>
-                  <TableHead>Descontado</TableHead>
-                  <TableHead>Saldo</TableHead>
+                  <TableHead className="text-right">Monto Original</TableHead>
+                  <TableHead className="text-right">Descontado</TableHead>
+                  <TableHead className="text-right">Saldo</TableHead>
                   <TableHead>Estado</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {adelantosArray.map((adelanto) => (
-                  <TableRow key={adelanto.$id}>
+                {adelantosFiltrados.map((adelanto) => (
+                  <TableRow key={adelanto.id}>
                     <TableCell>{format(new Date(adelanto.fecha_adelanto), "dd/MM/yyyy", { locale: es })}</TableCell>
                     <TableCell className="font-medium">{adelanto.productor_nombre}</TableCell>
                     <TableCell className="max-w-xs truncate">{adelanto.concepto}</TableCell>
-                    <TableCell className="font-semibold">S/ {adelanto.monto_original.toLocaleString()}</TableCell>
-                    <TableCell className="text-green-600">S/ {adelanto.monto_descontado.toLocaleString()}</TableCell>
-                    <TableCell className="font-semibold text-orange-600">
-                      S/ {adelanto.saldo_pendiente.toLocaleString()}
+                    <TableCell className="text-right font-semibold">S/ {Number(adelanto.monto_original).toLocaleString()}</TableCell>
+                    <TableCell className="text-right text-green-600">S/ {Number(adelanto.monto_descontado).toLocaleString()}</TableCell>
+                    <TableCell className="text-right font-semibold text-orange-600">
+                      S/ {Number(adelanto.saldo_pendiente).toLocaleString()}
                     </TableCell>
                     <TableCell>{getEstadoBadge(adelanto.estado)}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEditAdelanto(adelanto)}
+                          disabled={adelanto.estado === "descontado-total"}
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleDeleteAdelanto(adelanto.id, adelanto.estado)}
+                          className="text-red-600 hover:text-red-700"
+                          disabled={adelanto.estado !== "pendiente"}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -329,6 +508,31 @@ export function GestionAdelantos() {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Editar Adelanto</DialogTitle>
+            <DialogDescription>Modifica el concepto del adelanto</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label>Concepto</Label>
+              <Textarea
+                value={editFormData.concepto}
+                onChange={(e) => setEditFormData((prev) => ({ ...prev, concepto: e.target.value }))}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveEdit}>Guardar Cambios</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

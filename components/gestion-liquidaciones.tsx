@@ -432,6 +432,7 @@ export function GestionLiquidaciones() {
                 <TableRow>
                   <TableHead>Nro Liquidación</TableHead>
                   <TableHead>Lote</TableHead>
+                  <TableHead>Categorías</TableHead>
                   <TableHead>Productor</TableHead>
                   <TableHead>Fecha</TableHead>
                   <TableHead className="text-right">Total Ventas</TableHead>
@@ -446,6 +447,23 @@ export function GestionLiquidaciones() {
                   <TableRow key={liq.id}>
                     <TableCell className="font-medium">{liq.numero_liquidacion}</TableCell>
                     <TableCell>{liq.numero_lote}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {liq.detalles && liq.detalles.length > 0
+                          ? liq.detalles.map((det, idx) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                {det.categoria_nombre || "Cat"}: {Number(det.peso_ajustado || 0).toFixed(1)}kg
+                              </Badge>
+                            ))
+                          : liq.detalle_categorias && liq.detalle_categorias.length > 0
+                            ? liq.detalle_categorias.map((det, idx) => (
+                                <Badge key={idx} variant="outline" className="text-xs">
+                                  {det.nombre_categoria || det.categoria || "Cat"}: {Number(det.peso_ajustado || 0).toFixed(1)}kg
+                                </Badge>
+                              ))
+                            : <span className="text-xs text-muted-foreground">—</span>}
+                      </div>
+                    </TableCell>
                     <TableCell>{liq.nombre_completo}</TableCell>
                     <TableCell>{new Date(liq.fecha_liquidacion).toLocaleDateString("es-PE")}</TableCell>
                     <TableCell className="text-right">{formatCurrency(Number(liq.total_bruto_fruta))}</TableCell>
