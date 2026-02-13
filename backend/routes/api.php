@@ -133,10 +133,10 @@ if (isset($segments[1])) {
         case 'kardex-integral':
             // Manejo especial de rutas anidadas para kardex-integral
             $kardexController = new KardexIntegralController($db);
-            $subPath = implode('/', array_slice($segments, 1));
+            $subPath = trim(implode('/', array_slice($segments, 1)), '/');
             
             if ($request_method === 'GET') {
-                if ($subPath === '' || $subPath === '/') {
+                if ($subPath === '') {
                     echo json_encode($kardexController->getAll());
                 } elseif ($subPath === 'saldos/fisico') {
                     echo json_encode($kardexController->getSaldosFisicos());

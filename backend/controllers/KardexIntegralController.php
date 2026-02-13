@@ -749,28 +749,32 @@ class KardexIntegralController extends BaseController
         try {
             $query = "
                 SELECT 
-                    l.id as lote_id,
-                    l.numero_lote,
-                    l.producto,
-                    l.productor_id,
-                    p.nombre_completo as productor_nombre,
-                    COALESCE(cp.nombre, k.categoria_nombre, 'Sin categoría') AS categoria_nombre,
-                    SUM(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.peso_kg ELSE -k.peso_kg END) as stock_kg,
-                    COALESCE(cp.precio_kg, 0) as precio_kg,
-                    SUM(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.peso_kg ELSE -k.peso_kg END) * COALESCE(cp.precio_kg, 0) as valor_inventario,
-                    l.fecha_ingreso as fecha_ingreso_lote,
-                    MIN(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.fecha_movimiento END) AS fecha_ingreso_categoria,
-                    DATEDIFF(CURDATE(), MIN(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.fecha_movimiento END)) as antiguedad_dias
-                FROM kardex_integral k
-                JOIN lotes l ON k.lote_id = l.id
-                JOIN personas p ON l.productor_id = p.id
-                LEFT JOIN categorias_peso cp ON k.categoria_id = cp.id
-                WHERE k.tipo_kardex = 'fisico'
-                GROUP BY l.id, l.numero_lote, l.producto, l.productor_id, p.nombre_completo,
-                         COALESCE(cp.nombre, k.categoria_nombre, 'Sin categoría'), 
-                         COALESCE(cp.precio_kg, 0), l.fecha_ingreso
-                HAVING stock_kg > 0
-                ORDER BY l.numero_lote, categoria_nombre
+                    sub.*,
+                    sub.stock_kg * sub.precio_kg as valor_inventario
+                FROM (
+                    SELECT 
+                        l.id as lote_id,
+                        l.numero_lote,
+                        l.producto,
+                        l.productor_id,
+                        p.nombre_completo as productor_nombre,
+                        COALESCE(cp.nombre, k.categoria_nombre, 'Sin categoría') AS categoria_nombre,
+                        SUM(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.peso_kg ELSE -k.peso_kg END) as stock_kg,
+                        COALESCE(cp.precio_kg, 0) as precio_kg,
+                        l.fecha_ingreso as fecha_ingreso_lote,
+                        MIN(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.fecha_movimiento END) AS fecha_ingreso_categoria,
+                        DATEDIFF(CURDATE(), MIN(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.fecha_movimiento END)) as antiguedad_dias
+                    FROM kardex_integral k
+                    JOIN lotes l ON k.lote_id = l.id
+                    JOIN personas p ON l.productor_id = p.id
+                    LEFT JOIN categorias_peso cp ON k.categoria_id = cp.id
+                    WHERE k.tipo_kardex = 'fisico'
+                    GROUP BY l.id, l.numero_lote, l.producto, l.productor_id, p.nombre_completo,
+                             COALESCE(cp.nombre, k.categoria_nombre, 'Sin categoría'), 
+                             COALESCE(cp.precio_kg, 0), l.fecha_ingreso
+                    HAVING stock_kg > 0
+                ) sub
+                ORDER BY sub.numero_lote, sub.categoria_nombre
             ";
             
             $stmt = $this->db->prepare($query);
