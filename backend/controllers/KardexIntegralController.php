@@ -269,7 +269,17 @@ class KardexIntegralController extends BaseController
     public function getSaldosFinancieros()
     {
         try {
-            $query = "SELECT * FROM v_kardex_financiero_saldos ORDER BY cuenta_tipo";
+            $query = "
+                SELECT 
+                    k.cuenta_tipo,
+                    SUM(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.monto ELSE 0 END) AS total_ingresos,
+                    SUM(CASE WHEN k.tipo_movimiento = 'egreso' THEN k.monto ELSE 0 END) AS total_egresos,
+                    SUM(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.monto ELSE -k.monto END) AS saldo_actual
+                FROM kardex_integral k
+                WHERE k.tipo_kardex = 'financiero'
+                GROUP BY k.cuenta_tipo
+                ORDER BY k.cuenta_tipo
+            ";
             $stmt = $this->db->prepare($query);
             $stmt->execute();
             
@@ -283,7 +293,7 @@ class KardexIntegralController extends BaseController
             return $this->success($saldos);
             
         } catch (Exception $e) {
-            // En caso de error (ej: vista no existe), devolver array vacío
+            // En caso de error, devolver array vacío
             error_log("Error en getSaldosFinancieros: " . $e->getMessage());
             return $this->success([]);
         }
@@ -296,7 +306,21 @@ class KardexIntegralController extends BaseController
     public function getPorProductor($productor_id)
     {
         try {
-            $query = "SELECT * FROM v_kardex_por_productor WHERE persona_id = :productor_id";
+            $query = "
+                SELECT 
+                    k.persona_id,
+                    k.persona_nombre,
+                    k.tipo_kardex,
+                    k.tipo_movimiento,
+                    k.documento_tipo,
+                    COUNT(*) AS cantidad_movimientos,
+                    SUM(CASE WHEN k.tipo_kardex = 'fisico' THEN k.peso_kg ELSE 0 END) AS total_peso_kg,
+                    SUM(CASE WHEN k.tipo_kardex = 'financiero' THEN k.monto ELSE 0 END) AS total_monto
+                FROM kardex_integral k
+                WHERE k.persona_tipo = 'productor'
+                  AND k.persona_id = :productor_id
+                GROUP BY k.persona_id, k.persona_nombre, k.tipo_kardex, k.tipo_movimiento, k.documento_tipo
+            ";
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':productor_id', $productor_id, PDO::PARAM_INT);
             $stmt->execute();
@@ -324,18 +348,31 @@ class KardexIntegralController extends BaseController
             $bindings = [];
             
             if ($documento_tipo) {
-                $where[] = "documento_tipo = :documento_tipo";
+                $where[] = "k.documento_tipo = :documento_tipo";
                 $bindings[':documento_tipo'] = $documento_tipo;
             }
             
             if ($documento_id) {
-                $where[] = "documento_id = :documento_id";
+                $where[] = "k.documento_id = :documento_id";
                 $bindings[':documento_id'] = $documento_id;
             }
             
             $whereClause = count($where) > 0 ? "WHERE " . implode(" AND ", $where) : "";
             
-            $query = "SELECT * FROM v_kardex_por_documento {$whereClause}";
+            $query = "
+                SELECT 
+                    k.documento_tipo,
+                    k.documento_numero,
+                    k.documento_id,
+                    k.fecha_movimiento,
+                    k.persona_nombre,
+                    SUM(CASE WHEN k.tipo_kardex = 'fisico' THEN k.peso_kg ELSE 0 END) AS peso_total,
+                    SUM(CASE WHEN k.tipo_kardex = 'financiero' THEN k.monto ELSE 0 END) AS monto_total
+                FROM kardex_integral k
+                {$whereClause}
+                GROUP BY k.documento_tipo, k.documento_numero, k.documento_id, k.fecha_movimiento, k.persona_nombre
+                ORDER BY k.fecha_movimiento DESC
+            ";
             $stmt = $this->db->prepare($query);
             
             foreach ($bindings as $key => $value) {
@@ -712,33 +749,32 @@ class KardexIntegralController extends BaseController
         try {
             $query = "
                 SELECT 
-                    l.id as lote_id,
-                    l.numero_lote,
-                    l.producto,
-                    l.productor_id,
-                    p.nombre_completo as productor_nombre,
-                    kfs.categoria_nombre,
-                    kfs.saldo_actual as stock_kg,
-                    cp.precio_kg,
-                    (kfs.saldo_actual * cp.precio_kg) as valor_inventario,
-                    l.fecha_ingreso as fecha_ingreso_lote,
-                    kmin.fecha_ingreso_categoria,
-                    DATEDIFF(CURDATE(), kmin.fecha_ingreso_categoria) as antiguedad_dias
-                FROM v_kardex_fisico_saldos kfs
-                JOIN lotes l ON kfs.lote_id = l.id
-                JOIN personas p ON l.productor_id = p.id
-                JOIN categorias_peso cp ON kfs.categoria_id = cp.id
-                LEFT JOIN (
+                    sub.*,
+                    sub.stock_kg * sub.precio_kg as valor_inventario
+                FROM (
                     SELECT 
-                        lote_id,
-                        categoria_id,
-                        MIN(CASE WHEN tipo_movimiento = 'ingreso' THEN fecha_movimiento END) AS fecha_ingreso_categoria
-                    FROM kardex_integral
-                    WHERE tipo_kardex = 'fisico'
-                    GROUP BY lote_id, categoria_id
-                ) kmin ON kmin.lote_id = kfs.lote_id AND kmin.categoria_id = kfs.categoria_id
-                WHERE kfs.saldo_actual > 0
-                ORDER BY l.numero_lote, kfs.categoria_nombre
+                        l.id as lote_id,
+                        l.numero_lote,
+                        l.producto,
+                        l.productor_id,
+                        p.nombre_completo as productor_nombre,
+                        COALESCE(cp.nombre, k.categoria_nombre, 'Sin categoría') AS categoria_nombre,
+                        SUM(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.peso_kg ELSE -k.peso_kg END) as stock_kg,
+                        COALESCE(cp.precio_kg, 0) as precio_kg,
+                        l.fecha_ingreso as fecha_ingreso_lote,
+                        MIN(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.fecha_movimiento END) AS fecha_ingreso_categoria,
+                        DATEDIFF(CURDATE(), MIN(CASE WHEN k.tipo_movimiento = 'ingreso' THEN k.fecha_movimiento END)) as antiguedad_dias
+                    FROM kardex_integral k
+                    JOIN lotes l ON k.lote_id = l.id
+                    JOIN personas p ON l.productor_id = p.id
+                    LEFT JOIN categorias_peso cp ON k.categoria_id = cp.id
+                    WHERE k.tipo_kardex = 'fisico'
+                    GROUP BY l.id, l.numero_lote, l.producto, l.productor_id, p.nombre_completo,
+                             COALESCE(cp.nombre, k.categoria_nombre, 'Sin categoría'), 
+                             COALESCE(cp.precio_kg, 0), l.fecha_ingreso
+                    HAVING stock_kg > 0
+                ) sub
+                ORDER BY sub.numero_lote, sub.categoria_nombre
             ";
             
             $stmt = $this->db->prepare($query);

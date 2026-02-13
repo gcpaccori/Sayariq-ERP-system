@@ -24,22 +24,11 @@ import {
   Home,
   ChevronDown,
   ChevronRight,
-  Factory,
   UserCheck,
-  Calculator,
   Zap,
-  UserCog,
   BarChart2,
-  TrendingUp,
-  DollarSign,
-  CreditCard,
-  FileText,
-  Wallet,
-  PieChart,
   ShoppingBag,
-  LineChart,
   Receipt,
-  Database,
   Activity,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -59,7 +48,7 @@ const navigationItems: NavItem[] = [
     icon: Home,
   },
   {
-    title: "Gestión de personas",
+    title: "Productores y Clientes",
     icon: Users,
     children: [
       {
@@ -70,142 +59,55 @@ const navigationItems: NavItem[] = [
     ],
   },
   {
-    title: "Inventario",
+    title: "Almacén",
     icon: Package,
     children: [
       {
-        title: "Almacén",
+        title: "Ingreso y Clasificación",
         href: "/almacen",
         icon: Package,
-      },
-      {
-        title: "Kardex Integral",
-        href: "/kardex-integral",
-        icon: Database,
-        badge: "NEW",
-      },
-    ],
-  },
-  {
-    title: "Pedido de Productos",
-    icon: ShoppingCart,
-    children: [
-      {
-        title: "Pedidos - CRUD",
-        href: "/pedidos-crud",
-        icon: ShoppingBag,
-      },
-    ],
-  },
-  {
-    title: "Producción-campo",
-    icon: Factory,
-    children: [
-      {
-        title: "Asignación Lotes",
-        href: "/asignacion-lotes",
-        icon: Package,
-      },
-      {
-        title: "Análisis Lotes-Pedidos",
-        href: "/analisis-lotes-pedidos",
-        icon: LineChart,
       },
       {
         title: "Procesamiento de Lotes",
         href: "/pesos-lote",
         icon: BarChart2,
       },
+    ],
+  },
+  {
+    title: "Pedidos y Asignación",
+    icon: ShoppingCart,
+    children: [
       {
-        title: "Liquidación de Lotes",
+        title: "Gestión de Pedidos",
+        href: "/pedidos-crud",
+        icon: ShoppingBag,
+      },
+      {
+        title: "Asignación Lotes a Pedidos",
+        href: "/asignacion-lotes",
+        icon: Package,
+      },
+    ],
+  },
+  {
+    title: "Kardex General",
+    href: "/kardex-integral",
+    icon: Activity,
+  },
+  {
+    title: "Liquidaciones",
+    icon: Receipt,
+    children: [
+      {
+        title: "Liquidación Productores",
         href: "/liquidaciones",
         icon: Receipt,
       },
       {
-        title: "Liquidación Proveedores",
-        href: "/liquidacion-proveedores",
+        title: "Liquidación Clientes",
+        href: "/liquidaciones-clientes",
         icon: Receipt,
-      },
-    ],
-  },
-  {
-    title: "Contabilidad",
-    icon: Calculator,
-    children: [
-      {
-        title: "Kardex Integral",
-        href: "/kardex-integral",
-        icon: Activity,
-        badge: "NEW",
-      },
-      {
-        title: "Ajuste Pesos-precio contable",
-        href: "/ajuste-contable",
-        icon: Calculator,
-      },
-      {
-        title: "Registro Pago-campo",
-        href: "/registro-pago-campo",
-        icon: CreditCard,
-      },
-      {
-        title: "Libro Banco",
-        href: "/libro-banco",
-        icon: Wallet,
-      },
-    ],
-  },
-  {
-    title: "Ventas",
-    icon: TrendingUp,
-    children: [
-      {
-        title: "Boletas de venta",
-        href: "/boletas-ventas",
-        icon: FileText,
-        badge: "NEW",
-      },
-      {
-        title: "Registro Venta",
-        href: "/registro-venta",
-        icon: FileText,
-      },
-      {
-        title: "Ventas clientes",
-        href: "/ventas-clientes",
-        icon: ShoppingCart,
-      },
-    ],
-  },
-  {
-    title: "Finanzas",
-    icon: DollarSign,
-    children: [
-      {
-        title: "Control-rentabilidad",
-        href: "/control-rentabilidad",
-        icon: PieChart,
-      },
-      {
-        title: "Costos Fijos",
-        href: "/costos-fijos",
-        icon: FileText,
-      },
-    ],
-  },
-  {
-    title: "RRHH",
-    icon: UserCog,
-    children: [
-      {
-        title: "Registro de personal",
-        href: "/gestion-personal-subprocesos",
-        icon: UserCog,
-      },
-      {
-        title: "Gestión de Empleados",
-        href: "/empleados",
-        icon: Users,
       },
     ],
   },

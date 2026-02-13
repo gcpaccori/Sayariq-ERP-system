@@ -1,40 +1,23 @@
 "use client"
 
 /**
- * =====================================================
- * KARDEX INTEGRAL ERP - SISTEMA COMPLETO
- * =====================================================
- * El mejor sistema de Kardex Industrial para Sayariq
- * Integra control físico y financiero en tiempo real
+ * KARDEX GENERAL - SAYARIQ SYSTEM
+ *
+ * Vista simplificada del Kardex que muestra:
+ * 1. Movimiento de producto por categorías (entradas y salidas)
+ * 2. Deudas pendientes (dinero)
  */
 
 import { useState, useEffect, useMemo } from "react"
-import { format, isSameMonth } from "date-fns"
-import { es } from "date-fns/locale"
+import { format } from "date-fns"
 import {
-  TrendingUp,
-  TrendingDown,
   Package,
   DollarSign,
-  AlertTriangle,
-  Eye,
-  FileText,
-  BarChart3,
-  ArrowUpDown,
   RefreshCw,
-  Download,
-  Filter,
-  Calendar,
-  Search,
   Plus,
   Minus,
   CheckCircle2,
   XCircle,
-  Clock,
-  Wallet,
-  ShoppingCart,
-  Users,
-  Box,
   Activity,
 } from "lucide-react"
 
@@ -42,7 +25,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
@@ -54,53 +36,24 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 import kardexIntegralService from "@/lib/services/kardex-integral-service"
-import { personasService } from "@/lib/services/personas-service"
-import { useApi } from "@/lib/hooks/use-api"
 import type {
-  DashboardKardex,
   MovimientoKardexIntegral,
   SaldoFisico,
   SaldoFinanciero,
-  EstadoCuentaProductor,
 } from "@/lib/types/kardex-integral"
-import type { Persona } from "@/lib/types"
 
 export function KardexIntegralERP() {
   const [loading, setLoading] = useState(true)
-  const [dashboard, setDashboard] = useState<DashboardKardex | null>(null)
   const [saldosFisicos, setSaldosFisicos] = useState<SaldoFisico[]>([])
   const [saldosFinancieros, setSaldosFinancieros] = useState<SaldoFinanciero[]>([])
   const [movimientos, setMovimientos] = useState<MovimientoKardexIntegral[]>([])
   const [filtroTipo, setFiltroTipo] = useState<string>("todos")
   const [filtroDocumento, setFiltroDocumento] = useState<string>("todos")
   const [searchTerm, setSearchTerm] = useState("")
-  const [productorSeleccionado, setProductorSeleccionado] = useState<string>("")
-  const [estadoCuenta, setEstadoCuenta] = useState<EstadoCuentaProductor | null>(null)
-  const [cargandoEstadoCuenta, setCargandoEstadoCuenta] = useState(false)
 
-  const { data: personasData } = useApi(personasService, { initialLoad: true })
-  const productores = useMemo(
-    () =>
-      Array.isArray(personasData)
-        ? (personasData as Persona[]).filter((persona) =>
-            (persona.roles || []).includes("productor") || persona.tipo_persona === "productor",
-          )
-        : [],
-    [personasData],
-  )
-
-  const formatFechaCorta = (value?: string | null) => {
-    if (!value) return "—"
-    const parsed = new Date(value)
-    if (Number.isNaN(parsed.getTime())) return "—"
-    return format(parsed, "dd/MM/yyyy")
-  }
-
-  // Cargar datos iniciales
   useEffect(() => {
     cargarDatos()
   }, [])
@@ -108,14 +61,12 @@ export function KardexIntegralERP() {
   const cargarDatos = async () => {
     setLoading(true)
     try {
-      const [dashData, fisicos, financieros, movs] = await Promise.all([
-        kardexIntegralService.obtenerDashboard(),
+      const [fisicos, financieros, movs] = await Promise.all([
         kardexIntegralService.obtenerSaldosFisicos(),
         kardexIntegralService.obtenerSaldosFinancieros(),
-        kardexIntegralService.obtenerMovimientos({ limit: 50 }),
+        kardexIntegralService.obtenerMovimientos({ limit: 100 }),
       ])
 
-      setDashboard(dashData)
       setSaldosFisicos(fisicos)
       setSaldosFinancieros(financieros)
       setMovimientos(movs.movimientos)
@@ -126,7 +77,6 @@ export function KardexIntegralERP() {
     }
   }
 
-  // Filtrar movimientos
   const movimientosFiltrados = useMemo(() => {
     return movimientos.filter((mov) => {
       const cumpleTipo = filtroTipo === "todos" || mov.tipo_kardex === filtroTipo
@@ -135,13 +85,14 @@ export function KardexIntegralERP() {
       const cumpleBusqueda =
         searchTerm === "" ||
         mov.concepto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        mov.persona_nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         mov.documento_tipo.toLowerCase().includes(searchTerm.toLowerCase())
 
       return cumpleTipo && cumpleDocumento && cumpleBusqueda
     })
   }, [movimientos, filtroTipo, filtroDocumento, searchTerm])
 
-  const resumenCalidades = useMemo(() => {
+  const resumenCategorias = useMemo(() => {
     const resumen = new Map<string, { totalKg: number; lotes: Set<number> }>()
     saldosFisicos.forEach((saldo) => {
       const key = saldo.categoria_nombre || "Sin categoría"
@@ -161,76 +112,28 @@ export function KardexIntegralERP() {
     }))
   }, [saldosFisicos])
 
-  const resumenFinanciero = useMemo(() => {
-    const financieros = movimientos.filter((mov) => mov.tipo_kardex === "financiero")
-    const fechas = financieros
-      .map((mov) => new Date(mov.fecha_movimiento))
-      .filter((fecha) => !Number.isNaN(fecha.getTime()))
-    const fechaReferencia = fechas.length > 0 ? new Date(Math.max(...fechas.map((f) => f.getTime()))) : new Date()
-    const financierosMes = financieros.filter((mov) => {
-      const fecha = new Date(mov.fecha_movimiento)
-      return !Number.isNaN(fecha.getTime()) && isSameMonth(fecha, fechaReferencia)
-    })
-    const totalIngresos = financierosMes.reduce(
-      (acc, mov) => acc + (mov.tipo_movimiento === "ingreso" ? Number(mov.monto || 0) : 0),
-      0,
-    )
-    const totalEgresos = financierosMes.reduce(
-      (acc, mov) => acc + (mov.tipo_movimiento === "egreso" ? Number(mov.monto || 0) : 0),
-      0,
-    )
-    const totalVentas = financierosMes.reduce(
-      (acc, mov) =>
-        acc + (mov.documento_tipo === "venta" && mov.tipo_movimiento === "ingreso" ? Number(mov.monto || 0) : 0),
-      0,
-    )
-    const totalAdelantos = financierosMes.reduce(
-      (acc, mov) =>
-        acc + (mov.documento_tipo === "adelanto" && mov.tipo_movimiento === "egreso" ? Number(mov.monto || 0) : 0),
-      0,
-    )
-    const totalPagosProductor = financierosMes.reduce(
-      (acc, mov) =>
-        acc +
-        (["liquidacion", "pago"].includes(mov.documento_tipo) && mov.tipo_movimiento === "egreso"
-          ? Number(mov.monto || 0)
-          : 0),
-      0,
-    )
-
-    const saldoBanco = saldosFinancieros.find((saldo) => saldo.cuenta_tipo === "banco")?.saldo_actual || 0
-    const saldoCaja = saldosFinancieros.find((saldo) => saldo.cuenta_tipo === "caja")?.saldo_actual || 0
+  const resumenDeudas = useMemo(() => {
+    const financieros = saldosFinancieros || []
+    const totalDeudas = financieros
+      .filter((s) => s.cuenta_tipo === "adelantos")
+      .reduce((sum, s) => sum + (s.total_egresos || 0), 0)
+    const totalPagado = financieros
+      .filter((s) => s.cuenta_tipo === "adelantos")
+      .reduce((sum, s) => sum + (s.total_ingresos || 0), 0)
     return {
-      mesReferencia: fechaReferencia,
-      totalIngresos,
-      totalEgresos,
-      totalVentas,
-      totalAdelantos,
-      totalPagosProductor,
-      saldoDisponible: saldoBanco + saldoCaja,
+      totalDeudas,
+      totalPagado,
+      saldoPendiente: totalDeudas - totalPagado,
     }
-  }, [movimientos, saldosFinancieros])
+  }, [saldosFinancieros])
 
-  useEffect(() => {
-    const cargarEstadoCuenta = async () => {
-      if (!productorSeleccionado) {
-        setEstadoCuenta(null)
-        return
-      }
-      setCargandoEstadoCuenta(true)
-      try {
-        const data = await kardexIntegralService.obtenerEstadoCuentaProductor(Number(productorSeleccionado))
-        setEstadoCuenta(data)
-      } catch (error) {
-        console.error("Error al cargar estado de cuenta:", error)
-        setEstadoCuenta(null)
-      } finally {
-        setCargandoEstadoCuenta(false)
-      }
-    }
+  const totalStockKg = useMemo(() => {
+    return saldosFisicos.reduce((sum, s) => sum + (s.saldo_actual || 0), 0)
+  }, [saldosFisicos])
 
-    cargarEstadoCuenta()
-  }, [productorSeleccionado])
+  const totalLotesActivos = useMemo(() => {
+    return new Set(saldosFisicos.map((s) => s.lote_id)).size
+  }, [saldosFisicos])
 
   if (loading) {
     return <LoadingSkeleton />
@@ -241,78 +144,103 @@ export function KardexIntegralERP() {
       {/* HEADER */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">Kardex Integral ERP</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Kardex General</h1>
           <p className="text-muted-foreground mt-1">
-            Sistema completo de control físico y financiero en tiempo real
+            Movimiento de producto por categorías y control de deudas
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={cargarDatos}>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Actualizar
-          </Button>
-          <Button variant="default">
-            <Download className="mr-2 h-4 w-4" />
-            Exportar
-          </Button>
-        </div>
+        <Button variant="outline" onClick={cargarDatos}>
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Actualizar
+        </Button>
       </div>
 
-      {/* ALERTAS */}
-      {dashboard?.alertas && dashboard.alertas.length > 0 && (
-        <div className="space-y-2">
-          {dashboard.alertas.map((alerta, idx) => (
-            <Alert
-              key={idx}
-              variant={alerta.tipo === "error" ? "destructive" : "default"}
-              className={
-                alerta.tipo === "warning"
-                  ? "border-yellow-500 bg-yellow-50 dark:bg-yellow-950"
-                  : ""
-              }
-            >
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>
-                {alerta.tipo === "error" ? "Error" : alerta.tipo === "warning" ? "Advertencia" : "Info"}
-              </AlertTitle>
-              <AlertDescription>{alerta.mensaje}</AlertDescription>
-            </Alert>
-          ))}
-        </div>
-      )}
+      {/* TARJETAS RESUMEN */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-muted-foreground">Stock Total</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">
+              {totalStockKg.toLocaleString("es-PE", { minimumFractionDigits: 2 })} kg
+            </p>
+            <p className="text-xs text-muted-foreground">En {totalLotesActivos} lotes activos</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-muted-foreground">Categorías</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{resumenCategorias.length}</p>
+            <p className="text-xs text-muted-foreground">Categorías con stock</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-muted-foreground">Movimientos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{movimientos.length}</p>
+            <p className="text-xs text-muted-foreground">Registros totales</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-muted-foreground">Deudas Pendientes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-amber-700">
+              S/ {resumenDeudas.saldoPendiente.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
+            </p>
+            <p className="text-xs text-muted-foreground">Adelantos por regularizar</p>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* TARJETA GERENCIAL */}
-      <Card className="border-2 border-primary/10 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-xl">Resumen Gerencial</CardTitle>
-          <CardDescription>
-            Visión inmediata de calidades disponibles y control financiero (ventas, adelantos y pagos).
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Package className="h-5 w-5 text-muted-foreground" />
-              <h3 className="text-sm font-semibold uppercase text-muted-foreground">Stock por calidad</h3>
-            </div>
-            <div className="rounded-lg border bg-background">
+      {/* TABS PRINCIPALES */}
+      <Tabs defaultValue="categorias" className="space-y-4">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="categorias">
+            <Package className="mr-2 h-4 w-4" />
+            Stock por Categoría
+          </TabsTrigger>
+          <TabsTrigger value="movimientos">
+            <Activity className="mr-2 h-4 w-4" />
+            Entradas y Salidas
+          </TabsTrigger>
+          <TabsTrigger value="deudas">
+            <DollarSign className="mr-2 h-4 w-4" />
+            Deudas
+          </TabsTrigger>
+        </TabsList>
+
+        {/* TAB: STOCK POR CATEGORÍA */}
+        <TabsContent value="categorias" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Resumen por Categoría</CardTitle>
+              <CardDescription>Stock disponible agrupado por tipo de producto</CardDescription>
+            </CardHeader>
+            <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Calidad</TableHead>
-                    <TableHead className="text-right">Kg disponibles</TableHead>
-                    <TableHead className="text-right">Lotes activos</TableHead>
+                    <TableHead>Categoría</TableHead>
+                    <TableHead className="text-right">Kg Disponibles</TableHead>
+                    <TableHead className="text-right">Lotes Activos</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {resumenCalidades.length === 0 ? (
+                  {resumenCategorias.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center text-sm text-muted-foreground">
-                        Sin stock registrado.
+                      <TableCell colSpan={3} className="text-center text-sm text-muted-foreground py-8">
+                        No hay stock registrado en el Kardex.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    resumenCalidades.map((item) => (
+                    resumenCategorias.map((item) => (
                       <TableRow key={item.categoria}>
                         <TableCell className="font-medium">{item.categoria}</TableCell>
                         <TableCell className="text-right font-mono">
@@ -324,390 +252,106 @@ export function KardexIntegralERP() {
                   )}
                 </TableBody>
               </Table>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Wallet className="h-5 w-5 text-muted-foreground" />
-              <h3 className="text-sm font-semibold uppercase text-muted-foreground">Control financiero</h3>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Card className="bg-muted/30">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Dinero disponible</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-green-700">
-                    S/ {resumenFinanciero.saldoDisponible.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Caja + banco en cuentas registradas.
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="bg-muted/30">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Ventas del mes ({format(resumenFinanciero.mesReferencia, "MM/yyyy")})</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold">
-                    S/ {resumenFinanciero.totalVentas.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Cobros asociados a lotes vendidos.</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-muted/30">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Adelantos del mes ({format(resumenFinanciero.mesReferencia, "MM/yyyy")})</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-amber-700">
-                    S/ {resumenFinanciero.totalAdelantos.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Pagos adelantados a productores.</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-muted/30">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Pagos del mes ({format(resumenFinanciero.mesReferencia, "MM/yyyy")})</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-red-700">
-                    S/ {resumenFinanciero.totalPagosProductor.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Liquidaciones y pagos por lote.</p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* TABS PRINCIPALES */}
-      <Tabs defaultValue="control" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="control">
-            <Eye className="mr-2 h-4 w-4" />
-            Control Total
-          </TabsTrigger>
-          <TabsTrigger value="detallado">
-            <FileText className="mr-2 h-4 w-4" />
-            Detallado
-          </TabsTrigger>
-          <TabsTrigger value="movimientos">
-            <Activity className="mr-2 h-4 w-4" />
-            Movimientos
-          </TabsTrigger>
-          <TabsTrigger value="fisico">
-            <Box className="mr-2 h-4 w-4" />
-            Stock Físico
-          </TabsTrigger>
-          <TabsTrigger value="financiero">
-            <DollarSign className="mr-2 h-4 w-4" />
-            Cuentas
-          </TabsTrigger>
-          <TabsTrigger value="reportes">
-            <BarChart3 className="mr-2 h-4 w-4" />
-            Reportes
-          </TabsTrigger>
-        </TabsList>
-
-        {/* TAB: CONTROL GERENCIAL */}
-        <TabsContent value="control" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Control total de carga y dinero</CardTitle>
-              <CardDescription>
-                Relacione ventas, adelantos y deudas por productor para una vista gerencial completa.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Productor</Label>
-                  <Select value={productorSeleccionado} onValueChange={setProductorSeleccionado}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccione un productor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {productores.map((productor) => (
-                        <SelectItem key={productor.id} value={String(productor.id)}>
-                          {productor.nombre_completo}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>
-                    Resumen financiero del mes ({format(resumenFinanciero.mesReferencia, "MMMM yyyy", { locale: es })})
-                  </Label>
-                  <div className="rounded-lg border p-4">
-                    <div className="flex items-center justify-between text-sm">
-                      <span>Ingresos totales</span>
-                      <span className="font-semibold text-green-700">
-                        S/ {resumenFinanciero.totalIngresos.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm mt-1">
-                      <span>Egresos totales</span>
-                      <span className="font-semibold text-red-700">
-                        S/ {resumenFinanciero.totalEgresos.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm mt-1">
-                      <span>Saldo neto</span>
-                      <span className="font-semibold">
-                        S/ {(resumenFinanciero.totalIngresos - resumenFinanciero.totalEgresos).toLocaleString("es-PE", {
-                          minimumFractionDigits: 2,
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <Card className="bg-muted/30">
-                <CardHeader>
-                  <CardTitle className="text-base">Estado de cuenta del productor</CardTitle>
-                  <CardDescription>
-                    Adelantos, pagos y saldo pendiente según el Kardex integral.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {!productorSeleccionado ? (
-                    <p className="text-sm text-muted-foreground">Seleccione un productor para ver su estado.</p>
-                  ) : cargandoEstadoCuenta ? (
-                    <p className="text-sm text-muted-foreground">Cargando estado de cuenta...</p>
-                  ) : !estadoCuenta ? (
-                    <p className="text-sm text-muted-foreground">No hay información disponible.</p>
-                  ) : (
-                    <div className="grid gap-4 md:grid-cols-3">
-                      <div>
-                        <p className="text-xs text-muted-foreground">Adelantos</p>
-                        <p className="text-lg font-semibold text-amber-700">
-                          S/ {(estadoCuenta.resumen?.total_adelantos ?? 0).toLocaleString("es-PE", { minimumFractionDigits: 2 })}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Pagos</p>
-                        <p className="text-lg font-semibold text-red-700">
-                          S/ {(estadoCuenta.resumen?.total_pagos ?? 0).toLocaleString("es-PE", { minimumFractionDigits: 2 })}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Saldo por regularizar</p>
-                        <p className="text-lg font-semibold">
-                          S/ {(estadoCuenta.resumen?.saldo ?? 0).toLocaleString("es-PE", { minimumFractionDigits: 2 })}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        {/* TAB: VISTA DETALLADA COMBINADA */}
-        <TabsContent value="detallado" className="space-y-4">
           <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg">Registro Detallado de Operaciones</CardTitle>
-                  <CardDescription className="text-xs">
-                    Vista combinada: físico + financiero con detalles de calidades y kilajes
-                  </CardDescription>
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={cargarDatos}>
-                    <RefreshCw className="mr-2 h-3 w-3" />
-                    Actualizar
-                  </Button>
-                  <Button size="sm">
-                    <Download className="mr-2 h-3 w-3" />
-                    Exportar
-                  </Button>
-                </div>
-              </div>
+            <CardHeader>
+              <CardTitle>Detalle por Lote</CardTitle>
+              <CardDescription>Stock físico desglosado por lote y categoría</CardDescription>
             </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
+            <CardContent>
+              <ScrollArea className="h-[500px]">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-muted/50">
-                      <TableHead className="w-[90px] text-xs">Fecha</TableHead>
-                      <TableHead className="w-[100px] text-xs">Operación</TableHead>
-                      <TableHead className="w-[110px] text-xs">Documento</TableHead>
-                      <TableHead className="w-[150px] text-xs">Persona</TableHead>
-                      <TableHead className="w-[120px] text-xs">Producto/Cuenta</TableHead>
-                      <TableHead className="w-[100px] text-xs">Calidad</TableHead>
-                      <TableHead className="w-[80px] text-xs text-right">Kg</TableHead>
-                      <TableHead className="w-[90px] text-xs text-right">Monto S/</TableHead>
-                      <TableHead className="w-[80px] text-xs text-right">Saldo Kg</TableHead>
-                      <TableHead className="w-[90px] text-xs text-right">Saldo S/</TableHead>
-                      <TableHead className="w-[80px] text-xs">Estado</TableHead>
+                    <TableRow>
+                      <TableHead>Lote</TableHead>
+                      <TableHead>Producto</TableHead>
+                      <TableHead>Productor</TableHead>
+                      <TableHead>Categoría</TableHead>
+                      <TableHead className="text-right">Entradas (kg)</TableHead>
+                      <TableHead className="text-right">Salidas (kg)</TableHead>
+                      <TableHead className="text-right">Saldo (kg)</TableHead>
+                      <TableHead>Estado</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {movimientosFiltrados.slice(0, 10).map((mov) => (
-                      <TableRow key={mov.id} className="text-xs hover:bg-muted/30">
-                        <TableCell className="py-2 font-mono">
-                          {format(new Date(mov.fecha_movimiento), "dd/MM/yy HH:mm", { locale: es })}
-                        </TableCell>
-                        <TableCell className="py-2">
-                          <div className="flex items-center gap-1">
-                            {mov.tipo_movimiento === "ingreso" ? (
-                              <TrendingUp className="h-3 w-3 text-green-600" />
-                            ) : (
-                              <TrendingDown className="h-3 w-3 text-red-600" />
-                            )}
-                            <span className="capitalize">
-                              {mov.tipo_kardex === "fisico" ? "Entrada" : ""}
-                              {mov.tipo_kardex === "financiero" && mov.tipo_movimiento === "egreso" ? "Pago" : ""}
-                              {mov.tipo_kardex === "financiero" && mov.tipo_movimiento === "ingreso" ? "Cobro" : ""}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-2">
-                          <div>
-                            <div className="font-medium text-xs">{mov.documento_tipo.toUpperCase()}</div>
-                            <div className="text-[10px] text-muted-foreground">
-                              {mov.documento_numero || `#${mov.documento_id}`}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-2">
-                          <div>
-                            <div className="font-medium text-xs truncate max-w-[140px]">
-                              {mov.persona_nombre || "—"}
-                            </div>
-                            <div className="text-[10px] text-muted-foreground capitalize">
-                              {mov.persona_tipo || "—"}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="py-2">
-                          {mov.tipo_kardex === "fisico" ? (
-                            <div>
-                              <div className="text-xs font-medium">{mov.producto_nombre || "Producto"}</div>
-                              <div className="text-[10px] text-muted-foreground">
-                                Lote: {mov.lote_codigo || mov.lote_id}
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="text-xs capitalize">{mov.cuenta_descripcion || mov.cuenta_tipo}</div>
-                          )}
-                        </TableCell>
-                        <TableCell className="py-2">
-                          {mov.categoria_nombre ? (
-                            <Badge variant="outline" className="text-[10px] px-1 py-0">
-                              {mov.categoria_nombre}
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="py-2 text-right font-mono text-xs">
-                          {mov.peso_kg ? (
-                            <span className={mov.tipo_movimiento === "ingreso" ? "text-green-700" : "text-red-700"}>
-                              {mov.tipo_movimiento === "ingreso" ? "+" : "-"}
-                              {parseFloat(mov.peso_kg.toString()).toFixed(2)}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="py-2 text-right font-mono text-xs">
-                          {mov.monto ? (
-                            <span className={mov.tipo_movimiento === "egreso" ? "text-red-700" : "text-green-700"}>
-                              {mov.tipo_movimiento === "egreso" ? "-" : "+"}
-                              {parseFloat(mov.monto.toString()).toFixed(2)}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="py-2 text-right font-mono text-xs font-semibold">
-                          {mov.saldo_fisico_kg
-                            ? parseFloat(mov.saldo_fisico_kg.toString()).toFixed(2)
-                            : <span className="text-muted-foreground">—</span>}
-                        </TableCell>
-                        <TableCell className="py-2 text-right font-mono text-xs font-semibold">
-                          {mov.saldo_financiero
-                            ? parseFloat(mov.saldo_financiero.toString()).toFixed(2)
-                            : <span className="text-muted-foreground">—</span>}
-                        </TableCell>
-                        <TableCell className="py-2">
-                          {mov.tipo_movimiento === "ingreso" ? (
-                            <Badge variant="default" className="bg-green-100 text-green-800 text-[10px] px-1 py-0">
-                              Activo
-                            </Badge>
-                          ) : (
-                            <Badge variant="default" className="bg-red-100 text-red-800 text-[10px] px-1 py-0">
-                              Procesado
-                            </Badge>
-                          )}
+                    {saldosFisicos.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-8">
+                          No hay datos de inventario.
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      saldosFisicos.map((saldo) => (
+                        <TableRow key={`${saldo.lote_id}-${saldo.categoria_id ?? saldo.categoria_nombre}`}>
+                          <TableCell className="font-medium">{saldo.lote_codigo || saldo.numero_lote}</TableCell>
+                          <TableCell>{saldo.producto_nombre || saldo.producto}</TableCell>
+                          <TableCell>{saldo.productor_nombre || "—"}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{saldo.categoria_nombre || "Sin categoría"}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right text-green-600 font-mono">
+                            +{saldo.total_ingresos.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
+                          </TableCell>
+                          <TableCell className="text-right text-red-600 font-mono">
+                            -{saldo.total_egresos.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
+                          </TableCell>
+                          <TableCell className="text-right font-mono font-bold">
+                            {saldo.saldo_actual.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
+                          </TableCell>
+                          <TableCell>
+                            {saldo.saldo_actual > 0 ? (
+                              <Badge variant="default" className="bg-green-600">
+                                <CheckCircle2 className="mr-1 h-3 w-3" />
+                                Disponible
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary">
+                                <XCircle className="mr-1 h-3 w-3" />
+                                Agotado
+                              </Badge>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
-              </div>
-              
-              {/* Paginación */}
-              <div className="flex items-center justify-between px-4 py-3 border-t">
-                <div className="text-xs text-muted-foreground">
-                  Mostrando {Math.min(10, movimientosFiltrados.length)} de {movimientosFiltrados.length} registros
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" disabled>
-                    Anterior
-                  </Button>
-                  <Button size="sm" variant="outline">
-                    Siguiente
-                  </Button>
-                </div>
-              </div>
+              </ScrollArea>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* TAB: MOVIMIENTOS */}
+        {/* TAB: ENTRADAS Y SALIDAS */}
         <TabsContent value="movimientos" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Movimientos Recientes</CardTitle>
-              <CardDescription>
-                Todos los movimientos físicos y financieros del sistema
-              </CardDescription>
+              <CardTitle>Registro de Movimientos</CardTitle>
+              <CardDescription>Historial de entradas y salidas de producto</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Filtros */}
-              <div className="flex gap-4">
-                <div className="flex-1">
+              <div className="flex gap-4 flex-wrap">
+                <div className="flex-1 min-w-[200px]">
                   <Input
-                    placeholder="Buscar movimiento..."
+                    placeholder="Buscar por concepto o persona..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="max-w-sm"
                   />
                 </div>
                 <Select value={filtroTipo} onValueChange={setFiltroTipo}>
                   <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Tipo Kardex" />
+                    <SelectValue placeholder="Tipo" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="fisico">Físico</SelectItem>
-                    <SelectItem value="financiero">Financiero</SelectItem>
+                    <SelectItem value="fisico">Producto (Físico)</SelectItem>
+                    <SelectItem value="financiero">Dinero (Financiero)</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select value={filtroDocumento} onValueChange={setFiltroDocumento}>
                   <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Tipo Documento" />
+                    <SelectValue placeholder="Documento" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="todos">Todos</SelectItem>
@@ -719,280 +363,200 @@ export function KardexIntegralERP() {
                 </Select>
               </div>
 
-              {/* Tabla de movimientos */}
-              <ScrollArea className="h-[600px]">
+              <ScrollArea className="h-[500px]">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Fecha</TableHead>
                       <TableHead>Tipo</TableHead>
-                      <TableHead>Movimiento</TableHead>
+                      <TableHead>Dirección</TableHead>
                       <TableHead>Documento</TableHead>
-                      <TableHead>Descripción</TableHead>
-                      <TableHead className="text-right">Cantidad/Monto</TableHead>
-                      <TableHead className="text-right">Saldo</TableHead>
+                      <TableHead>Persona</TableHead>
+                      <TableHead>Categoría</TableHead>
+                      <TableHead className="text-right">Kg</TableHead>
+                      <TableHead className="text-right">Monto S/</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {movimientosFiltrados.map((mov) => (
-                      <TableRow key={mov.id}>
-                        <TableCell className="font-medium">
-                          {format(new Date(mov.fecha_movimiento), "dd/MM/yyyy", { locale: es })}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={mov.tipo_kardex === "fisico" ? "default" : "secondary"}>
-                            {mov.tipo_kardex === "fisico" ? "Físico" : "Financiero"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {mov.tipo_movimiento === "ingreso" ? (
-                              <Plus className="h-4 w-4 text-green-600" />
-                            ) : (
-                              <Minus className="h-4 w-4 text-red-600" />
-                            )}
-                            <span
-                              className={
-                                mov.tipo_movimiento === "ingreso"
-                                  ? "text-green-600"
-                                  : "text-red-600"
-                              }
-                            >
-                              {mov.tipo_movimiento === "ingreso" ? "Ingreso" : "Egreso"}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="capitalize">{mov.documento_tipo}</span> #{mov.documento_id}
-                        </TableCell>
-                        <TableCell className="max-w-[300px] truncate">
-                          {mov.concepto || "-"}
-                        </TableCell>
-                        <TableCell className="text-right font-mono">
-                          {mov.tipo_kardex === "fisico" ? (
-                            <span>
-                              {mov.peso_kg?.toLocaleString("es-PE", {
-                                minimumFractionDigits: 2,
-                              })}{" "}
-                              kg
-                            </span>
-                          ) : (
-                            <span>
-                              S/{" "}
-                              {mov.monto?.toLocaleString("es-PE", {
-                                minimumFractionDigits: 2,
-                              })}
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right font-mono font-bold">
-                          {mov.tipo_kardex === "fisico" ? (
-                            <span>
-                              {mov.saldo_fisico_kg?.toLocaleString("es-PE", {
-                                minimumFractionDigits: 2,
-                              })}{" "}
-                              kg
-                            </span>
-                          ) : (
-                            <span>
-                              S/{" "}
-                              {mov.saldo_financiero?.toLocaleString("es-PE", {
-                                minimumFractionDigits: 2,
-                              })}
-                            </span>
-                          )}
+                    {movimientosFiltrados.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-8">
+                          No hay movimientos que coincidan con los filtros.
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      movimientosFiltrados.map((mov) => (
+                        <TableRow key={mov.id}>
+                          <TableCell className="font-mono text-sm">
+                            {format(new Date(mov.fecha_movimiento), "dd/MM/yyyy")}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={mov.tipo_kardex === "fisico" ? "default" : "secondary"}>
+                              {mov.tipo_kardex === "fisico" ? "Producto" : "Dinero"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              {mov.tipo_movimiento === "ingreso" ? (
+                                <Plus className="h-4 w-4 text-green-600" />
+                              ) : (
+                                <Minus className="h-4 w-4 text-red-600" />
+                              )}
+                              <span className={mov.tipo_movimiento === "ingreso" ? "text-green-600" : "text-red-600"}>
+                                {mov.tipo_movimiento === "ingreso" ? "Entrada" : "Salida"}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="capitalize">{mov.documento_tipo}</span>
+                            {mov.documento_numero && (
+                              <span className="text-xs text-muted-foreground ml-1">({mov.documento_numero})</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="max-w-[150px] truncate">{mov.persona_nombre || "—"}</TableCell>
+                          <TableCell>
+                            {mov.categoria_nombre ? (
+                              <Badge variant="outline" className="text-xs">{mov.categoria_nombre}</Badge>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right font-mono">
+                            {mov.peso_kg ? (
+                              <span className={mov.tipo_movimiento === "ingreso" ? "text-green-700" : "text-red-700"}>
+                                {mov.tipo_movimiento === "ingreso" ? "+" : "-"}
+                                {parseFloat(mov.peso_kg.toString()).toFixed(2)}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right font-mono">
+                            {mov.monto ? (
+                              <span className={mov.tipo_movimiento === "egreso" ? "text-red-700" : "text-green-700"}>
+                                {mov.tipo_movimiento === "egreso" ? "-" : "+"}S/{" "}
+                                {parseFloat(mov.monto.toString()).toFixed(2)}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </ScrollArea>
+
+              <div className="text-xs text-muted-foreground text-right">
+                {movimientosFiltrados.length} movimientos encontrados
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* TAB: STOCK FÍSICO */}
-        <TabsContent value="fisico" className="space-y-4">
+        {/* TAB: DEUDAS */}
+        <TabsContent value="deudas" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Stock Físico por Lote y Categoría</CardTitle>
-              <CardDescription>Inventario actual de todos los productos</CardDescription>
+              <CardTitle>Control de Deudas</CardTitle>
+              <CardDescription>Resumen de adelantos y pagos pendientes</CardDescription>
             </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[600px]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Lote</TableHead>
-                      <TableHead>Producto</TableHead>
-                      <TableHead>Productor</TableHead>
-                      <TableHead>Categoría</TableHead>
-                      <TableHead>Ingreso</TableHead>
-                      <TableHead className="text-right">Antigüedad (días)</TableHead>
-                      <TableHead className="text-right">Stock Actual (kg)</TableHead>
-                      <TableHead className="text-right">Total Ingresos</TableHead>
-                      <TableHead className="text-right">Total Egresos</TableHead>
-                      <TableHead>Estado</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {saldosFisicos.map((saldo) => (
-                      <TableRow key={`${saldo.lote_id}-${saldo.categoria_id ?? "sin-categoria"}-${saldo.categoria_nombre ?? "sin-categoria"}`}>
-                        <TableCell className="font-medium">{saldo.lote_codigo}</TableCell>
-                        <TableCell>{saldo.producto_nombre}</TableCell>
-                        <TableCell>{saldo.productor_nombre || "—"}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{saldo.categoria_nombre || "Sin categoría"}</Badge>
-                        </TableCell>
-                        <TableCell>{formatFechaCorta(saldo.fecha_ingreso_categoria || saldo.fecha_ingreso_lote)}</TableCell>
-                        <TableCell className="text-right font-mono">
-                          {saldo.antiguedad_dias ?? "—"}
-                        </TableCell>
-                        <TableCell className="text-right font-mono font-bold">
-                          {saldo.saldo_actual.toLocaleString("es-PE", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </TableCell>
-                        <TableCell className="text-right text-green-600 font-mono">
-                          {saldo.total_ingresos.toLocaleString("es-PE", {
-                            minimumFractionDigits: 2,
-                          })}
-                        </TableCell>
-                        <TableCell className="text-right text-red-600 font-mono">
-                          {saldo.total_egresos.toLocaleString("es-PE", {
-                            minimumFractionDigits: 2,
-                          })}
-                        </TableCell>
-                        <TableCell>
-                          {saldo.saldo_actual > 0 ? (
-                            <Badge variant="default" className="bg-green-600">
-                              <CheckCircle2 className="mr-1 h-3 w-3" />
-                              Disponible
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary">
-                              <XCircle className="mr-1 h-3 w-3" />
-                              Agotado
-                            </Badge>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            <CardContent className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-3">
+                {saldosFinancieros.length === 0 ? (
+                  <div className="col-span-3 text-center text-sm text-muted-foreground py-8">
+                    No hay datos financieros registrados en el Kardex.
+                  </div>
+                ) : (
+                  saldosFinancieros.map((saldo) => (
+                    <Card key={saldo.cuenta_tipo} className="bg-muted/30">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm capitalize flex items-center gap-2">
+                          <DollarSign className="h-4 w-4" />
+                          {saldo.cuenta_tipo}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                        <p className="text-2xl font-bold">
+                          S/ {saldo.saldo_actual.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
+                        </p>
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <span className="text-muted-foreground">Ingresos:</span>
+                            <span className="ml-1 text-green-600 font-mono">
+                              S/ {saldo.total_ingresos.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Egresos:</span>
+                            <span className="ml-1 text-red-600 font-mono">
+                              S/ {saldo.total_egresos.toLocaleString("es-PE", { minimumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
 
-        {/* TAB: FINANCIERO */}
-        <TabsContent value="financiero" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-3">
-            {saldosFinancieros.map((saldo) => (
-              <Card key={saldo.cuenta_tipo}>
+              <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    {saldo.cuenta_tipo === "banco" && <Wallet className="h-5 w-5" />}
-                    {saldo.cuenta_tipo === "caja" && <DollarSign className="h-5 w-5" />}
-                    {saldo.cuenta_tipo === "ventas" && <ShoppingCart className="h-5 w-5" />}
-                    {saldo.cuenta_tipo === "produccion" && <Activity className="h-5 w-5" />}
-                    <span className="capitalize">{saldo.cuenta_tipo}</span>
-                  </CardTitle>
-                  <CardDescription>{saldo.cuenta_descripcion || "Cuenta general"}</CardDescription>
+                  <CardTitle className="text-base">Movimientos Financieros Recientes</CardTitle>
+                  <CardDescription>Adelantos, liquidaciones y pagos</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Saldo Actual</p>
-                    <p className="text-3xl font-bold">
-                      S/{" "}
-                      {saldo.saldo_actual.toLocaleString("es-PE", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Total Ingresos</p>
-                      <p className="text-sm font-semibold text-green-600">
-                        S/{" "}
-                        {saldo.total_ingresos.toLocaleString("es-PE", {
-                          minimumFractionDigits: 2,
-                        })}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Total Egresos</p>
-                      <p className="text-sm font-semibold text-red-600">
-                        S/{" "}
-                        {saldo.total_egresos.toLocaleString("es-PE", {
-                          minimumFractionDigits: 2,
-                        })}
-                      </p>
-                    </div>
-                  </div>
+                <CardContent>
+                  <ScrollArea className="h-[400px]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Fecha</TableHead>
+                          <TableHead>Tipo</TableHead>
+                          <TableHead>Persona</TableHead>
+                          <TableHead>Concepto</TableHead>
+                          <TableHead>Cuenta</TableHead>
+                          <TableHead className="text-right">Monto S/</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {movimientos
+                          .filter((mov) => mov.tipo_kardex === "financiero")
+                          .map((mov) => (
+                            <TableRow key={mov.id}>
+                              <TableCell className="font-mono text-sm">
+                                {format(new Date(mov.fecha_movimiento), "dd/MM/yyyy")}
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={mov.tipo_movimiento === "ingreso" ? "default" : "destructive"}
+                                  className="text-xs"
+                                >
+                                  {mov.tipo_movimiento === "ingreso" ? "Ingreso" : "Egreso"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="max-w-[150px] truncate">
+                                {mov.persona_nombre || "—"}
+                              </TableCell>
+                              <TableCell className="max-w-[200px] truncate">{mov.concepto}</TableCell>
+                              <TableCell className="capitalize">{mov.cuenta_tipo}</TableCell>
+                              <TableCell className="text-right font-mono font-semibold">
+                                <span
+                                  className={mov.tipo_movimiento === "egreso" ? "text-red-700" : "text-green-700"}
+                                >
+                                  {mov.tipo_movimiento === "egreso" ? "-" : "+"}S/{" "}
+                                  {parseFloat(mov.monto?.toString() || "0").toFixed(2)}
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  </ScrollArea>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        {/* TAB: REPORTES */}
-        <TabsContent value="reportes" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Estado de Cuenta Productor
-                </CardTitle>
-                <CardDescription>Ver cuentas por cobrar/pagar a productores</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full">Ver Reporte</Button>
-              </CardContent>
-            </Card>
-
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="h-5 w-5" />
-                  Flujo de Caja
-                </CardTitle>
-                <CardDescription>Análisis de ingresos y egresos</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full">Ver Reporte</Button>
-              </CardContent>
-            </Card>
-
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Box className="h-5 w-5" />
-                  Valorización de Inventario
-                </CardTitle>
-                <CardDescription>Valor total del stock actual</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full">Ver Reporte</Button>
-              </CardContent>
-            </Card>
-
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5" />
-                  Análisis de Rentabilidad
-                </CardTitle>
-                <CardDescription>Márgenes y rentabilidad por producto</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full">Ver Reporte</Button>
-              </CardContent>
-            </Card>
-          </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
@@ -1003,18 +567,18 @@ function LoadingSkeleton() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="space-y-2">
-        <Skeleton className="h-10 w-[300px]" />
-        <Skeleton className="h-4 w-[500px]" />
+        <Skeleton className="h-8 w-[250px]" />
+        <Skeleton className="h-4 w-[400px]" />
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
           <Card key={i}>
-            <CardHeader>
+            <CardHeader className="pb-2">
               <Skeleton className="h-4 w-[100px]" />
             </CardHeader>
             <CardContent>
-              <Skeleton className="h-8 w-[150px]" />
-              <Skeleton className="h-3 w-[100px] mt-2" />
+              <Skeleton className="h-8 w-[120px]" />
+              <Skeleton className="h-3 w-[80px] mt-2" />
             </CardContent>
           </Card>
         ))}
