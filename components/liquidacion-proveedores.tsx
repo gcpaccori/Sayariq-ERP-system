@@ -20,7 +20,7 @@ import { liquidacionesService } from "@/lib/services/liquidaciones-service"
 import { lotesService } from "@/lib/services/lotes-service"
 import type { Liquidacion } from "@/lib/types/liquidaciones"
 import type { Lote, Persona } from "@/lib/types"
-import { CheckCircle2, CircleAlert, Coins, ReceiptText, Search } from "lucide-react"
+import { CheckCircle2, AlertCircle, Coins, Receipt, Search } from "lucide-react"
 
 const formatCurrency = (value: number) =>
   `S/ ${value.toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -171,7 +171,7 @@ export function LiquidacionProveedores() {
           </p>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <ReceiptText className="h-4 w-4" />
+          <Receipt className="h-4 w-4" />
           Kardex financiero se actualiza al registrar pagos y liquidaciones.
         </div>
       </div>
@@ -369,7 +369,7 @@ export function LiquidacionProveedores() {
               )}
               <Separator />
               <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                <CircleAlert className="mt-0.5 h-4 w-4" />
+                <AlertCircle className="mt-0.5 h-4 w-4" />
                 <span>
                   Al marcar como pagado, el movimiento se refleja como salida de dinero en el Kardex Integral.
                 </span>
@@ -452,7 +452,7 @@ export function LiquidacionProveedores() {
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <ReceiptText className="h-4 w-4" />
+                <Receipt className="h-4 w-4" />
                 <span>Liquidaciones registradas</span>
               </div>
               <p className="text-2xl font-semibold">{liquidacionesProveedor.length}</p>
