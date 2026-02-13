@@ -18,6 +18,8 @@ require_once '../controllers/AnalisisLotesPedidosController.php';
 require_once '../controllers/RegistroPesosController.php';
 require_once '../controllers/PesosLoteController.php';
 require_once '../controllers/LiquidacionesController.php';
+require_once '../controllers/LiquidacionClientesController.php';
+require_once '../controllers/LiquidacionProveedoresController.php';
 require_once '../controllers/CategoriasPesoController.php';
 require_once '../controllers/KardexIntegralController.php';
 
@@ -119,6 +121,12 @@ if (isset($segments[1])) {
         case 'liquidaciones':
             $controller = new LiquidacionesController($db);
             break;
+        case 'liquidaciones-clientes':   // 👈 NUEVO
+            $controller = new LiquidacionClientesController($db);
+            break;
+        case 'liquidaciones-proveedores':   // 👈 NUEVO
+            $controller = new LiquidacionProveedoresController($db);
+            break;
         case 'categorias-peso':   // 👈 NUEVO
             $controller = new CategoriasPesoController($db);
             break;
@@ -137,7 +145,8 @@ if (isset($segments[1])) {
                     'pagos-campo', 'pedidos', 'kardex', 'ventas',
                     'banco', 'costos-fijos', 'empleados', 'rentabilidad', 
                     'adelantos', 'analisis-lotes-pedidos', 'registro-pesos', 
-                    'liquidaciones', 'categorias-peso', 'kardex-integral'
+                    'liquidaciones', 'liquidaciones-clientes', 'liquidaciones-proveedores',
+                    'categorias-peso', 'kardex-integral'
                 ],
                 'timestamp' => date('Y-m-d H:i:s')
             ], 404);
