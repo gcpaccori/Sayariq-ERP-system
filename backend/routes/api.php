@@ -121,18 +121,68 @@ if (isset($segments[1])) {
         case 'liquidaciones':
             $controller = new LiquidacionesController($db);
             break;
-        case 'liquidaciones-clientes':   // 👈 NUEVO
+        case 'liquidaciones-clientes':
             $controller = new LiquidacionClientesController($db);
             break;
-        case 'liquidaciones-proveedores':   // 👈 NUEVO
+        case 'liquidaciones-proveedores':
             $controller = new LiquidacionProveedoresController($db);
             break;
-        case 'categorias-peso':   // 👈 NUEVO
+        case 'categorias-peso':
             $controller = new CategoriasPesoController($db);
             break;
-        case 'kardex-integral':   // 👈 KARDEX INTEGRAL
-            $controller = new KardexIntegralController($db);
-            break;
+        case 'kardex-integral':
+            // Manejo especial de rutas anidadas para kardex-integral
+            $kardexController = new KardexIntegralController($db);
+            $subPath = implode('/', array_slice($segments, 1));
+            
+            if ($request_method === 'GET') {
+                if ($subPath === '' || $subPath === '/') {
+                    echo json_encode($kardexController->getAll());
+                } elseif ($subPath === 'saldos/fisico') {
+                    echo json_encode($kardexController->getSaldosFisicos());
+                } elseif ($subPath === 'saldos/financiero') {
+                    echo json_encode($kardexController->getSaldosFinancieros());
+                } elseif (preg_match('/^por-productor\/(\d+)$/', $subPath, $m)) {
+                    echo json_encode($kardexController->getPorProductor($m[1]));
+                } elseif ($subPath === 'por-documento') {
+                    echo json_encode($kardexController->getPorDocumento());
+                } elseif (preg_match('/^reporte\/estado-cuenta\/(\d+)$/', $subPath, $m)) {
+                    echo json_encode($kardexController->getEstadoCuentaProductor($m[1]));
+                } elseif ($subPath === 'reporte/flujo-caja') {
+                    echo json_encode($kardexController->getFlujoCaja());
+                } elseif ($subPath === 'reporte/inventario') {
+                    echo json_encode($kardexController->getReporteInventario());
+                } elseif (is_numeric($subPath)) {
+                    echo json_encode($kardexController->getById($subPath));
+                } else {
+                    http_response_code(404);
+                    echo json_encode(['success' => false, 'error' => 'Ruta no encontrada: kardex-integral/' . $subPath]);
+                }
+            } elseif ($request_method === 'POST') {
+                if ($subPath === 'liquidacion') {
+                    echo json_encode($kardexController->registrarLiquidacion());
+                } elseif ($subPath === 'venta') {
+                    echo json_encode($kardexController->registrarVenta());
+                } elseif ($subPath === 'adelanto') {
+                    echo json_encode($kardexController->registrarAdelanto());
+                } elseif ($subPath === 'manual') {
+                    echo json_encode($kardexController->registrarManual());
+                } else {
+                    http_response_code(404);
+                    echo json_encode(['success' => false, 'error' => 'Ruta POST no encontrada']);
+                }
+            } elseif ($request_method === 'DELETE') {
+                if (is_numeric($subPath)) {
+                    echo json_encode($kardexController->delete($subPath));
+                } else {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'error' => 'ID requerido para eliminar']);
+                }
+            } else {
+                http_response_code(405);
+                echo json_encode(['success' => false, 'error' => 'Método no permitido']);
+            }
+            exit();
         default:
             http_response_code(404);
             jsonResponse([
