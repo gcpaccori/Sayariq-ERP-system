@@ -236,11 +236,12 @@ Totales al pie:
 ```
 
 #### Validaciones
-- La suma de peso_bruto de todas las categorias NO PUEDE superar peso_bruto_ingreso del lote.
+- La suma de peso_bruto de todas las categorias NO PUEDE superar peso_bruto_ingreso del lote (debe ser <= peso_bruto_ingreso). Es normal que sea menor por merma.
 - Si la diferencia (merma) supera el 5%, se muestra una advertencia amarilla.
 - Si supera el 10%, se muestra una advertencia roja.
 - El lote debe estar en estado 'sin_clasificar' para poder clasificarse.
 - peso_neto no puede ser negativo.
+- Cada categoria debe tener peso_bruto > 0 para ser incluida.
 
 #### Que pasa al guardar la clasificacion
 1. Se crean N filas en `lote_clasificacion` (una por categoria con peso > 0)
@@ -364,6 +365,7 @@ lotes clasificados para cubrirlo.
 | observaciones | texto | NO | Notas |
 
 #### Validaciones de asignacion
+- kg_asignados debe ser mayor a 0.
 - kg_asignados no puede superar los kg disponibles del lote en esa categoria.
 - kg_asignados no puede superar los kg faltantes del pedido.
 - El lote debe estar en estado 'clasificado' o 'asignado'.
@@ -586,7 +588,7 @@ Cuando un lote ya esta clasificado y se quiere pagar al productor.
 | numero_liquidacion | texto auto | SI | Codigo unico (ej: LIQ-P-2026-0001) |
 | tipo | fijo | SI | 'productor' |
 | persona_id | auto | SI | El productor del lote |
-| lote_id | selector | SI | El lote a liquidar (solo lotes clasificados) |
+| lote_id | selector | SI | El lote a liquidar (lotes en estado 'clasificado' o 'asignado') |
 | fecha_liquidacion | fecha | SI | Fecha de la liquidacion |
 | serie_comprobante | texto | NO | Serie del comprobante |
 | numero_comprobante | texto | NO | Numero del comprobante |
@@ -626,6 +628,8 @@ CABECERA:
   total_bruto = SUM(subtotal) de todos los detalles
   total_descuentos = costo_flete + costo_cosecha + costo_maquila + descuento_jabas + otros_descuentos
   total_adelantos = SUM(monto) de adelantos pendientes seleccionados
+                    (se muestran los del productor: los que tienen lote_id = NULL o lote_id = lote actual)
+                    (un adelanto con lote_id especifico solo puede aplicarse a ESE lote)
   total_a_pagar = total_bruto - total_descuentos - total_adelantos
 ```
 
@@ -982,12 +986,16 @@ antes de liquidarlo. Se descuenta en la liquidacion.
 
 ### Validaciones criticas
 - Un lote no puede clasificarse si ya esta clasificado.
-- Un lote no puede liquidarse si no esta clasificado.
+- Un lote no puede liquidarse si no esta clasificado (debe estar en estado 'clasificado' o 'asignado').
 - Un pedido no puede recibir mas kg de los que solicita.
 - Una asignacion no puede exceder el stock disponible del lote.
+- kg_asignados y peso_bruto deben ser mayores a 0.
 - Un adelanto no puede descontarse dos veces.
+- Un adelanto en estado 'aplicado' debe tener liquidacion_id asignado (no NULL).
+- Un adelanto con lote_id especifico solo puede aplicarse en la liquidacion de ese lote.
 - Los precios por kg deben ser mayores a 0.
 - Los pesos no pueden ser negativos.
+- Forma de pago 'mixto': la app debe registrar el monto por cada medio (ej: S/ 500 efectivo + S/ 500 transferencia) en observaciones o en pagos parciales separados.
 
 ### Convenciones de moneda
 - Moneda: Soles (S/)
