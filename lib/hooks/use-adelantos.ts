@@ -1,29 +1,29 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { adelantosService, type Adelanto, type NuevoAdelanto } from "@/lib/services/adelantos-service"
+import { useState, useEffect, useCallback } from "react"
+import { adelantosService, type Adelanto, type NuevoAdelanto, type ActualizarAdelanto } from "@/lib/services/adelantos-service"
 
 export function useAdelantos(initialLoad = true) {
   const [data, setData] = useState<Adelanto[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true)
     setError(null)
 
     try {
-      const result = await adelantosService.obtenerAdelantos()
+      const result = await adelantosService.getAll()
       setData(result)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Error desconocido"
-      console.error("Error loading adelantos:", errorMessage)
+      console.error("[Sayariq] Error loading adelantos:", errorMessage)
       setError(errorMessage)
       setData([])
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   const create = async (adelanto: NuevoAdelanto) => {
     setLoading(true)
@@ -44,29 +44,74 @@ export function useAdelantos(initialLoad = true) {
     }
   }
 
-  const getByProductor = async (productorId: number) => {
+  const update = async (id: number | string, updates: ActualizarAdelanto) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const updatedAdelanto = await adelantosService.actualizarAdelanto(id, updates)
+      if (updatedAdelanto) {
+        setData((prev) =>
+          prev.map((a) => {
+            const aId = a.id ?? (a as any).$id
+            return String(aId) === String(id) ? { ...a, ...updatedAdelanto } : a
+          })
+        )
+        return updatedAdelanto
+      }
+      throw new Error("No se pudo actualizar el adelanto")
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Error al actualizar adelanto"
+      setError(errorMessage)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const remove = async (id: number | string) => {
+    setLoading(true)
+    setError(null)
+    try {
+      await adelantosService.eliminarAdelanto(id)
+      setData((prev) =>
+        prev.filter((a) => {
+          const aId = a.id ?? (a as any).$id
+          return String(aId) !== String(id)
+        })
+      )
+      return true
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Error al eliminar adelanto"
+      setError(errorMessage)
+      throw err
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getByProductor = async (productorId: number | string) => {
     try {
       return await adelantosService.obtenerAdelantosPorProductor(productorId)
     } catch (err) {
-      console.error("Error getting adelantos by productor:", err)
+      console.error("[Sayariq] Error getting adelantos by productor:", err)
       return []
     }
   }
 
-  const getPendientes = async (productorId: number) => {
+  const getPendientes = async (productorId: number | string) => {
     try {
       return await adelantosService.obtenerAdelantosPendientes(productorId)
     } catch (err) {
-      console.error("Error getting adelantos pendientes:", err)
+      console.error("[Sayariq] Error getting adelantos pendientes:", err)
       return []
     }
   }
 
-  const calcularSaldo = async (productorId: number) => {
+  const calcularSaldo = async (productorId: number | string) => {
     try {
       return await adelantosService.calcularSaldoProductor(productorId)
     } catch (err) {
-      console.error("Error calculating saldo:", err)
+      console.error("[Sayariq] Error calculating saldo:", err)
       return {
         total_adelantos: 0,
         total_descontado: 0,
@@ -80,11 +125,11 @@ export function useAdelantos(initialLoad = true) {
     try {
       const success = await adelantosService.descontarAdelanto(adelantoId, loteId, loteCodigo, montoDescuento)
       if (success) {
-        await loadData() // Recargar datos después del descuento
+        await loadData()
       }
       return success
     } catch (err) {
-      console.error("Error descontando adelanto:", err)
+      console.error("[Sayariq] Error descontando adelanto:", err)
       return false
     }
   }
@@ -98,7 +143,7 @@ export function useAdelantos(initialLoad = true) {
     try {
       return await adelantosService.procesarDescuentosAutomaticos(productorId, loteId, loteCodigo, valorLote)
     } catch (err) {
-      console.error("Error processing automatic discounts:", err)
+      console.error("[Sayariq] Error processing automatic discounts:", err)
       return {
         descuentos_aplicados: [],
         monto_total_descontado: 0,
@@ -107,7 +152,7 @@ export function useAdelantos(initialLoad = true) {
     }
   }
 
-  const refresh = () => loadData()
+  const refresh = useCallback(() => loadData(), [loadData])
 
   useEffect(() => {
     if (initialLoad) {
@@ -116,13 +161,15 @@ export function useAdelantos(initialLoad = true) {
       }, 300)
       return () => clearTimeout(timer)
     }
-  }, [initialLoad])
+  }, [initialLoad, loadData])
 
   return {
     data,
     loading,
     error,
     create,
+    update,
+    remove,
     getByProductor,
     getPendientes,
     calcularSaldo,
