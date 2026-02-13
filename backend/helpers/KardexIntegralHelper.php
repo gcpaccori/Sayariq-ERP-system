@@ -18,28 +18,64 @@ class KardexIntegralHelper {
     /**
      * Registrar liquidación completa en kardex integral
      * (movimiento físico + movimiento financiero)
+     * 
+     * NUEVO: Inserta un registro por cada categoría desde liquidaciones_detalle
      */
     public function registrarLiquidacion(array $data) {
         try {
-            // 1. MOVIMIENTO FÍSICO - Egreso de productos
-            if (isset($data['peso_total']) && $data['peso_total'] > 0) {
-                $this->insertarMovimiento([
-                    'fecha_movimiento' => $data['fecha_liquidacion'] ?? date('Y-m-d H:i:s'),
-                    'tipo_kardex' => 'fisico',
-                    'tipo_movimiento' => 'egreso',
-                    'documento_tipo' => 'liquidacion',
-                    'documento_id' => $data['liquidacion_id'],
-                    'documento_numero' => $data['numero_liquidacion'] ?? null,
-                    'lote_id' => $data['lote_id'] ?? null,
-                    'categoria_id' => $data['categoria_id'] ?? null,
-                    'categoria_nombre' => $data['categoria_nombre'] ?? 'MIXTO',
-                    'peso_kg' => $data['peso_total'],
-                    'persona_id' => $data['productor_id'] ?? null,
-                    'persona_nombre' => $data['productor_nombre'] ?? null,
-                    'persona_tipo' => 'productor',
-                    'concepto' => "Liquidación {$data['numero_liquidacion']} - Lote {$data['lote_nombre']}",
-                    'observaciones' => $data['observaciones'] ?? null
-                ]);
+            // 1. MOVIMIENTOS FÍSICOS - Egreso de productos POR CATEGORÍA
+            // Obtener detalle de categorías desde liquidaciones_detalle
+            $query = "SELECT ld.categoria_id, cp.nombre AS categoria_nombre, ld.peso_ajustado
+                      FROM liquidaciones_detalle ld
+                      LEFT JOIN categorias_peso cp ON ld.categoria_id = cp.id
+                      WHERE ld.liquidacion_id = :liquidacion_id 
+                      AND ld.peso_ajustado > 0";
+            $stmt = $this->conn->prepare($query);
+            $stmt->execute([':liquidacion_id' => $data['liquidacion_id']]);
+            $categorias = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Insertar un movimiento físico por cada categoría
+            if (count($categorias) > 0) {
+                foreach ($categorias as $cat) {
+                    $this->insertarMovimiento([
+                        'fecha_movimiento' => $data['fecha_liquidacion'] ?? date('Y-m-d H:i:s'),
+                        'tipo_kardex' => 'fisico',
+                        'tipo_movimiento' => 'egreso',
+                        'documento_tipo' => 'liquidacion',
+                        'documento_id' => $data['liquidacion_id'],
+                        'documento_numero' => $data['numero_liquidacion'] ?? null,
+                        'lote_id' => $data['lote_id'] ?? null,
+                        'categoria_id' => $cat['categoria_id'],
+                        'categoria_nombre' => $cat['categoria_nombre'] ?? 'Sin categoría',
+                        'peso_kg' => $cat['peso_ajustado'],
+                        'persona_id' => $data['productor_id'] ?? null,
+                        'persona_nombre' => $data['productor_nombre'] ?? null,
+                        'persona_tipo' => 'productor',
+                        'concepto' => "Liquidación {$data['numero_liquidacion']} - Categoría {$cat['categoria_nombre']} - Lote {$data['lote_nombre']}",
+                        'observaciones' => $data['observaciones'] ?? null
+                    ]);
+                }
+            } else {
+                // Fallback: Si no hay detalle, insertar con peso total (compatibilidad con código antiguo)
+                if (isset($data['peso_total']) && $data['peso_total'] > 0) {
+                    $this->insertarMovimiento([
+                        'fecha_movimiento' => $data['fecha_liquidacion'] ?? date('Y-m-d H:i:s'),
+                        'tipo_kardex' => 'fisico',
+                        'tipo_movimiento' => 'egreso',
+                        'documento_tipo' => 'liquidacion',
+                        'documento_id' => $data['liquidacion_id'],
+                        'documento_numero' => $data['numero_liquidacion'] ?? null,
+                        'lote_id' => $data['lote_id'] ?? null,
+                        'categoria_id' => $data['categoria_id'] ?? null,
+                        'categoria_nombre' => $data['categoria_nombre'] ?? 'MIXTO',
+                        'peso_kg' => $data['peso_total'],
+                        'persona_id' => $data['productor_id'] ?? null,
+                        'persona_nombre' => $data['productor_nombre'] ?? null,
+                        'persona_tipo' => 'productor',
+                        'concepto' => "Liquidación {$data['numero_liquidacion']} - Lote {$data['lote_nombre']}",
+                        'observaciones' => $data['observaciones'] ?? null
+                    ]);
+                }
             }
             
             // 2. MOVIMIENTO FINANCIERO - Egreso de dinero (pago al productor)

@@ -14,6 +14,7 @@
 -- =====================================================
 -- 1. MIGRAR LIQUIDACIONES (movimientos físicos + financieros)
 -- =====================================================
+-- 1.1 Migrar liquidaciones con detalle por categoría (CORRECTO - muestra categorías individuales)
 INSERT INTO kardex_integral (
   fecha_movimiento,
   tipo_kardex,
@@ -25,8 +26,6 @@ INSERT INTO kardex_integral (
   categoria_id,
   categoria_nombre,
   peso_kg,
-  cuenta_tipo,
-  monto,
   persona_id,
   persona_nombre,
   persona_tipo,
@@ -42,25 +41,21 @@ SELECT
   l.id AS documento_id,
   l.numero_liquidacion AS documento_numero,
   l.lote_id,
-  NULL AS categoria_id,
-  'MIXTO' AS categoria_nombre,
-  COALESCE(
-    (SELECT SUM(ld.peso_ajustado) FROM liquidaciones_detalle ld WHERE ld.liquidacion_id = l.id),
-    l.peso_final_ajustado,
-    0
-  ) AS peso_kg,
-  NULL AS cuenta_tipo,
-  NULL AS monto,
+  ld.categoria_id,
+  cp.nombre AS categoria_nombre,
+  ld.peso_ajustado AS peso_kg,
   lt.productor_id AS persona_id,
   p.nombre_completo AS persona_nombre,
   'productor' AS persona_tipo,
-  CONCAT('Liquidación ', COALESCE(l.numero_liquidacion, CONCAT('LIQ-', l.id)), ' - Lote ', lt.numero_lote) AS concepto,
+  CONCAT('Liquidación ', COALESCE(l.numero_liquidacion, CONCAT('LIQ-', l.id)), ' - Categoría ', COALESCE(cp.nombre, 'SIN CATEGORIA'), ' - Lote ', lt.numero_lote) AS concepto,
   l.observaciones,
   'migracion' AS usuario_registro
 FROM liquidaciones l
+INNER JOIN liquidaciones_detalle ld ON l.id = ld.liquidacion_id
+LEFT JOIN categorias_peso cp ON ld.categoria_id = cp.id
 LEFT JOIN lotes lt ON l.lote_id = lt.id
 LEFT JOIN personas p ON lt.productor_id = p.id
-WHERE l.id IS NOT NULL;
+WHERE l.id IS NOT NULL AND ld.peso_ajustado > 0;
 
 -- Movimientos financieros de liquidaciones (EGRESO de banco/caja)
 INSERT INTO kardex_integral (
